@@ -1,0 +1,251 @@
+@import url("https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700;900&display=swap");
+@import "tailwindcss" source(".");
+
+@media (prefers-reduced-motion: reduce), (pointer: coarse) {
+  [data-testid="beauty-cursor-trail"] { display: none; }
+}
+
+@media (hover: hover) and (pointer: fine) {
+  body,
+  a,
+  button,
+  [role="button"],
+  .cursor-pointer {
+    cursor:
+      url("/lipstick-cursor.svg") 5 2,
+      auto;
+  }
+  input,
+  textarea,
+  [contenteditable="true"] {
+    cursor: text;
+  }
+  button:disabled,
+  [aria-disabled="true"] {
+    cursor: not-allowed;
+  }
+}
+
+@font-face {
+  font-family: "Inter";
+  src: url("/fonts/inter-variable.ttf") format("truetype");
+  font-weight: 100 900;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: "Tajawal";
+  src: url("/fonts/tajawal-regular.ttf") format("truetype");
+  font-weight: 400;
+  font-display: swap;
+}
+@font-face {
+  font-family: "Tajawal";
+  src: url("/fonts/tajawal-bold.ttf") format("truetype");
+  font-weight: 700;
+  font-display: swap;
+}
+@font-face {
+  font-family: "Manrope";
+  src: url("/fonts/manrope-regular.ttf") format("truetype");
+  font-weight: 400;
+  font-display: swap;
+}
+@font-face {
+  font-family: "Manrope";
+  src: url("/fonts/manrope-bold.ttf") format("truetype");
+  font-weight: 700;
+  font-display: swap;
+}
+
+@theme {
+  --color-brand: #541c2b;
+  --font-sans: "Inter", "Tajawal", sans-serif;
+  --font-arabic: "Tajawal", "Manrope", sans-serif;
+  --color-background: #fffdf9;
+  --color-foreground: #2a2421;
+  --color-muted: #756b64;
+  --color-line: #e8d9c7;
+  --color-champagne: #c5a06a;
+  --color-deep-gold: #86643b;
+  --color-blush: #f4ddd8;
+  --color-rose: #b98276;
+  --color-ivory: #faf4ec;
+  --color-ink: #2f2926;
+  --shadow-panel: 0 18px 56px rgb(83 60 39 / 8%);
+  --shadow-stage: 0 24px 70px rgb(84 61 38 / 13%);
+  --shadow-button: 0 16px 36px rgb(47 41 38 / 16%);
+}
+
+@layer base {
+  html {
+    @apply scroll-smooth;
+  }
+  body {
+    @apply m-0 font-sans leading-[1.7] tracking-normal text-foreground;
+    background: #fff;
+  }
+  section[id] {
+    @apply scroll-mt-[130px];
+  }
+  svg {
+    @apply shrink-0;
+  }
+  h1,
+  h2,
+  h3,
+  p,
+  a,
+  button,
+  span {
+    overflow-wrap: anywhere;
+  }
+  h1,
+  h2,
+  h3 {
+    @apply font-bold tracking-normal;
+  }
+  h1 {
+    @apply my-[18px] text-[2.125rem] leading-[1.4] text-[#302621] min-[641px]:text-[3.5rem] min-[641px]:leading-[1.3];
+  }
+  h2 {
+    @apply mb-[18px] text-[1.75rem] leading-[1.4] min-[641px]:text-[2.5rem];
+  }
+  h3 {
+    @apply mb-[1em] text-[1.2rem];
+  }
+  p {
+    @apply mb-4;
+  }
+  :focus-visible {
+    @apply outline-2 outline-offset-4 outline-deep-gold;
+  }
+}
+
+@utility page-width {
+  width: min(1180px, calc(100% - 24px));
+  margin-inline: auto;
+  @media (min-width: 641px) {
+    width: min(1180px, calc(100% - 36px));
+  }
+}
+
+/* The wheel's center sits on the viewport edge, leaving exactly half visible. */
+.campaign-hero {
+  height: min(740px, calc(100svh - 220px));
+  min-height: 520px;
+}
+.campaign-hero-inner {
+  display: flex;
+  align-items: center;
+  direction: ltr;
+}
+.campaign-hero-copy {
+  position: relative;
+  left: 6%;
+  width: 40%;
+}
+.campaign-wordmark {
+  margin: 0 0 20px;
+  font-size: 88px;
+  line-height: 1;
+}
+.campaign-product-caption {
+  margin-top: 28px;
+  padding-top: 16px;
+  border-top: 1px solid rgb(51 77 71 / 18%);
+  max-width: 440px;
+}
+@media (max-width: 767px) {
+  .campaign-hero {
+    height: min(640px, calc(100svh - 230px));
+    min-height: 560px;
+  }
+  .campaign-hero .campaign-hero-image {
+    top: auto !important;
+    height: 45% !important;
+    object-position: 88% center;
+  }
+  .campaign-hero-copy {
+    position: absolute;
+    left: 24px;
+    right: 24px;
+    top: 28px;
+    width: auto;
+    transform: none;
+  }
+  .campaign-wordmark {
+    font-size: 56px;
+    margin-bottom: 12px;
+  }
+  .campaign-hero-copy h2 {
+    font-size: 24px;
+  }
+  .campaign-hero-copy p {
+    margin-bottom: 12px;
+  }
+  .campaign-product-caption {
+    display: none;
+  }
+}
+.gift-drawer-layout {
+  min-height: 100dvh;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  align-content: center;
+}
+.gift-drawer {
+  scrollbar-width: none;
+  overscroll-behavior: contain;
+}
+.gift-drawer::-webkit-scrollbar {
+  display: none;
+}
+.gift-drawer-wheel {
+  position: relative;
+  height: 300px;
+  margin-top: 60px;
+}
+.gift-drawer-wheel .prize-wheel-frame {
+  position: absolute;
+  left: 0;
+  top: 50%;
+  width: 280px;
+  transform: translate(-50%, -50%);
+}
+.gift-drawer-content {
+  padding: 24px 24px 36px;
+}
+@media (min-width: 768px) {
+  .gift-drawer {
+    width: min(960px, 75vw);
+  }
+  .gift-drawer-layout {
+    grid-template-columns: 43% minmax(0, 1fr);
+    align-content: stretch;
+    min-height: max(100dvh, 650px);
+  }
+  .gift-drawer-wheel {
+    height: auto;
+    margin-top: 0;
+  }
+  .gift-drawer-wheel .prize-wheel-frame {
+    width: min(80dvh, 190%);
+  }
+  .gift-drawer-content {
+    padding: 72px 36px 56px 24px;
+  }
+}
+@media (prefers-reduced-motion: no-preference) {
+  .gift-drawer[open]::backdrop {
+    animation: gift-backdrop-enter 900ms ease-out both;
+  }
+  @keyframes gift-backdrop-enter {
+    from {
+      opacity: 0;
+    }
+    to {
+      opacity: 1;
+    }
+  }
+}
