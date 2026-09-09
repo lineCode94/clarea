@@ -32,8 +32,8 @@ export default function ProductShelf({
     });
   }
   return (
-    <section className="page-width py-12 md:py-16" aria-label={title}>
-      <div className="mb-7 flex items-end justify-between gap-4">
+    <section className="py-12 md:py-16" aria-label={title}>
+      <div className="page-width mb-7 flex items-end justify-between gap-4">
         <div>
           <h2 className="mb-2 text-2xl text-brand md:text-3xl">{title}</h2>
           {subtitle && <p className="mb-0 text-sm text-muted">{subtitle}</p>}
@@ -47,7 +47,7 @@ export default function ProductShelf({
       </div>
       <div
         ref={track}
-        className="flex snap-x snap-mandatory gap-5 overflow-x-auto pb-4"
+        className="flex snap-x snap-mandatory gap-5 overflow-x-auto pb-4 px-3 min-[641px]:px-[18px] max-w-[100vw] 2xl:px-[calc((100vw-1180px)/2)]"
         style={{ scrollbarWidth: "thin" }}
       >
         {products.map((product) => (
@@ -59,7 +59,7 @@ export default function ProductShelf({
           </article>
         ))}
       </div>
-      <div className="mt-3 flex justify-end gap-2">
+      <div className="page-width mt-3 flex justify-end gap-2">
         <button
           onClick={() => scroll(false)}
           title={lang === "ar" ? "السابق" : "Previous"}

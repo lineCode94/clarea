@@ -26,7 +26,7 @@ export default function StorefrontActions({
         onClick={onOpen}
         title={t.gifts}
         aria-label={t.tab}
-        className="gift-tab fixed bottom-[calc(20px+env(safe-area-inset-bottom))] left-4 z-40 flex size-14 items-center justify-center rounded-full bg-brand text-white shadow-lg transition-colors hover:bg-[#793448] xl:bottom-auto xl:left-0 xl:top-1/2 xl:h-auto xl:w-auto xl:-translate-y-1/2 xl:flex-col xl:gap-2 xl:rounded-none xl:rounded-e-lg xl:px-2 xl:py-4"
+        className="gift-tab fixed bottom-[calc(20px+env(safe-area-inset-bottom))] right-4 z-40 flex size-14 items-center justify-center rounded-full bg-brand text-white shadow-lg transition-colors hover:bg-[#793448] xl:bottom-auto xl:right-0 xl:top-1/2 xl:h-auto xl:w-auto xl:-translate-y-1/2 xl:flex-col xl:gap-2 xl:rounded-none xl:rounded-s-lg xl:px-2 xl:py-4"
       >
         <TbGift size={23} />
         <span className="hidden text-sm font-bold xl:block xl:[writing-mode:vertical-rl]">
@@ -39,9 +39,9 @@ export default function StorefrontActions({
         rel="noreferrer"
         title={t.whatsapp}
         aria-label={t.whatsapp}
-        className="floating-whatsapp fixed bottom-[calc(20px+env(safe-area-inset-bottom))] right-4 z-40 grid size-14 place-items-center rounded-full border-[3px] border-white bg-[#25d366] text-white shadow-lg transition-transform hover:scale-105"
+        className="floating-whatsapp fixed bottom-[calc(20px+env(safe-area-inset-bottom))] left-4 z-40 block transition-transform hover:scale-105"
       >
-        <TbBrandWhatsapp size={31} />
+        <img src="/whatsapp.svg" alt="WhatsApp" className="size-14 drop-shadow-xl" />
       </a>
       {open && <GiftDialog lang={lang} wheel={wheel} close={onClose} />}
     </>

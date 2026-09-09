@@ -20,15 +20,20 @@ export default function ProductCard({
   const reduced = useReducedMotion();
   return (
     <>
-      <button
+      <motion.button
+        initial="initial"
+        whileHover={reduced ? "initial" : "hover"}
         onClick={() => onSelect(product)}
         aria-label={`${t.details}: ${product.name}`}
-        className="relative block aspect-[1.12] w-full cursor-pointer overflow-hidden rounded-lg text-start"
+        className="group relative block aspect-[1.12] w-full cursor-pointer overflow-hidden rounded-lg text-start"
         style={{ background: product.tone }}
       >
         <motion.div
-          whileHover={reduced ? {} : { scale: 1.055, y: -4 }}
-          transition={{ type: "spring", stiffness: 150, damping: 20 }}
+          variants={{
+            initial: { scale: 1, y: 0 },
+            hover: { scale: 1.08, y: -6 },
+          }}
+          transition={{ type: "spring", stiffness: 300, damping: 25 }}
           className="absolute inset-4"
         >
           <Image
@@ -50,15 +55,26 @@ export default function ProductCard({
             />
           )}
         </motion.div>
+        
+        {/* Premium Shine Overlay */}
+        <motion.div
+          variants={{
+            initial: { opacity: 0, x: "-100%", y: "100%" },
+            hover: { opacity: 1, x: "100%", y: "-100%" },
+          }}
+          transition={{ duration: 0.7, ease: "easeInOut" }}
+          className="pointer-events-none absolute inset-0 z-10 bg-gradient-to-tr from-transparent via-white/50 to-transparent"
+        />
+
         <span
-          className={`absolute start-3 top-3 rounded-full border border-white/50 px-3 py-1.5 text-xs backdrop-blur-md ${product.available ? "bg-white/90 text-[#365842]" : "bg-white/85 text-[#765961]"}`}
+          className={`absolute start-3 top-3 z-20 rounded-full border border-white/50 px-3 py-1.5 text-xs backdrop-blur-md transition-transform duration-300 group-hover:scale-105 ${product.available ? "bg-white/90 text-[#365842]" : "bg-white/85 text-[#765961]"}`}
         >
           {product.available ? t.available : t.unavailable}
         </span>
-        <span className="absolute bottom-3 end-3 grid size-11 place-items-center rounded-full bg-white text-brand shadow-sm transition-colors group-hover:bg-brand group-hover:text-white">
+        <span className="absolute bottom-3 end-3 z-20 grid size-11 place-items-center rounded-full bg-white text-brand shadow-sm transition-all duration-300 group-hover:scale-110 group-hover:bg-brand group-hover:text-white group-hover:shadow-md group-hover:rotate-90">
           <TbPlus size={22} />
         </span>
-      </button>
+      </motion.button>
       <div className="pt-4">
         <div className="mb-2 flex items-center justify-between gap-3 text-xs text-muted">
           <span dir="ltr">{product.brand}</span>

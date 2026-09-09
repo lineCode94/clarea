@@ -6,7 +6,7 @@ import WheelOfFortune, { type WheelSegment } from "./WheelOfFortune";
 const CLAREA_SEGMENTS: WheelSegment[] = [
   { id: "save-10", label: "10% OFF" },
   { id: "gift", label: "Free Gift" },
-  { id: "save-15", label: "15% OFF" },
+  { id: "save-5", label: "5% OFF" },
   { id: "again", label: "Try Again" },
   { id: "shipping", label: "Free Shipping" },
   { id: "save-20", label: "20% OFF" },

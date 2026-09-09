@@ -15,7 +15,7 @@ export const rewardsConfig = {
       color: "#C9A05C",
       ink: "#ffffff",
     },
-    { id: "save-15", label: { ar: "خصم 15%", en: "15% OFF" }, color: "#5C1A2B", ink: "#ffffff" },
+    { id: "save-5", label: { ar: "خصم 5%", en: "5% OFF" }, color: "#5C1A2B", ink: "#ffffff" },
     {
       id: "try-again",
       label: { ar: "حاولي مرة أخرى", en: "Try Again" },
