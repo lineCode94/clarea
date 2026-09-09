@@ -19,7 +19,7 @@ import ProductDialog from "./catalog/product-dialog";
 import StorefrontActions from "./rewards/storefront-actions";
 
 export default function CatalogPage() {
-  const [lang, setLang] = useState<Language>("ar");
+  const [lang, setLang] = useState<Language>("en");
   const [selected, setSelected] = useState<Product | null>(null);
   const [giftsOpen, setGiftsOpen] = useState(false);
   const filters = useCatalogFilters(lang);
