@@ -1,0 +1,14 @@
+.git
+.vercel
+node_modules
+.next
+.next-dev*
+.migration-deps*
+.pnpm-store
+*.tsbuildinfo
+test-results
+*.log
+.env*
+*.pem
+*.key
+remove_bg.py
