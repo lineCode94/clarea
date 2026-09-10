@@ -104,10 +104,10 @@ export default function BrandIntro({ lang }: { lang: Language }) {
         >
           {/* Background image with Ken Burns zoom */}
           <motion.div
-            initial={reduced ? false : { scale: 1.12 }}
+            initial={reduced ? false : { scale: 1.025 }}
             animate={{ scale: 1 }}
             transition={{ duration: 6, ease: "easeOut" }}
-            className="hero-image-wrap"
+            className="hero-image-wrap bg-[#f5e9e2]"
           >
             <Image
               src={slide.image}
@@ -115,7 +115,7 @@ export default function BrandIntro({ lang }: { lang: Language }) {
               fill
               priority={active === 0}
               sizes="100vw"
-              className="hero-image"
+              className={slide.id === "hero-1" ? "hero-image !object-cover !object-[75%_center] md:!object-center" : "hero-image !object-contain !object-center bg-white p-4 sm:p-8"}
             />
           </motion.div>
 
