@@ -1,10 +1,14 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import "./globals.css";
+import PwaRegister from "./components/pwa-register";
+export const viewport: Viewport = { themeColor: "#541c2b" };
 
 export const metadata: Metadata = {
   title: "Claréa | Beauty & Care",
   description:
     "اكتشفي العناية بالبشرة والشعر من Claréa، وتصفّحي المنتجات واطلبي عبر واتساب. Explore beauty and care and order through WhatsApp.",
+  applicationName: "Claréa",
+  appleWebApp: { capable: true, title: "Claréa", statusBarStyle: "default" },
   icons: {
     icon: [
       {
@@ -21,7 +25,7 @@ export const metadata: Metadata = {
     shortcut: "/favicon.ico?v=rose-2",
     apple: [
       {
-        url: "/clarea-flower-rose.png",
+        url: "/pwa/apple-touch-icon.png",
         type: "image/png",
       },
     ],
@@ -35,7 +39,7 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en">
-      <body>{children}</body>
+      <body><PwaRegister />{children}</body>
     </html>
   );
 }
