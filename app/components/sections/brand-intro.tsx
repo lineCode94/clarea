@@ -66,9 +66,10 @@ export default function BrandIntro({ lang }: { lang: Language }) {
   }, []);
 
   useEffect(() => {
+    if (reduced) return;
     const timer = setInterval(next, INTERVAL);
     return () => clearInterval(timer);
-  }, [active, next]);
+  }, [active, next, reduced]);
 
   function previous() {
     setActive((c) => (c - 1 + slides.length) % slides.length);
@@ -79,7 +80,7 @@ export default function BrandIntro({ lang }: { lang: Language }) {
       id="top"
       aria-roledescription="carousel"
       aria-label={ar ? "واجهة Claréa" : "Claréa highlights"}
-      className="hero-banner"
+      className="hero-banner max-sm:!h-[580px] max-sm:!min-h-[580px]"
       tabIndex={0}
       onKeyDown={(e) => {
         if (e.key === "ArrowRight") { e.preventDefault(); next(); }
@@ -120,12 +121,12 @@ export default function BrandIntro({ lang }: { lang: Language }) {
           </motion.div>
 
           {/* Dark gradient overlay */}
-          <div className="hero-overlay" style={{ background: `linear-gradient(to top, ${slide.tint} 0%, transparent 55%), linear-gradient(to top, rgba(0,0,0,0.55) 0%, rgba(0,0,0,0.1) 40%, transparent 70%)` }} />
         </motion.div>
       </AnimatePresence>
 
+      <div aria-hidden="true" className="pointer-events-none absolute inset-0 z-[1] bg-[linear-gradient(to_bottom,rgba(24,8,15,0.32)_0%,rgba(24,8,15,0.38)_30%,rgba(24,8,15,0.72)_55%,rgba(24,8,15,0.90)_100%)]" />
       {/* Content overlay – always on top */}
-      <div className="hero-content" dir={ar ? "rtl" : "ltr"}>
+      <div className="hero-content max-sm:!px-6 max-sm:!py-6" dir={ar ? "rtl" : "ltr"}>
         {/* Center logo */}
         <Image
           src="/clarea-logo-transparent.png"
@@ -137,7 +138,7 @@ export default function BrandIntro({ lang }: { lang: Language }) {
         />
 
         {/* Bottom text + controls */}
-        <div className="hero-bottom">
+        <div className="hero-bottom max-sm:!gap-3">
           <AnimatePresence mode="wait">
             <motion.div
               key={slide.id + "-text"}
@@ -147,8 +148,8 @@ export default function BrandIntro({ lang }: { lang: Language }) {
               transition={{ duration: reduced ? 0 : 0.4, ease: "easeOut" }}
               className="hero-text"
             >
-              <h1 className="hero-title">{slide.title[lang]}</h1>
-              <p className="hero-subtitle">{slide.subtitle[lang]}</p>
+              <h1 className="hero-title !text-white max-sm:!text-[26px] max-sm:!leading-[1.3]">{slide.title[lang]}</h1>
+              <p className="hero-subtitle !text-white max-sm:!text-[15px] max-sm:!leading-relaxed">{slide.subtitle[lang]}</p>
             </motion.div>
           </AnimatePresence>
 
@@ -182,4 +183,5 @@ export default function BrandIntro({ lang }: { lang: Language }) {
     </section>
   );
 }
+
 

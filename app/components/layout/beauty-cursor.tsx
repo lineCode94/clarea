@@ -42,15 +42,16 @@ export default function BeautyCursor() {
     };
   }, [reduced, x, y]);
 
-  if (reduced) return null;
+  // Keep the initial DOM consistent; CSS hides the trail for reduced motion.
   return (
     <motion.div
       aria-hidden="true"
       data-testid="beauty-cursor-trail"
-      style={{ x: softX, y: softY, opacity: visible ? 0.22 : 0 }}
+      style={{ x: softX, y: softY, opacity: !reduced && visible ? 0.22 : 0 }}
       className="pointer-events-none fixed left-0 top-0 z-[100] text-brand transition-opacity duration-150"
     >
       <GiLipstick size={24} />
     </motion.div>
   );
 }
+
