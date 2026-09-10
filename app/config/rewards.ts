@@ -28,13 +28,8 @@ export const rewardsConfig = {
       color: "#5C1A2B",
       ink: "#ffffff",
     },
-    { id: "save-20", label: { ar: "خصم 20%", en: "20% OFF" }, color: "#C9A05C", ink: "#ffffff" },
-    {
-      id: "free-sample",
-      label: { ar: "عينة مجانية", en: "Free Sample" },
-      color: "#5C1A2B",
-      ink: "#ffffff",
-    },
-    { id: "save-5", label: { ar: "خصم 5%", en: "5% OFF" }, color: "#C9A05C", ink: "#ffffff" },
+      { id: "save-5-extra", label: { ar: "خصم 5%", en: "5% OFF" }, color: "#C9A05C", ink: "#ffffff" },
   ],
 };
+
+

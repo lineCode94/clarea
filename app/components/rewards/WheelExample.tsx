@@ -9,9 +9,7 @@ const CLAREA_SEGMENTS: WheelSegment[] = [
   { id: "save-5", label: "5% OFF" },
   { id: "again", label: "Try Again" },
   { id: "shipping", label: "Free Shipping" },
-  { id: "save-20", label: "20% OFF" },
-  { id: "sample", label: "Free Sample" },
-  { id: "save-5", label: "5% OFF" },
+  { id: "save-5-extra", label: "5% OFF" },
 ];
 
 export default function WheelExample() {
@@ -40,3 +38,4 @@ export default function WheelExample() {
     </section>
   );
 }
+
