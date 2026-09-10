@@ -28,9 +28,8 @@ export const newArrivals: Product[] = [
     "category": "skin",
     "available": false,
     "images": [
-      "/products/retinol.png"
+      "/products/retinol-pack.jpg"
     ],
-    "imageTransform": "rotate(180deg)",
     "tone": "#faf5ef",
     "label": {
       "ar": "ريتينول — تفاصيل المنتج قريبًا",
