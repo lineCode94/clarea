@@ -11,7 +11,7 @@ export type Product = {
   id: string;
   brand: string;
   name: string;
-  category: "skin";
+  category: "skin" | "hair" | "supplements";
   available: boolean;
   images: string[];
   tone: string;

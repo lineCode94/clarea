@@ -3,11 +3,13 @@ export const text = {
     nav: ["المجموعة", "عالم Claréa", "عن Claréa", "الأسئلة الشائعة"],
     intro: "روتين العناية يبدأ هنا.",
     description:
-      "اكتشفي منتجات العناية الكورية وتعرّفي على مكوناتها وطريقة استخدامها قبل الاختيار.",
+      "اكتشفي منتجات العناية بالبشرة والشعر وتعرّفي على مكوناتها وطريقة استخدامها قبل الاختيار.",
     edit: "THE CARE EDIT / 01",
     collection: "اكتشفي المجموعة",
     all: "كل المنتجات",
     skin: "العناية بالبشرة",
+    hair: "العناية بالشعر",
+    supplements: "المكملات الغذائية",
     search: "ابحثي عن منتج أو ماركة",
     available: "متاح الآن",
     unavailable: "غير متاح حاليًا",
@@ -31,8 +33,8 @@ export const text = {
     studioCopy: "اكتشفي مجموعة التنظيف في خطوتين.",
     about: "تعرّفي على Claréa.",
     aboutCopy:
-      "في Claréa، نجمع لكِ اختيارات من العناية الكورية مع تفاصيل عن المكونات والاستخدام. تصفّحي المنتجات، وتواصلي معنا على واتساب للاستفسار أو لتأكيد تفاصيل طلبك.",
-    values: ["عناية كورية", "معلومات واضحة", "تواصل مباشر"],
+      "في Claréa، نجمع لكِ اختيارات من العناية بالبشرة والشعر مع تفاصيل عن المكونات والاستخدام. تصفّحي المنتجات، وتواصلي معنا على واتساب للاستفسار أو لتأكيد تفاصيل طلبك.",
+    values: ["عناية بالبشرة والشعر", "معلومات واضحة", "تواصل مباشر"],
     faq: "الأسئلة الشائعة",
     faqs: [
       [
@@ -56,13 +58,15 @@ export const text = {
   },
   en: {
     nav: ["The collection", "The Claréa edit", "About Claréa", "FAQs"],
-    intro: "Your skincare ritual starts here.",
+    intro: "Your daily care starts here.",
     description:
-      "Discover Korean skincare and explore product ingredients and how to use them before you choose.",
+      "Discover beauty and care and explore product ingredients and how to use them before you choose.",
     edit: "THE CARE EDIT / 01",
     collection: "Explore the collection",
     all: "All products",
     skin: "Skincare",
+    hair: "Haircare",
+    supplements: "Supplements",
     search: "Search for a product or brand",
     available: "Available now",
     unavailable: "Currently unavailable",
@@ -86,8 +90,8 @@ export const text = {
     studioCopy: "Meet the two-step cleansing duo.",
     about: "Get to know Claréa.",
     aboutCopy:
-      "At Claréa, discover a selection of Korean skincare with clear ingredient and usage information. Browse the collection and contact us on WhatsApp for product questions or to confirm your order details.",
-    values: ["Korean skincare", "Clear product details", "Direct support"],
+      "At Claréa, discover a selection of beauty and care with clear ingredient and usage information. Browse the collection and contact us on WhatsApp for product questions or to confirm your order details.",
+    values: ["beauty and care", "Clear product details", "Direct support"],
     faq: "Frequently asked questions",
     faqs: [
       [

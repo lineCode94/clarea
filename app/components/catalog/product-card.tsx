@@ -78,7 +78,7 @@ export default function ProductCard({
       <div className="pt-4">
         <div className="mb-2 flex items-center justify-between gap-3 text-xs text-muted">
           <span dir="ltr">{product.brand}</span>
-          <span>{t.skin}</span>
+          <span>{t[product.category]}</span>
         </div>
         <button className="cursor-pointer text-start" onClick={() => onSelect(product)}>
           <h3 className="mb-1 text-base leading-relaxed font-bold">{product.name}</h3>

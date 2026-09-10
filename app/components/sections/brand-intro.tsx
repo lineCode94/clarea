@@ -22,8 +22,8 @@ const slides: Slide[] = [
     tint: "rgba(84,28,43,0.38)",
     title: { ar: "روتين العناية يبدأ هنا", en: "Your skincare ritual starts here" },
     subtitle: {
-      ar: "اكتشفي منتجات العناية الكورية من Claréa",
-      en: "Discover Korean skincare at Claréa",
+      ar: "اكتشفي منتجات العناية بالبشرة والشعر من Claréa",
+      en: "Discover beauty and care at Claréa",
     },
     label: { ar: "تسوّقي الآن", en: "Shop now" },
   },

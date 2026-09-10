@@ -3,7 +3,7 @@ export const footerText = {
     title: "لديكِ سؤال عن العناية؟",
     description: "تواصلي معنا للاستفسار عن منتج، أو معرفة تفاصيل الطلب والشحن.",
     cta: "تواصلي معنا",
-    brand: "اختيارات من العناية الكورية، مع معلومات واضحة لروتينك اليومي.",
+    brand: "اختيارات من العناية بالبشرة والشعر، مع معلومات واضحة لروتينك اليومي.",
     explore: "اكتشفي Claréa",
     links: ["مجموعة المنتجات", "عالم Claréa", "عن Claréa", "الأسئلة الشائعة"],
     contact: "تواصلي معنا",
@@ -17,7 +17,7 @@ export const footerText = {
     description:
       "Contact us with product questions or for help with ordering and shipping.",
     cta: "Talk to our team",
-    brand: "Korean skincare selections with clear information for your daily routine.",
+    brand: "beauty and care selections with clear information for your daily routine.",
     explore: "Explore Claréa",
     links: ["The collection", "The Claréa edit", "About Claréa", "FAQs"],
     contact: "Here for you",

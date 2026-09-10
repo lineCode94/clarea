@@ -2,9 +2,9 @@ import type { Metadata } from "next";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "Claréa | Korean Skincare",
+  title: "Claréa | Beauty & Care",
   description:
-    "اكتشفي العناية الكورية من Claréa، وتصفّحي المنتجات واطلبي عبر واتساب. Explore Korean skincare and order through WhatsApp.",
+    "اكتشفي العناية بالبشرة والشعر من Claréa، وتصفّحي المنتجات واطلبي عبر واتساب. Explore beauty and care and order through WhatsApp.",
   icons: {
     icon: [
       {

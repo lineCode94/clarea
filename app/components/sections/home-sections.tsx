@@ -59,6 +59,7 @@ export default function HomeSections({ lang, onSelect, onExplore }: Props) {
   const duo = products.find((product) => product.id === "centella-duo")!;
   return (
     <>
+      <ProductShelf lang={lang} title={ar ? "الجديد في Claréa" : "New to Claréa"} subtitle={ar ? "اكتشفي المزيد للعناية ببشرتك وشعرك" : "Discover more for your skin, hair and daily care"} products={selectProducts(homeCollections.newArrivals)} onSelect={onSelect} onViewAll={() => onExplore("all")} />
       <ProductShelf
         lang={lang}
         title={ar ? "اختيارات Claréa" : "Claréa picks"}
@@ -119,7 +120,7 @@ export default function HomeSections({ lang, onSelect, onExplore }: Props) {
           {ar ? "تسوّقي حسب العلامة التجارية" : "Shop by brand"}
         </h2>
         <div className="flex flex-wrap items-center justify-center gap-10 md:gap-24">
-          {["SKIN1004"].map((brand) => (
+          {Array.from(new Set(products.map((product) => product.brand).filter(Boolean))).map((brand) => (
             <button
               key={brand}
               onClick={() => onExplore("all", brand)}

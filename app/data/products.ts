@@ -1,8 +1,10 @@
 import type { Product } from "../types/catalog";
+import { newArrivals } from "./new-arrivals";
 import { skin1004Products } from "./skin1004";
 
 // Only set available to true after stock is confirmed. Add new products here.
 export const products: Product[] = [
+  ...newArrivals,
   ...skin1004Products,
   {
     id: "centella-duo",
