@@ -40,14 +40,14 @@ const slides: Slide[] = [
   },
   {
     id: "hero-3",
-    image: "/hero/poremizing-toner.png",
+    image: "/hero/travel-kit-2.jpg",
     tint: "rgba(84,28,43,0.32)",
     title: { ar: "خطوتك لملمس أنعم", en: "Make room for smoother skin." },
     subtitle: {
       ar: "تونر Poremizing المقشّر يساعد على إزالة الخلايا الميتة والشوائب السطحية لملمس أكثر نعومة.",
       en: "Refresh your routine with Poremizing Clear Toner, an exfoliating step for smoother-feeling skin.",
     },
-    label: { ar: "اكتشفي التونر", en: "Explore the toner" },
+    label: { ar: "مجموعة السفر سنتيلا", en: " Travel Kit" },
   },
 ];
 
