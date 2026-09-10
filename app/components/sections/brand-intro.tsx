@@ -29,25 +29,25 @@ const slides: Slide[] = [
   },
   {
     id: "hero-2",
-    image: "/centella-duo.webp",
+    image: "/hero/centella-ampoule.jpg",
     tint: "rgba(84,28,43,0.35)",
-    title: { ar: "ثنائي التنظيف المثالي", en: "The perfect cleansing duo" },
+    title: { ar: "ترطيب خفيف. راحة لبشرتك.", en: "A little hydration. A softer feel." },
     subtitle: {
-      ar: "زيت تنظيف وغسول فوم، في مجموعة واحدة",
-      en: "An oil cleanser and a foam cleanser, together in one set",
+      ar: "أمبول سنتيلا من SKIN1004: ترطيب بقوام خفيف ولمسة تهدئة لروتينك اليومي.",
+      en: "Meet the SKIN1004 Centella Ampoule: lightweight hydration and soothing care for your daily routine.",
     },
-    label: { ar: "اكتشفي المجموعة", en: "Explore the set" },
+    label: { ar: "اكتشفي أمبول سنتيلا", en: "Discover Centella" },
   },
   {
     id: "hero-3",
-    image: "/centella-studio.webp",
+    image: "/hero/poremizing-toner.png",
     tint: "rgba(84,28,43,0.32)",
-    title: { ar: "اكتشفي عناية سنتيلا", en: "Meet your Centella essentials" },
+    title: { ar: "خطوتك لملمس أنعم", en: "Make room for smoother skin." },
     subtitle: {
-      ar: "أمبول وتونر وواقي شمس من SKIN1004",
-      en: "Ampoules, toners and sunscreens from SKIN1004",
+      ar: "تونر Poremizing المقشّر يساعد على إزالة الخلايا الميتة والشوائب السطحية لملمس أكثر نعومة.",
+      en: "Refresh your routine with Poremizing Clear Toner, an exfoliating step for smoother-feeling skin.",
     },
-    label: { ar: "تصفّحي المنتجات", en: "Browse products" },
+    label: { ar: "اكتشفي التونر", en: "Explore the toner" },
   },
 ];
 
@@ -115,7 +115,7 @@ export default function BrandIntro({ lang }: { lang: Language }) {
               fill
               priority={active === 0}
               sizes="100vw"
-              className={slide.id === "hero-1" ? "hero-image !object-cover !object-[75%_center] md:!object-center" : "hero-image !object-contain !object-center bg-white p-4 sm:p-8"}
+              className={slide.id === "hero-1" ? "hero-image !object-cover !object-[75%_center] md:!object-center" : "hero-image !object-cover !object-[center_45%]"}
             />
           </motion.div>
 
@@ -182,3 +182,4 @@ export default function BrandIntro({ lang }: { lang: Language }) {
     </section>
   );
 }
+
