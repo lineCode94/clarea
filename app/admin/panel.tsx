@@ -12,6 +12,7 @@ import {
   TbRefresh,
   TbLock,
 } from "react-icons/tb";
+import AdminSidebar, { type AdminView } from "./sidebar";
 import type { ManagedProduct } from "../lib/catalog-schema";
 
 type Catalog = { products: ManagedProduct[]; version: string };
@@ -97,8 +98,8 @@ export default function AdminPanel({ authenticated }: { authenticated: boolean }
   function canLeave() {
     return !dirty || window.confirm("فيه تعديلات لم تُحفظ. هل تريد تجاهلها؟");
   }
-  function edit(product?: ManagedProduct) {
-    if (!canLeave() || uploading || busy) return;
+  function edit(product?: ManagedProduct, confirmed = false) {
+    if ((!confirmed && !canLeave()) || uploading || busy) return;
     setCreating(!product);
     setDirty(false);
     setError("");
@@ -216,10 +217,37 @@ export default function AdminPanel({ authenticated }: { authenticated: boolean }
         (filter === "all" || (filter === "published" ? p.published : !p.published)),
     ) || [];
 
+  function navigate(view: AdminView) {
+    if (busy || uploading || loading || !canLeave()) return false;
+    setError("");
+    setNotice("");
+    setQuery("");
+    if (view === "new") edit(undefined, true);
+    else {
+      setDraft(null);
+      setDirty(false);
+      setFilter(view);
+    }
+    window.scrollTo({ top: 0, behavior: "instant" });
+    return true;
+  }
+
   return (
-    <main dir="rtl" className="admin-panel min-h-dvh bg-[#f8f5f1] font-arabic text-[#412832]">
+    <main
+      dir="rtl"
+      className={`admin-panel min-h-dvh bg-[#f8f5f1] font-arabic text-[#412832] ${auth ? "lg:pr-64" : ""}`}
+    >
+      {auth && (
+        <AdminSidebar
+          active={draft && creating ? "new" : (filter as AdminView)}
+          onNavigate={navigate}
+          disabled={busy || uploading || loading || !catalog}
+        />
+      )}
       <style>{`.admin-panel,.admin-panel *{cursor:auto}.admin-panel button,.admin-panel a,.admin-panel label[for=product-images]{cursor:pointer}.admin-panel input,.admin-panel textarea{cursor:text}`}</style>
-      <header className="border-b border-[#e8ddd5] bg-white px-4 py-5 sm:px-8">
+      <header
+        className={`border-b border-[#e8ddd5] bg-white px-4 py-5 sm:px-8 ${auth ? "!pr-16 lg:!pr-8" : ""}`}
+      >
         <div className="mx-auto flex max-w-7xl flex-wrap items-center justify-between gap-4">
           <div className="flex items-center gap-3">
             <img src="/pwa/icon-192-brand-v2.png" alt="Claréa" className="size-12 rounded-xl" />
