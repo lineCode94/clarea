@@ -1,8 +1,9 @@
 "use client";
 
 import Image from "next/image";
+import { useProducts } from "../catalog-provider";
 import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { TbArrowUpRight } from "react-icons/tb";
 import type { Language } from "../../types/catalog";
 
@@ -15,7 +16,7 @@ type Slide = {
   label: Record<Language, string>;
 };
 
-const slides: Slide[] = [
+const allSlides: Slide[] = [
   {
     id: "hero-1",
     image: "/clarea-campaign-hero.png",
@@ -58,12 +59,22 @@ export default function BrandIntro({ lang }: { lang: Language }) {
   const reduced = useReducedMotion();
   const [active, setActive] = useState(0);
   const touchStart = useRef<number | null>(null);
-  const slide = slides[active];
+  const products = useProducts();
+  const slides = useMemo(
+    () =>
+      allSlides.filter(
+        (s) =>
+          s.id === "hero-1" ||
+          products.some((p) => p.id === (s.id === "hero-2" ? "centella-ampoule" : "travel-kit")),
+      ),
+    [products],
+  );
+  const slide = slides[active % slides.length];
 
   /* Auto-advance */
   const next = useCallback(() => {
     setActive((c) => (c + 1) % slides.length);
-  }, []);
+  }, [slides.length]);
 
   useEffect(() => {
     if (reduced) return;
@@ -83,14 +94,24 @@ export default function BrandIntro({ lang }: { lang: Language }) {
       className="hero-banner max-sm:!h-[580px] max-sm:!min-h-[580px]"
       tabIndex={0}
       onKeyDown={(e) => {
-        if (e.key === "ArrowRight") { e.preventDefault(); next(); }
-        if (e.key === "ArrowLeft") { e.preventDefault(); previous(); }
+        if (e.key === "ArrowRight") {
+          e.preventDefault();
+          next();
+        }
+        if (e.key === "ArrowLeft") {
+          e.preventDefault();
+          previous();
+        }
       }}
-      onTouchStart={(e) => { touchStart.current = e.touches[0].clientX; }}
+      onTouchStart={(e) => {
+        touchStart.current = e.touches[0].clientX;
+      }}
       onTouchEnd={(e) => {
         if (touchStart.current === null) return;
         const d = e.changedTouches[0].clientX - touchStart.current;
-        if (Math.abs(d) > 45) { d < 0 ? next() : previous(); }
+        if (Math.abs(d) > 45) {
+          d < 0 ? next() : previous();
+        }
         touchStart.current = null;
       }}
     >
@@ -116,7 +137,11 @@ export default function BrandIntro({ lang }: { lang: Language }) {
               fill
               priority={active === 0}
               sizes="100vw"
-              className={slide.id === "hero-1" ? "hero-image !object-cover !object-[75%_center] md:!object-center" : "hero-image !object-cover !object-[center_45%]"}
+              className={
+                slide.id === "hero-1"
+                  ? "hero-image !object-cover !object-[75%_center] md:!object-center"
+                  : "hero-image !object-cover !object-[center_45%]"
+              }
             />
           </motion.div>
 
@@ -124,7 +149,10 @@ export default function BrandIntro({ lang }: { lang: Language }) {
         </motion.div>
       </AnimatePresence>
 
-      <div aria-hidden="true" className="pointer-events-none absolute inset-0 z-[1] bg-[linear-gradient(to_bottom,rgba(24,8,15,0.32)_0%,rgba(24,8,15,0.38)_30%,rgba(24,8,15,0.72)_55%,rgba(24,8,15,0.90)_100%)]" />
+      <div
+        aria-hidden="true"
+        className="pointer-events-none absolute inset-0 z-[1] bg-[linear-gradient(to_bottom,rgba(24,8,15,0.32)_0%,rgba(24,8,15,0.38)_30%,rgba(24,8,15,0.72)_55%,rgba(24,8,15,0.90)_100%)]"
+      />
       {/* Content overlay – always on top */}
       <div className="hero-content max-sm:!px-6 max-sm:!py-6" dir={ar ? "rtl" : "ltr"}>
         {/* Center logo */}
@@ -148,8 +176,12 @@ export default function BrandIntro({ lang }: { lang: Language }) {
               transition={{ duration: reduced ? 0 : 0.4, ease: "easeOut" }}
               className="hero-text"
             >
-              <h1 className="hero-title !text-white max-sm:!text-[26px] max-sm:!leading-[1.3]">{slide.title[lang]}</h1>
-              <p className="hero-subtitle !text-white max-sm:!text-[15px] max-sm:!leading-relaxed">{slide.subtitle[lang]}</p>
+              <h1 className="hero-title !text-white max-sm:!text-[26px] max-sm:!leading-[1.3]">
+                {slide.title[lang]}
+              </h1>
+              <p className="hero-subtitle !text-white max-sm:!text-[15px] max-sm:!leading-relaxed">
+                {slide.subtitle[lang]}
+              </p>
             </motion.div>
           </AnimatePresence>
 
@@ -183,5 +215,3 @@ export default function BrandIntro({ lang }: { lang: Language }) {
     </section>
   );
 }
-
-

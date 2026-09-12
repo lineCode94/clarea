@@ -1,10 +1,11 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import { products } from "../data/products";
+import { useProducts } from "../components/catalog-provider";
 import type { Language } from "../types/catalog";
 
 export function useCatalogFilters(lang: Language) {
+  const products = useProducts();
   const [category, setCategory] = useState("all");
   const [query, setQuery] = useState("");
   const [onlyAvailable, setOnlyAvailable] = useState(false);
@@ -22,7 +23,7 @@ export function useCatalogFilters(lang: Language) {
     return matching.sort((a, b) =>
       sort === "az" ? a.name.localeCompare(b.name) : Number(b.available) - Number(a.available),
     );
-  }, [category, query, onlyAvailable, sort, lang]);
+  }, [category, query, onlyAvailable, sort, lang, products]);
 
   function reset() {
     setQuery("");

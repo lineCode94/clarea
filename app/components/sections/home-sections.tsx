@@ -2,7 +2,7 @@
 
 import Image from "next/image";
 import { TbArrowUpRight, TbBrandWhatsapp, TbGift, TbPackage, TbListDetails } from "react-icons/tb";
-import { products } from "../../data/products";
+import { useProducts } from "../catalog-provider";
 import { homeCategories, homeCollections } from "../../config/home-collections";
 import type { Language, Product } from "../../types/catalog";
 import ProductShelf from "./product-shelf";
@@ -12,8 +12,6 @@ type Props = {
   onSelect: (product: Product) => void;
   onExplore: (category: string, query?: string) => void;
 };
-const selectProducts = (ids: string[]) =>
-  ids.flatMap((id) => products.filter((product) => product.id === id));
 
 export function ShopCategories({ lang, onExplore }: Pick<Props, "lang" | "onExplore">) {
   return (
@@ -55,51 +53,71 @@ export function ShopCategories({ lang, onExplore }: Pick<Props, "lang" | "onExpl
 }
 
 export default function HomeSections({ lang, onSelect, onExplore }: Props) {
+  const products = useProducts();
+  const selectProducts = (ids: string[]) =>
+    ids.flatMap((id) => products.filter((p) => p.id === id));
   const ar = lang === "ar";
-  const duo = products.find((product) => product.id === "centella-duo")!;
+  const duo = products.find((product) => product.id === "centella-duo");
   return (
     <>
-      <ProductShelf lang={lang} title={ar ? "الجديد في Claréa" : "New to Claréa"} subtitle={ar ? "اكتشفي المزيد للعناية ببشرتك وشعرك" : "Discover more for your skin, hair and daily care"} products={selectProducts(homeCollections.newArrivals)} onSelect={onSelect} onViewAll={() => onExplore("all")} />
+      <ProductShelf
+        lang={lang}
+        title={ar ? "الجديد في Claréa" : "New to Claréa"}
+        subtitle={
+          ar
+            ? "اكتشفي المزيد للعناية ببشرتك وشعرك"
+            : "Discover more for your skin, hair and daily care"
+        }
+        products={products.filter((product) => product.newArrival)}
+        onSelect={onSelect}
+        onViewAll={() => onExplore("all")}
+      />
       <ProductShelf
         lang={lang}
         title={ar ? "اختيارات Claréa" : "Claréa picks"}
-        subtitle={ar ? "اختيارات للتنظيف والترطيب والعناية اليومية" : "Explore cleansing, hydration and everyday care"}
+        subtitle={
+          ar
+            ? "اختيارات للتنظيف والترطيب والعناية اليومية"
+            : "Explore cleansing, hydration and everyday care"
+        }
         products={selectProducts(homeCollections.care)}
         onSelect={onSelect}
         onViewAll={() => onExplore("all")}
       />
-      <section
-        className="relative isolate flex min-h-[620px] items-start overflow-hidden bg-[#e5f1ed] md:min-h-[480px] md:items-center"
-        aria-label={ar ? "روتين التنظيف" : "The cleansing ritual"}
-      >
-        <Image
-          src="/clarea-campaign-hero.png"
-          alt={duo.name}
-          fill
-          sizes="100vw"
-          className="object-cover object-[85%_center] max-md:!top-auto max-md:!h-[45%] md:object-center"
-        />
-        <div className="page-width relative z-10 py-10 md:py-0" dir="ltr">
-          <div className="max-w-[420px] md:w-[42%]" dir={ar ? "rtl" : "ltr"}>
-            <p className="text-sm font-bold text-deep-gold">SKIN1004 · CENTELLA</p>
-            <h2 className="text-3xl text-brand md:text-4xl">
-              {ar ? "ابدئي روتينك بالتنظيف." : "A fresh start for your routine."}
-            </h2>
-            <p className="text-base text-[#334d47]">
-              {ar
-                ? "اكتشفي ثنائي التنظيف: زيت تنظيف وغسول فوم، في مجموعة واحدة."
-                : "Discover the cleansing duo: an oil cleanser and a foam cleanser, together in one set."}
-            </p>
-            <button
-              onClick={() => onSelect(duo)}
-              className="mt-2 inline-flex min-h-12 items-center gap-5 rounded bg-brand px-6 py-3 text-sm font-bold text-white"
-            >
-              {ar ? "اكتشفي الثنائي" : "Explore the duo"}
-              <TbArrowUpRight size={22} className="rtl:-scale-x-100" />
-            </button>
+      {duo && (
+        <section
+          className="relative isolate flex min-h-[620px] items-start overflow-hidden bg-[#e5f1ed] md:min-h-[480px] md:items-center"
+          aria-label={ar ? "روتين التنظيف" : "The cleansing ritual"}
+        >
+          <Image
+            src="/clarea-campaign-hero.png"
+            alt={duo.name}
+            fill
+            sizes="100vw"
+            className="object-cover object-[85%_center] max-md:!top-auto max-md:!h-[45%] md:object-center"
+          />
+          <div className="page-width relative z-10 py-10 md:py-0" dir="ltr">
+            <div className="max-w-[420px] md:w-[42%]" dir={ar ? "rtl" : "ltr"}>
+              <p className="text-sm font-bold text-deep-gold">SKIN1004 · CENTELLA</p>
+              <h2 className="text-3xl text-brand md:text-4xl">
+                {ar ? "ابدئي روتينك بالتنظيف." : "A fresh start for your routine."}
+              </h2>
+              <p className="text-base text-[#334d47]">
+                {ar
+                  ? "اكتشفي ثنائي التنظيف: زيت تنظيف وغسول فوم، في مجموعة واحدة."
+                  : "Discover the cleansing duo: an oil cleanser and a foam cleanser, together in one set."}
+              </p>
+              <button
+                onClick={() => onSelect(duo)}
+                className="mt-2 inline-flex min-h-12 items-center gap-5 rounded bg-brand px-6 py-3 text-sm font-bold text-white"
+              >
+                {ar ? "اكتشفي الثنائي" : "Explore the duo"}
+                <TbArrowUpRight size={22} className="rtl:-scale-x-100" />
+              </button>
+            </div>
           </div>
-        </div>
-      </section>
+        </section>
+      )}
       <ProductShelf
         lang={lang}
         title={ar ? "عالم SKIN1004" : "The world of SKIN1004"}
@@ -120,15 +138,17 @@ export default function HomeSections({ lang, onSelect, onExplore }: Props) {
           {ar ? "تسوّقي حسب العلامة التجارية" : "Shop by brand"}
         </h2>
         <div className="flex flex-wrap items-center justify-center gap-10 md:gap-24">
-          {Array.from(new Set(products.map((product) => product.brand).filter(Boolean))).map((brand) => (
-            <button
-              key={brand}
-              onClick={() => onExplore("all", brand)}
-              className="py-3 font-serif text-3xl text-[#334d47] transition-colors hover:text-brand md:text-4xl"
-            >
-              {brand}
-            </button>
-          ))}
+          {Array.from(new Set(products.map((product) => product.brand).filter(Boolean))).map(
+            (brand) => (
+              <button
+                key={brand}
+                onClick={() => onExplore("all", brand)}
+                className="py-3 font-serif text-3xl text-[#334d47] transition-colors hover:text-brand md:text-4xl"
+              >
+                {brand}
+              </button>
+            ),
+          )}
         </div>
       </section>
       <section
@@ -155,7 +175,9 @@ export default function HomeSections({ lang, onSelect, onExplore }: Props) {
             {
               Icon: TbGift,
               title: ar ? "هدايا Claréa" : "Claréa gifts",
-              copy: ar ? "جرّبي عجلة الهدايا واطّلعي على الشروط" : "Try the gift wheel and view the offer terms",
+              copy: ar
+                ? "جرّبي عجلة الهدايا واطّلعي على الشروط"
+                : "Try the gift wheel and view the offer terms",
             },
           ].map(({ Icon, title, copy }) => (
             <div key={title} className="flex items-start gap-3">
