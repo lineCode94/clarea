@@ -13,20 +13,20 @@ export const metadata: Metadata = {
   icons: {
     icon: [
       {
-        url: "/favicon.ico?v=rose-2",
+        url: "/favicon.ico?v=logo-3",
         type: "image/x-icon",
-        sizes: "32x32 256x256",
+        sizes: "192x192",
       },
       {
-        url: "/clarea-tab-rose-v2.png",
+        url: "/clarea-logo-icon-v3.png",
         type: "image/png",
-        sizes: "32x32",
+        sizes: "192x192",
       },
     ],
-    shortcut: "/favicon.ico?v=rose-2",
+    shortcut: "/favicon.ico?v=logo-3",
     apple: [
       {
-        url: "/pwa/apple-touch-icon-brand-v2.png",
+        url: "/pwa/apple-touch-icon-logo-v3.png",
         type: "image/png",
       },
     ],

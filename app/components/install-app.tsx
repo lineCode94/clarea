@@ -101,7 +101,7 @@ export default function InstallApp({ lang }: { lang: "ar" | "en" }) {
     >
       <div className="flex items-center gap-2">
         <img
-          src="/pwa/icon-192-brand-v2.png"
+          src="/pwa/icon-192-logo-v3.png"
           alt=""
           width={44}
           height={44}

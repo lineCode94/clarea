@@ -250,7 +250,7 @@ export default function AdminPanel({ authenticated }: { authenticated: boolean }
       >
         <div className="mx-auto flex max-w-7xl flex-wrap items-center justify-between gap-4">
           <div className="flex items-center gap-3">
-            <img src="/pwa/icon-192-brand-v2.png" alt="Claréa" className="size-12 rounded-xl" />
+            <img src="/pwa/icon-192-logo-v3.png" alt="Claréa" className="size-12 rounded-xl" />
             <div>
               <h1 className="m-0 text-xl font-bold">إدارة المنتجات</h1>
               <p className="m-0 mt-1 text-xs text-[#917c73]">CLARÉA · YOUR COLLECTION</p>

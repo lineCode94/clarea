@@ -29,7 +29,7 @@ export default function AdminSidebar({ active, onNavigate, disabled }: Props) {
   const content = (
     <>
       <div className="mb-10 flex items-center gap-3 border-b border-[#e8ddd5] pb-6">
-        <img src="/pwa/icon-192-brand-v2.png" alt="Claréa" className="size-12 rounded-xl" />
+        <img src="/pwa/icon-192-logo-v3.png" alt="Claréa" className="size-12 rounded-xl" />
         <div>
           <p className="m-0 font-serif text-xl">Claréa</p>
           <p className="m-0 mt-1 text-xs text-[#917c73]">لوحة الإدارة</p>
