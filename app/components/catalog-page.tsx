@@ -6,6 +6,7 @@ import { text } from "../content/catalog";
 import { useCatalogFilters } from "../hooks/use-catalog-filters";
 import { whatsappLink } from "../lib/whatsapp";
 import type { Language, Product } from "../types/catalog";
+import InstallApp from "./install-app";
 import SiteHeader from "./layout/site-header";
 import SiteFooter from "./layout/site-footer";
 import BrandIntro from "./sections/brand-intro";
@@ -52,14 +53,12 @@ export default function CatalogPage() {
           onCategoryChange={exploreCategory}
           onOpenGifts={() => setGiftsOpen(true)}
         />
+        <InstallApp lang={lang} />
         <BrandIntro lang={lang} />
         <ShopCategories lang={lang} onExplore={exploreCategory} />
         <HomeSections lang={lang} onSelect={setSelected} onExplore={exploreCategory} />
         <ProductCatalog lang={lang} filters={filters} onSelect={setSelected} />
-        <EditorialSection
-          lang={lang}
-          onSelect={setSelected}
-        />
+        <EditorialSection lang={lang} onSelect={setSelected} />
         <AboutSection lang={lang} />
         <FaqSection lang={lang} />
         <SiteFooter lang={lang} whatsappUrl={whatsappLink(lang)} note={text[lang].footer} />

@@ -35,7 +35,13 @@ export const homeCategories = [
 ];
 
 export const homeCollections = {
-  newArrivals: ["kaminomoto-trigger", "retinol", "tirtir-cooling-pads", "perfectil-hair"],
+  newArrivals: [
+    "mary-may-eye-cream",
+    "kaminomoto-trigger",
+    "retinol",
+    "tirtir-cooling-pads",
+    "perfectil-hair",
+  ],
   care: ["travel-kit", "poremizing-toner", "tea-trica-b5", "centella-ampoule"],
   skin1004: ["probio-ampoule", "sun-stick", "air-fit-light", "centella-ampoule"],
 };

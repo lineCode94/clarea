@@ -1,6 +1,6 @@
 import { footerText } from "../../content/footer";
 import { siteConfig } from "../../config/site";
-import InstallApp from "../install-app";
+
 import Image from "next/image";
 import { FaInstagram, FaTiktok, FaWhatsapp, FaFacebook } from "react-icons/fa6";
 import { TbArrowUp, TbArrowUpRight } from "react-icons/tb";
@@ -18,7 +18,6 @@ export default function SiteFooter({ lang, whatsappUrl, note }: Props) {
       dir={lang === "ar" ? "rtl" : "ltr"}
       className="footer mt-8 border-t border-brand/15 bg-[#f7f7f7] text-brand"
     >
-      <InstallApp lang={lang} />
       <div className="bg-brand text-white">
         <div className="page-width grid gap-7 py-10 md:grid-cols-[minmax(0,1fr)_auto] md:items-center md:gap-12 md:py-14">
           <div className="min-w-0">

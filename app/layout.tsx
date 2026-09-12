@@ -1,6 +1,7 @@
 import type { Metadata, Viewport } from "next";
 import "./globals.css";
 import PwaRegister from "./components/pwa-register";
+import SiteLoading from "./components/site-loading";
 export const viewport: Viewport = { themeColor: "#541c2b" };
 
 export const metadata: Metadata = {
@@ -25,7 +26,7 @@ export const metadata: Metadata = {
     shortcut: "/favicon.ico?v=rose-2",
     apple: [
       {
-        url: "/pwa/apple-touch-icon.png",
+        url: "/pwa/apple-touch-icon-brand-v2.png",
         type: "image/png",
       },
     ],
@@ -39,7 +40,10 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en">
-      <body><PwaRegister />{children}</body>
+      <body>
+        <PwaRegister />
+        <SiteLoading>{children}</SiteLoading>
+      </body>
     </html>
   );
 }
