@@ -77,7 +77,7 @@ export default function ClareaLoadingScreen({ isLoading = true }: Props) {
                       strokeWidth="3"
                       strokeLinecap="round"
                       strokeLinejoin="round"
-                      initial={false}
+                      initial={{ pathLength: 0, opacity: 0 }}
                       animate={
                         reduced
                           ? { pathLength: 1, opacity: 1 }
@@ -87,7 +87,7 @@ export default function ClareaLoadingScreen({ isLoading = true }: Props) {
                             }
                       }
                       transition={{
-                        duration: 3.8,
+                        duration: 2.6,
                         repeat: Infinity,
                         times: [0, 0.06 + i * 0.09, 0.38 + i * 0.09, 0.84, 1],
                         ease: "easeInOut",

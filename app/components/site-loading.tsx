@@ -10,13 +10,24 @@ export default function SiteLoading({ children }: { children: ReactNode }) {
   useEffect(() => {
     let disposed = false;
     let frame = 0;
+    let revealTimer: ReturnType<typeof setTimeout> | undefined;
+    const started = performance.now();
+    // Give the brand reveal time to draw on fast/cached storefront loads.
+    const minimum =
+      window.location.pathname === "/" &&
+      !window.matchMedia("(prefers-reduced-motion: reduce)").matches
+        ? 1800
+        : 0;
     const finish = () => {
       if (!disposed) setLoading(false);
     };
     const ready = () => {
       // Wait for fonts and give the hydrated page a frame to paint underneath.
       void document.fonts.ready.then(() => {
-        if (!disposed) frame = requestAnimationFrame(finish);
+        if (!disposed)
+          frame = requestAnimationFrame(() => {
+            revealTimer = setTimeout(finish, Math.max(0, minimum - (performance.now() - started)));
+          });
       });
     };
     if (document.readyState === "complete") ready();
@@ -27,6 +38,7 @@ export default function SiteLoading({ children }: { children: ReactNode }) {
       disposed = true;
       window.clearTimeout(fallback);
       cancelAnimationFrame(frame);
+      clearTimeout(revealTimer);
       window.removeEventListener("load", ready);
     };
   }, []);

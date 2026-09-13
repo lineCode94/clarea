@@ -7,6 +7,7 @@ import { useCatalogFilters } from "../hooks/use-catalog-filters";
 import { whatsappLink } from "../lib/whatsapp";
 import type { Language, Product } from "../types/catalog";
 import InstallApp from "./install-app";
+import ClareaHelp from "./clarea-help";
 import SiteHeader from "./layout/site-header";
 import SiteFooter from "./layout/site-footer";
 import BrandIntro from "./sections/brand-intro";
@@ -67,6 +68,14 @@ export default function CatalogPage() {
           open={giftsOpen}
           onOpen={() => setGiftsOpen(true)}
           onClose={() => setGiftsOpen(false)}
+        />
+        <ClareaHelp
+          lang={lang}
+          onSelect={setSelected}
+          onBrowse={(category, query, available) => {
+            exploreCategory(category, query);
+            filters.setOnlyAvailable(available);
+          }}
         />
         {selected && (
           <ProductDialog
