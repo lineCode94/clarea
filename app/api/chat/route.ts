@@ -72,11 +72,12 @@ export async function POST(request: Request) {
   }
   let input;
   try {
-    input = chatInput.parse(await limitedJson(request, 4000));
+    input = chatInput.parse(await limitedJson(request, 16000));
   } catch {
     return NextResponse.json({ error: "Invalid request" }, { status: 400, headers });
   }
-  if (localOnly(input.message)) return NextResponse.json(privateReply(input.lang), { headers });
+  if (localOnly(input.message) || input.history.some((turn) => localOnly(turn.question)))
+    return NextResponse.json(privateReply(input.lang), { headers });
   try {
     if (!enabled() || !(await allow(request)))
       return NextResponse.json(fallback(input.lang), { headers });

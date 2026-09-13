@@ -4,6 +4,7 @@ import { useEffect, useRef, useState, type FormEvent } from "react";
 import { TbMessageCircle, TbX, TbSend, TbBrandWhatsapp, TbArrowUpRight } from "react-icons/tb";
 import { text } from "../content/catalog";
 import { useProducts } from "./catalog-provider";
+import { siteConfig } from "../config/site";
 import { whatsappLink } from "../lib/whatsapp";
 import type { Language, Product } from "../types/catalog";
 
@@ -69,7 +70,13 @@ export default function ClareaHelp({
     };
   }, []);
   const [messages, setMessages] = useState<
-    { question: string; answer: string; productIds?: string[]; source?: string }[]
+    {
+      question: string;
+      answer: string;
+      productIds?: string[];
+      recommendations?: { id: string; name: string; source: string }[];
+      source?: string;
+    }[]
   >([]);
   const ar = locale === "ar";
   const faqs = text[locale].faqs;
@@ -135,11 +142,16 @@ export default function ClareaHelp({
   async function submit(event: FormEvent) {
     event.preventDefault();
     if (!search || sending.current) return;
-    if (keywords[3].some((word) => search.includes(normalize(word)))) {
+    if (
+      /(new arrivals|new to clarea|new products|whats new|الجديد في|المنتجات الجديد|اخر المنتجات)/.test(
+        search,
+      ) ||
+      search === "الجديد"
+    ) {
       answer(query.trim(), faqs[3][1]);
       return;
     }
-    if (matches.length) {
+    if (matches.length && !(aiAvailable && aiConsent)) {
       answer(
         query.trim(),
         ar
@@ -152,7 +164,10 @@ export default function ClareaHelp({
     const index = keywords.findIndex((words) =>
       words.some((word) => search.includes(normalize(word))),
     );
-    if (index >= 0) {
+    if (
+      index >= 0 &&
+      (!(aiAvailable && aiConsent) || faqs.some(([q]) => normalize(q) === search))
+    ) {
       answer(query.trim(), faqs[index][1]);
       return;
     }
@@ -176,6 +191,10 @@ export default function ClareaHelp({
         body: JSON.stringify({
           message: question,
           lang: locale,
+          history: messages
+            .filter((m) => m.source === "gemini")
+            .slice(-4)
+            .map(({ question, answer }) => ({ question, answer })),
           adultConfirmed: true,
           consent: true,
         }),
@@ -190,6 +209,7 @@ export default function ClareaHelp({
             answer: body.answer,
             productIds: Array.isArray(body.productIds) ? body.productIds : [],
             source: body.source,
+            recommendations: Array.isArray(body.recommendations) ? body.recommendations : [],
           },
         ]);
     } catch {
@@ -360,6 +380,49 @@ export default function ClareaHelp({
                       </span>
                     )}
                   </p>
+                  {m.recommendations?.map((recommendation) => (
+                    <div
+                      key={recommendation.id}
+                      className="rounded-xl border border-[#dccbb5] p-3 text-sm"
+                    >
+                      <p className="m-0 text-xs text-[#917c73]">
+                        {ar
+                          ? "اقتراح خارج المجموعة · التوفر يحتاج تأكيد"
+                          : "Outside our collection · Availability unconfirmed"}
+                      </p>
+                      <p dir="ltr" className="mb-2 mt-1 font-bold">
+                        {recommendation.name}
+                      </p>
+                      <a
+                        href={recommendation.source}
+                        target="_blank"
+                        rel="noreferrer"
+                        className="text-xs underline"
+                      >
+                        {ar ? "معلومات الشركة المصنّعة" : "Manufacturer information"}
+                      </a>
+                      <a
+                        href={`https://wa.me/${siteConfig.whatsappNumber}?text=${encodeURIComponent(ar ? `أهلًا Claréa، هل منتج ${recommendation.name} متاح عندكم؟ وما سعره؟` : `Hello Claréa, is ${recommendation.name} available and what is its price?`)}`}
+                        target="_blank"
+                        rel="noreferrer"
+                        className="mt-3 flex min-h-11 items-center justify-center gap-2 rounded-xl bg-[#5C1A2B] px-3 py-2 text-xs text-white"
+                      >
+                        <TbBrandWhatsapp />
+                        {ar ? "اسألي عن توفره على واتساب" : "Check availability on WhatsApp"}
+                      </a>
+                    </div>
+                  ))}
+                  {m.source === "gemini" && (
+                    <a
+                      href={`https://wa.me/${siteConfig.whatsappNumber}?text=${encodeURIComponent(ar ? `أهلًا Claréa، كنت بسأل مساعد الموقع: ${m.question}\\nهل عندكم اختيار مناسب ومتاح؟` : `Hello Claréa, I asked the site assistant: ${m.question}\\nDo you have a suitable available option?`)}`}
+                      target="_blank"
+                      rel="noreferrer"
+                      className="flex min-h-11 items-center justify-center gap-2 rounded-xl border border-[#dccbb5] px-3 py-2 text-xs"
+                    >
+                      <TbBrandWhatsapp />
+                      {ar ? "كمّلي السؤال مع فريق Claréa" : "Continue with the Claréa team"}
+                    </a>
+                  )}
                   {m.productIds
                     ?.map((id) => products.find((p) => p.id === id))
                     .filter((p) => p !== undefined)

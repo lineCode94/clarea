@@ -90,6 +90,58 @@ function respond(value, finishReason = "STOP") {
   assert.equal((await api.generateReply(input, products)).source, "saved");
   reply = new Error("timeout");
   assert.equal((await api.generateReply(input, products)).source, "saved");
+  assert.equal(api.localOnly("انا عاوزه اشتري toner للبشرة الحساسة"), false);
+  assert.equal(
+    api.chatInput.safeParse({ ...input, history: Array(5).fill({ question: "q", answer: "a" }) })
+      .success,
+    false,
+  );
+  const reference = api.recommendationReferences[0];
+  respond({
+    answer: "This is an outside suggestion. Check availability on WhatsApp.",
+    productIds: [],
+    externalProductIds: [reference.id],
+  });
+  const outside = await api.generateReply(
+    {
+      ...input,
+      history: [{ question: "I need a toner", answer: "Which skin type?" }],
+      message: "Sensitive skin",
+    },
+    products,
+  );
+  assert.equal(outside.source, "gemini");
+  assert.equal(outside.recommendations[0].source, reference.source);
+  assert.equal(
+    JSON.parse(JSON.parse(observed.body).contents[0].parts[0].text).history[0].question,
+    "I need a toner",
+  );
+  const stock = [...products, { ...products[0], id: "purito-stock", name: reference.name }];
+  assert.equal(
+    (await api.generateReply(input, stock)).source,
+    "saved",
+    "An already-listed item must not be presented as external",
+  );
+  respond({ answer: "Fabricated", productIds: [], externalProductIds: ["invented"] });
+  assert.equal((await api.generateReply(input, products)).source, "saved");
+  respond({ answer: "For sensitive skin, review this toner.", productIds: ["public-one"] });
+  const detailed = [
+    {
+      ...products[0],
+      details: {
+        skinType: { en: "Sensitive" },
+        ingredients: { en: ["Panthenol"] },
+        caution: { en: "Individual tolerance varies" },
+        contents: { en: ["Toner"] },
+        size: "200ml",
+      },
+    },
+  ];
+  assert.equal((await api.generateReply(input, detailed)).source, "gemini");
+  const sent = JSON.parse(JSON.parse(observed.body).contents[0].parts[0].text).catalog[0];
+  assert.equal(sent.skinType, "Sensitive");
+  assert.equal(sent.ingredients[0], "Panthenol");
+  assert.equal(sent.caution, "Individual tolerance varies");
   delete env.GEMINI_API_KEY;
   assert.equal((await api.generateReply(input, products)).source, "saved");
   console.log(
