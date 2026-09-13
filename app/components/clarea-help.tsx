@@ -55,6 +55,7 @@ export default function ClareaHelp({
   const [query, setQuery] = useState("");
   const [aiAvailable, setAiAvailable] = useState(false);
   const [aiConsent, setAiConsent] = useState(false);
+  const [consentRequired, setConsentRequired] = useState(false);
   const [pending, setPending] = useState(false);
   const generation = useRef(0);
   const sending = useRef(false);
@@ -138,9 +139,26 @@ export default function ClareaHelp({
   function answer(question: string, reply: string, productIds?: string[]) {
     setMessages((previous) => [...previous.slice(-19), { question, answer: reply, productIds }]);
     setQuery("");
+    setConsentRequired(false);
   }
-  async function submit(event: FormEvent) {
-    event.preventDefault();
+  async function refreshAI() {
+    try {
+      const response = await fetch("/api/chat", {
+        cache: "no-store",
+        signal: AbortSignal.timeout(5000),
+      });
+      const config = await response.json();
+      const enabled = response.ok && config.enabled === true;
+      setAiAvailable(enabled);
+      return enabled;
+    } catch {
+      setAiAvailable(false);
+      return false;
+    }
+  }
+  async function submit(event?: FormEvent, consentGranted = false) {
+    event?.preventDefault();
+    const consent = aiConsent || consentGranted;
     if (!search || sending.current) return;
     if (
       /(new arrivals|new to clarea|new products|whats new|الجديد في|المنتجات الجديد|اخر المنتجات)/.test(
@@ -151,7 +169,7 @@ export default function ClareaHelp({
       answer(query.trim(), faqs[3][1]);
       return;
     }
-    if (matches.length && !(aiAvailable && aiConsent)) {
+    if (matches.length && !(aiAvailable && consent)) {
       answer(
         query.trim(),
         ar
@@ -161,24 +179,31 @@ export default function ClareaHelp({
       );
       return;
     }
-    const index = keywords.findIndex((words) =>
-      words.some((word) => search.includes(normalize(word))),
+    const exactFaq = faqs.findIndex(([q]) => normalize(q) === search);
+    const shortKeyword = keywords.findIndex(
+      (words, i) => i !== 2 && words.some((word) => search === normalize(word)),
     );
-    if (
-      index >= 0 &&
-      (!(aiAvailable && aiConsent) || faqs.some(([q]) => normalize(q) === search))
-    ) {
-      answer(query.trim(), faqs[index][1]);
+    const savedIndex = exactFaq >= 0 ? exactFaq : shortKeyword;
+    if (savedIndex >= 0) {
+      answer(query.trim(), faqs[savedIndex][1]);
+      setConsentRequired(false);
       return;
     }
     const question = query.trim();
     const saved = ar
-      ? "ما عنديش إجابة جاهزة مؤكدة للسؤال ده. اختاري من الأسئلة السريعة، أو اسألي فريق Claréa على واتساب."
-      : "I don't have a verified saved answer. Use a quick question or ask the Claréa team on WhatsApp.";
-    if (!aiAvailable || !aiConsent) {
+      ? "المساعد الذكي مش متاح دلوقتي. تقدري تبحثي باسم المنتج أو تكمّلي سؤالك مع فريق Claréa على واتساب."
+      : "AI is unavailable right now. Search a product name or continue with the Claréa team on WhatsApp.";
+    const enabled = aiAvailable || (await refreshAI());
+    if (sending.current) return;
+    if (!enabled) {
       answer(question, saved);
       return;
     }
+    if (!consent) {
+      setConsentRequired(true);
+      return;
+    }
+    setConsentRequired(false);
     const turn = generation.current;
     sending.current = true;
     setPending(true);
@@ -234,6 +259,7 @@ export default function ClareaHelp({
         type="button"
         onClick={() => {
           setLocale(lang);
+          void refreshAI();
           dialog.current?.showModal();
         }}
         aria-label={lang === "ar" ? "افتح مساعد Claréa" : "Open Claréa helper"}
@@ -294,22 +320,6 @@ export default function ClareaHelp({
                 ? "أهلًا بيكي في Claréa 🤍 اختاري سؤال أو اكتبي كلمة زي «شحن» أو «السعر». للمنتجات، ابحثي باسم المنتج أو الماركة."
                 : "Welcome to Claréa 🤍 Choose a question or type a keyword like shipping or price. Search a product or brand name to see its details."}
             </p>
-            {aiAvailable && (
-              <label className="mb-4 flex items-start gap-2 rounded-xl border border-[#e8ddd5] p-3 text-xs leading-6">
-                <input
-                  type="checkbox"
-                  checked={aiConsent}
-                  disabled={pending}
-                  onChange={(e) => setAiConsent(e.target.checked)}
-                  className="mt-1 size-4 shrink-0 accent-[#5C1A2B]"
-                />
-                <span>
-                  {ar
-                    ? "عمري 18+ وأوافق على إرسال أسئلتي غير الجاهزة إلى Google Gemini. قد تستخدم Google الأسئلة والردود لتحسين خدماتها. لا تكتبي بيانات شخصية أو صحية. الإجابات الجاهزة متاحة بدون AI."
-                    : "I am 18+ and agree to send questions without saved answers to Google Gemini. Google may use questions and replies to improve its services. Do not enter personal or health information. Saved answers work without AI."}
-                </span>
-              </label>
-            )}
             <div className="mb-4 flex flex-wrap gap-2">
               <button
                 type="button"
@@ -462,6 +472,43 @@ export default function ClareaHelp({
             </p>
           )}
           <div className="shrink-0 border-t border-[#e8ddd5] bg-[#fffdf9] p-3">
+            {consentRequired && !aiConsent && (
+              <section
+                aria-label={ar ? "تفعيل المساعد الذكي" : "Enable AI assistant"}
+                className="mb-3 rounded-xl border border-[#dccbb5] bg-[#f5eee5] p-3"
+              >
+                <p className="m-0 text-sm font-bold">
+                  {ar ? "خلّيني أساعدك تختاري المنتج المناسب" : "Let me help you choose a product"}
+                </p>
+                <p className="mb-2 mt-1 text-xs leading-5">
+                  {ar
+                    ? "بالمتابعة تؤكدين إن عمرك 18+ وتوافقين على إرسال سؤالك إلى Google Gemini. قد تستخدم Google السؤال والرد لتحسين خدماتها. لا تكتبي بيانات شخصية أو صحية."
+                    : "Continue to confirm you are 18+ and agree to send your question to Google Gemini. Google may use the question and reply to improve its services. Do not enter personal or health details."}
+                </p>
+                <button
+                  type="button"
+                  disabled={pending || !search}
+                  onClick={() => {
+                    setAiConsent(true);
+                    setConsentRequired(false);
+                    void submit(undefined, true);
+                  }}
+                  className="min-h-11 w-full rounded-xl bg-[#5C1A2B] px-3 py-2 text-sm font-bold text-white disabled:opacity-40"
+                >
+                  {ar
+                    ? "عمري 18+ · فعّلي المساعد وأرسلي سؤالي"
+                    : "I'm 18+ · Enable AI and send my question"}
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setConsentRequired(false)}
+                  className="mt-1 min-h-9 w-full text-xs text-[#5C1A2B]"
+                >
+                  {ar ? "اكتفي بالأسئلة الجاهزة وواتساب" : "Keep using quick answers and WhatsApp"}
+                </button>
+              </section>
+            )}
+
             {matches.length > 0 && (
               <div
                 aria-label={ar ? "منتجات مطابقة" : "Matching products"}
