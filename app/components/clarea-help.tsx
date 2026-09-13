@@ -414,7 +414,7 @@ export default function ClareaHelp({
                   ))}
                   {m.source === "gemini" && (
                     <a
-                      href={`https://wa.me/${siteConfig.whatsappNumber}?text=${encodeURIComponent(ar ? `أهلًا Claréa، كنت بسأل مساعد الموقع: ${m.question}\\nهل عندكم اختيار مناسب ومتاح؟` : `Hello Claréa, I asked the site assistant: ${m.question}\\nDo you have a suitable available option?`)}`}
+                      href={`https://wa.me/${siteConfig.whatsappNumber}?text=${encodeURIComponent(ar ? `أهلًا Claréa، كنت بسأل مساعد الموقع: ${m.question} هل عندكم اختيار مناسب ومتاح؟` : `Hello Claréa, I asked the site assistant: ${m.question} Do you have a suitable available option?`)}`}
                       target="_blank"
                       rel="noreferrer"
                       className="flex min-h-11 items-center justify-center gap-2 rounded-xl border border-[#dccbb5] px-3 py-2 text-xs"
