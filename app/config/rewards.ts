@@ -1,11 +1,11 @@
 // Starter offers: edit these and their terms before announcing the campaign.
-// Changing campaignId starts a new browser-local campaign.
+// Changing campaignId starts a new server-issued campaign (one winning code per phone).
 export const rewardsConfig = {
   campaignId: "clarea-welcome-v1",
   durationSeconds: 5,
   terms: {
-    ar: "هدية واحدة لكل متصفح خلال العرض. نتيجة «حاولي مرة أخرى» تمنحك دورة إضافية دون رقم مرجعي. يُرجى تأكيد الهدية مع فريق Claréa قبل الطلب. لا يمكن جمعها مع عرض آخر.",
-    en: "One gift per browser during this offer. Try Again gives you another spin without a reference number. Confirm your gift with Claréa before ordering. Gifts cannot be combined with another offer.",
+    ar: "هدية واحدة لكل رقم موبايل خلال العرض. نحفظ رقم المشاركة للتحقق من الهدية ومنع تكرار صرفها. نتيجة «حاولي مرة أخرى» تمنحك دورة إضافية دون رقم مرجعي. يُرجى تأكيد الهدية مع فريق Claréa قبل الطلب. لا يمكن جمعها مع عرض آخر.",
+    en: "One gift per mobile number during this offer. We store the entry number to verify rewards and prevent duplicate redemption. Try Again gives you another spin without a reference number. Confirm your gift with Claréa before ordering. Gifts cannot be combined with another offer.",
   },
   prizes: [
     { id: "save-10", label: { ar: "خصم 10%", en: "10% OFF" }, color: "#5C1A2B", ink: "#ffffff" },
@@ -28,8 +28,6 @@ export const rewardsConfig = {
       color: "#5C1A2B",
       ink: "#ffffff",
     },
-      { id: "save-5-extra", label: { ar: "خصم 5%", en: "5% OFF" }, color: "#C9A05C", ink: "#ffffff" },
+    { id: "save-5-extra", label: { ar: "خصم 5%", en: "5% OFF" }, color: "#C9A05C", ink: "#ffffff" },
   ],
 };
-
-

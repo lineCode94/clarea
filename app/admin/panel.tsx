@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, type FormEvent } from "react";
+import { useEffect, useRef, useState, type FormEvent } from "react";
 import {
   TbPlus,
   TbLogout,
@@ -41,6 +41,14 @@ export default function AdminPanel({ authenticated }: { authenticated: boolean }
   const [notice, setNotice] = useState("");
   const [dirty, setDirty] = useState(false);
   const [advanced, setAdvanced] = useState(false);
+  const navigationApplied = useRef(false);
+  useEffect(() => {
+    if (!auth || !catalog || navigationApplied.current) return;
+    navigationApplied.current = true;
+    const view = new URLSearchParams(window.location.search).get("view");
+    if (view === "new") edit();
+    else if (view === "published" || view === "draft") setFilter(view);
+  }, [auth, catalog]);
 
   async function api(path: string, init?: RequestInit) {
     const response = await fetch(path, { ...init, cache: "no-store" });
@@ -222,6 +230,10 @@ export default function AdminPanel({ authenticated }: { authenticated: boolean }
     setError("");
     setNotice("");
     setQuery("");
+    if (view === "codes") {
+      window.location.assign("/admin/rewards");
+      return true;
+    }
     if (view === "new") edit(undefined, true);
     else {
       setDraft(null);

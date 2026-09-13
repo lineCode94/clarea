@@ -146,6 +146,7 @@ export default function GiftDialog({
           </div>
           {result && retry ? (
             <button
+              disabled={wheel.requesting || wheel.spinning}
               onClick={wheel.spin}
               className="mt-3 min-h-12 w-full rounded-lg bg-brand px-5 py-3 font-bold text-white"
             >
@@ -210,7 +211,7 @@ export default function GiftDialog({
                     className={`w-full rounded-lg border py-3 ps-10 pe-4 text-sm outline-none transition-colors focus:border-brand ${
                       phoneError ? "border-red-400 bg-red-50" : "border-line bg-white"
                     }`}
-                    disabled={wheel.spinning}
+                    disabled={wheel.spinning || wheel.requesting}
                     autoComplete="tel"
                   />
                 </div>
@@ -221,7 +222,7 @@ export default function GiftDialog({
                 )}
               </div>
               <button
-                disabled={!wheel.ready || wheel.spinning}
+                disabled={!wheel.ready || wheel.spinning || wheel.requesting}
                 onClick={() => {
                   if (!wheel.phone.trim()) {
                     setPhoneError(true);
@@ -233,9 +234,20 @@ export default function GiftDialog({
                 className="mt-3 flex min-h-12 w-full items-center justify-center gap-2 rounded-lg bg-brand px-5 py-3 font-bold text-white disabled:cursor-wait disabled:opacity-60"
               >
                 <TbGift size={22} />
-                {wheel.spinning ? t.spinning : t.spin}
+                {wheel.requesting
+                  ? lang === "ar"
+                    ? "جارٍ تأكيد المشاركة…"
+                    : "Confirming your entry…"
+                  : wheel.spinning
+                    ? t.spinning
+                    : t.spin}
               </button>
             </>
+          )}
+          {wheel.error && (
+            <p role="alert" className="mt-3 text-sm text-red-700">
+              {wheel.error}
+            </p>
           )}
           <p className="mb-0 mt-5 text-xs leading-loose text-muted">{rewardsConfig.terms[lang]}</p>
           {!wheel.storageAvailable && <p className="mt-3 text-xs text-muted">{t.storage}</p>}

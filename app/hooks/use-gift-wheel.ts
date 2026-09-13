@@ -18,7 +18,7 @@ function readAward(): GiftAward | null {
   if (
     value?.campaign !== rewardsConfig.campaignId ||
     !rewardsConfig.prizes.some((p) => p.id === value.prizeId) ||
-    (value.prizeId !== "try-again" && !/^CL-[A-F0-9]{12}$/.test(value.reference))
+    (value.prizeId !== "try-again" && !/^CL(?:-[A-F0-9]{12}|2-[A-F0-9]{24})$/.test(value.reference))
   )
     return null;
   return {
@@ -37,6 +37,9 @@ export function useGiftWheel() {
   const [rotation, setRotation] = useState(0);
   const [phone, setPhone] = useState("");
   const locked = useRef(false);
+  const pendingId = useRef<string | null>(null);
+  const [requesting, setRequesting] = useState(false);
+  const [error, setError] = useState("");
   const rotationRef = useRef(0);
   const retryAllowed = useRef(false);
   const finishSpin = useCallback(() => {
@@ -73,54 +76,53 @@ export function useGiftWheel() {
     };
   }, []);
 
-  function spin() {
+  async function spin() {
     if (!ready || locked.current || !phone.trim()) return;
-    // Recheck other tabs immediately before issuing a local result.
-    try {
-      const saved = readAward();
-      if (saved && saved.prizeId !== "try-again") {
-        locked.current = true;
-        setAward(saved);
-        return;
-      }
-    } catch {
-      setStorageAvailable(false);
-    }
     locked.current = true;
-    const random = crypto.getRandomValues(new Uint32Array(1))[0] / 4294967296;
-    const index = Math.floor(random * rewardsConfig.prizes.length);
-    retryAllowed.current = rewardsConfig.prizes[index].id === "try-again";
-    const newAward = {
-      campaign: rewardsConfig.campaignId,
-      prizeId: rewardsConfig.prizes[index].id,
-      reference: retryAllowed.current
-        ? null
-        : `CL-${crypto.randomUUID().replaceAll("-", "").slice(0, 12).toUpperCase()}`,
-      phone: phone.trim(),
-    };
-    // Save before animation so a refresh cannot produce a different result.
+    setRequesting(true);
+    setError("");
+    pendingId.current ??= crypto.randomUUID();
     try {
-      localStorage.setItem(storageKey, JSON.stringify(newAward));
-    } catch {
-      setStorageAvailable(false);
+      const response = await fetch("/api/rewards/spin", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ phone, requestId: pendingId.current }),
+      });
+      const data = await response.json();
+      if (!response.ok)
+        throw new Error(data.error || "تعذر إصدار الهدية. حاولي مرة أخرى / Please retry");
+      const newAward = data as GiftAward;
+      const index = rewardsConfig.prizes.findIndex((p) => p.id === newAward.prizeId);
+      if (index < 0) throw new Error("تعذر تأكيد النتيجة / Invalid result");
+      pendingId.current = null;
+      retryAllowed.current = newAward.prizeId === "try-again";
+      try {
+        localStorage.setItem(storageKey, JSON.stringify(newAward));
+      } catch {
+        setStorageAvailable(false);
+      }
+      setAward(newAward);
+      setSpinning(true);
+      const step = 360 / rewardsConfig.prizes.length;
+      const landing = (360 - index * step) % 360;
+      const current = rotationRef.current;
+      const offset = (landing - (((current % 360) + 360) % 360) + 360) % 360;
+      const next = current + 3 * 360 + offset;
+      rotationRef.current = next;
+      setRotation(next);
+    } catch (e) {
+      locked.current = false;
+      setError((e as Error).message);
+    } finally {
+      setRequesting(false);
     }
-    setAward(newAward);
-    setSpinning(true);
-    const step = 360 / rewardsConfig.prizes.length;
-    const landingRotation = (360 - index * step) % 360;
-    const current = rotationRef.current;
-    const normalizedCurrent = ((current % 360) + 360) % 360;
-    const offset = (landingRotation - normalizedCurrent + 360) % 360;
-    const fullSpins =
-      2 + Math.floor((crypto.getRandomValues(new Uint32Array(1))[0] / 4294967296) * 2);
-    const nextRotation = current + fullSpins * 360 + offset;
-    rotationRef.current = nextRotation;
-    setRotation(nextRotation);
   }
 
   return {
     award,
     spinning,
+    requesting,
+    error,
     ready,
     rotation,
     duration,

@@ -86,7 +86,14 @@ Development uses `.next-dev-PORT`; production uses `.next`. Generated caches, de
 
 `app/config/rewards.ts` contains the campaign ID, proposed gifts, colors and bilingual terms. Each segment has an equal chance. The UI and translations are in `app/components/rewards/` and `app/content/rewards.ts`; persistence lives in `app/hooks/use-gift-wheel.ts`.
 
-This is a browser-local promotional experience with manual confirmation via WhatsApp, not an automatically redeemable coupon system. Starter prizes require business approval before advertising. Local storage remembers a result in the same browser but can be cleared or modified; it does not enforce one spin per customer or prevent simultaneous-tab abuse. A production campaign with enforced limits needs server-side issuance, customer identification and a redemption ledger. No email addresses are collected. Gift references are enquiry references, not proof of entitlement.
+Rewards are issued server-side and recorded in private Vercel Blob storage. Configure a persistent, independent `REWARDS_SECRET` (at least 32 random characters), along with the existing Blob token and admin credentials. Do not rotate it during a campaign: phone-record keys use this secret. Egyptian mobile numbers are normalized to +20, so local, international and Arabic-digit forms share one winning code per campaign. Clearing browser storage or using another device does not grant another winning code. Try Again has no code and permits another attempt. The browser cache is only for display.
+
+Authenticated staff can open `/admin/rewards` or “فحص أكواد الهدايا” in the sidebar to inspect a code. Verification does not consume it. Redemption requires a matching customer phone number and an order reference; conditional storage writes prevent simultaneous double redemption. Codes generated before this release (`CL-…`) have no authoritative record and require manual review. New `CL2-…` codes are checked against both their index and canonical record.
+
+Numbers are format-checked, not verified by SMS. Match the entry phone to the actual customer/order before redemption; this does not prevent someone using several different numbers. Per-IP and global request limits reduce automated issuance. Storage errors fail closed. Public requests cannot choose the prize or create a usable code in local storage. Prize probabilities and the WhatsApp confirmation flow are unchanged.
+
+For isolated API regression checks, run `node tests/rewards-api.cjs PATH_TO_REVIEW_ENV http://localhost:PORT`. The review environment must use a separate `rewards-test-…` namespace and include `ADMIN_TEST_PASSWORD`. The test creates and redeems test codes; never target production.
+
 
 The new transparent logo is `public/clarea-logo-transparent.png`. The floating WhatsApp link uses `app/config/site.ts`. The header has working search, category and gift controls, without placeholder account or cart actions.
 
