@@ -105,7 +105,7 @@ export async function generateReply(input: ChatInput, products: ManagedProduct[]
     (reference) =>
       !products.some((p) => p.published && p.name.toLowerCase().includes(reference.matchName)),
   );
-  const model = process.env.GEMINI_MODEL || "gemini-2.5-flash-lite";
+  const model = process.env.GEMINI_MODEL || "gemini-3.1-flash-lite";
   if (!/^[a-z0-9.-]+$/.test(model)) return fallback(input.lang);
   try {
     // Server-to-server only. No tools, browsing, conversation storage or private catalog fields.
@@ -144,7 +144,8 @@ Never invent prices, discounts, stock, authenticity guarantees, shipping dates, 
           ],
           generationConfig: {
             temperature: 0.2,
-            maxOutputTokens: 600,
+            maxOutputTokens: 1200,
+            ...(model.startsWith("gemini-3") ? { thinkingConfig: { thinkingLevel: "LOW" } } : {}),
             responseMimeType: "application/json",
             responseSchema: {
               type: "OBJECT",

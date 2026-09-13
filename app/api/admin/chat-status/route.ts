@@ -13,7 +13,7 @@ export async function POST(request: Request) {
   }
   const headers = { "Cache-Control": "private, no-store" };
   const key = process.env.GEMINI_API_KEY;
-  const model = process.env.GEMINI_MODEL || "gemini-2.5-flash-lite";
+  const model = process.env.GEMINI_MODEL || "gemini-3.1-flash-lite";
   if (!key || !/^[a-z0-9.-]+$/.test(model))
     return NextResponse.json({ configured: false }, { headers });
   try {
@@ -31,6 +31,25 @@ export async function POST(request: Request) {
       },
     );
     const data = await response.json();
+    let availableModels: string[] = [];
+    if (response.status === 404) {
+      const list = await fetch(
+        "https://generativelanguage.googleapis.com/v1beta/models?pageSize=100",
+        {
+          headers: { "x-goog-api-key": key },
+          cache: "no-store",
+          signal: AbortSignal.timeout(5000),
+        },
+      );
+      if (list.ok)
+        availableModels = ((await list.json()).models || [])
+          .filter(
+            (m: { name: string; supportedGenerationMethods?: string[] }) =>
+              m.name.includes("flash") && m.supportedGenerationMethods?.includes("generateContent"),
+          )
+          .map((m: { name: string }) => m.name)
+          .slice(0, 30);
+    }
     const quota = (data.error?.details || [])
       .flatMap(
         (detail: { violations?: { quotaId?: string; quotaValue?: string }[] }) =>
@@ -43,6 +62,7 @@ export async function POST(request: Request) {
       }));
     return NextResponse.json(
       {
+        availableModels,
         configured: true,
         model,
         upstreamStatus: response.status,

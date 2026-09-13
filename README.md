@@ -100,9 +100,9 @@ The three WebP product photos were supplied by the owner. Additional product-onl
 
 ## Optional Gemini shopping assistant
 
-The helper retains local FAQs and product search. New arrivals point to the homepage's New to Claréa section. Unmatched questions can use Gemini 2.5 Flash-Lite through the server-only /api/chat route, after an explicit 18+ declaration and consent. This declaration is not age verification. The owner must ensure the AI audience satisfies Google's API age requirements; an adult purchaser alone does not establish this.
+The helper retains local FAQs and product search. New arrivals point to the homepage's New to Claréa section. Unmatched questions can use Gemini 3.1 Flash-Lite through the server-only /api/chat route, after an explicit 18+ declaration and consent. This declaration is not age verification. The owner must ensure the AI audience satisfies Google's API age requirements; an adult purchaser alone does not establish this.
 
-Set GEMINI_API_KEY as a sensitive Production variable on Vercel, using a Google AI Studio project on the free tier with no billing enabled. Set GEMINI_ENABLED=true only when ready to activate, then redeploy. GEMINI_MODEL optionally overrides gemini-2.5-flash-lite. The existing ADMIN_SESSION_SECRET and BLOB_READ_WRITE_TOKEN support persistent request limits. Without configuration the helper remains fully local; it does not advertise AI. Never put the key in NEXT_PUBLIC variables or client code.
+Set GEMINI_API_KEY as a sensitive Production variable on Vercel, using a Google AI Studio project on the free tier with no billing enabled. Set GEMINI_ENABLED=true only when ready to activate, then redeploy. GEMINI_MODEL optionally overrides gemini-3.1-flash-lite. The existing ADMIN_SESSION_SECRET and BLOB_READ_WRITE_TOKEN support persistent request limits. Without configuration the helper remains fully local; it does not advertise AI. Never put the key in NEXT_PUBLIC variables or client code.
 
 Free quota varies by model/project. The app limits upstream requests to 10 per IP/hour and 40 globally per rolling day, and returns a saved fallback on rate limits, missing keys, blocked/malformed output or timeouts. These caps do not make a billing-enabled Google project free. There is no paid-provider fallback. Turn off GEMINI_ENABLED and redeploy to disable AI.
 

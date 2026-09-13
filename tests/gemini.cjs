@@ -78,7 +78,7 @@ function respond(value, finishReason = "STOP") {
   const body = JSON.parse(observed.body);
   assert.ok(!observed.body.includes("PRIVATE DRAFT"));
   assert.ok(!observed.body.includes("secret-draft"));
-  assert.equal(body.generationConfig.maxOutputTokens, 600);
+  assert.equal(body.generationConfig.maxOutputTokens, 1200);
   assert.equal(body.tools, undefined);
   respond({ answer: "Invented", productIds: ["secret-draft"] });
   assert.equal((await api.generateReply(input, products)).source, "saved");
