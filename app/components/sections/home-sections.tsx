@@ -60,18 +60,20 @@ export default function HomeSections({ lang, onSelect, onExplore }: Props) {
   const duo = products.find((product) => product.id === "centella-duo");
   return (
     <>
-      <ProductShelf
-        lang={lang}
-        title={ar ? "الجديد في Claréa" : "New to Claréa"}
-        subtitle={
-          ar
-            ? "اكتشفي المزيد للعناية ببشرتك وشعرك"
-            : "Discover more for your skin, hair and daily care"
-        }
-        products={products.filter((product) => product.newArrival)}
-        onSelect={onSelect}
-        onViewAll={() => onExplore("all")}
-      />
+      <div id="new-arrivals" className="scroll-mt-24">
+        <ProductShelf
+          lang={lang}
+          title={ar ? "الجديد في Claréa" : "New to Claréa"}
+          subtitle={
+            ar
+              ? "اكتشفي المزيد للعناية ببشرتك وشعرك"
+              : "Discover more for your skin, hair and daily care"
+          }
+          products={products.filter((product) => product.newArrival)}
+          onSelect={onSelect}
+          onViewAll={() => onExplore("all")}
+        />
+      </div>
       <ProductShelf
         lang={lang}
         title={ar ? "اختيارات Claréa" : "Claréa picks"}

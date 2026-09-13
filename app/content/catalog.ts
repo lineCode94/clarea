@@ -51,7 +51,7 @@ export const text = {
       ],
       [
         "كيف أتابع المنتجات الجديدة؟",
-        "تابعي المجموعة هنا، أو تواصلي معنا للاستفسار عن المنتج الذي يهمك.",
+        "تابعي قسم New to Claréa (الجديد في Claréa) في الصفحة الرئيسية؛ ده المكان اللي بنعرض فيه المنتجات الجديدة. افتحي أي منتج لمعرفة تفاصيله وحالة توفره.",
       ],
     ],
     footer: "معلومات العناية لا تغني عن استشارة مختص عند وجود حالة جلدية.",
@@ -108,7 +108,7 @@ export const text = {
       ],
       [
         "How can I follow new arrivals?",
-        "Check the collection here, or contact us about a product you are interested in.",
+        "Visit New to Claréa on the homepage to discover newly added products. Open any product to see its details and availability.",
       ],
     ],
     footer: "Care information does not replace professional advice for skin conditions.",

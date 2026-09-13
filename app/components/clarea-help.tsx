@@ -52,8 +52,24 @@ export default function ClareaHelp({
   const products = useProducts();
   const [locale, setLocale] = useState(lang);
   const [query, setQuery] = useState("");
+  const [aiAvailable, setAiAvailable] = useState(false);
+  const [aiConsent, setAiConsent] = useState(false);
+  const [pending, setPending] = useState(false);
+  const generation = useRef(0);
+  const sending = useRef(false);
+  useEffect(() => {
+    const controller = new AbortController();
+    fetch("/api/chat", { cache: "no-store", signal: controller.signal })
+      .then((r) => r.json())
+      .then((v) => setAiAvailable(v.enabled === true))
+      .catch(() => {});
+    return () => {
+      controller.abort();
+      generation.current++;
+    };
+  }, []);
   const [messages, setMessages] = useState<
-    { question: string; answer: string; productIds?: string[] }[]
+    { question: string; answer: string; productIds?: string[]; source?: string }[]
   >([]);
   const ar = locale === "ar";
   const faqs = text[locale].faqs;
@@ -116,9 +132,13 @@ export default function ClareaHelp({
     setMessages((previous) => [...previous.slice(-19), { question, answer: reply, productIds }]);
     setQuery("");
   }
-  function submit(event: FormEvent) {
+  async function submit(event: FormEvent) {
     event.preventDefault();
-    if (!search) return;
+    if (!search || sending.current) return;
+    if (keywords[3].some((word) => search.includes(normalize(word)))) {
+      answer(query.trim(), faqs[3][1]);
+      return;
+    }
     if (matches.length) {
       answer(
         query.trim(),
@@ -132,16 +152,57 @@ export default function ClareaHelp({
     const index = keywords.findIndex((words) =>
       words.some((word) => search.includes(normalize(word))),
     );
-    answer(
-      query.trim(),
-      index >= 0
-        ? faqs[index][1]
-        : ar
-          ? "ما عنديش إجابة جاهزة مؤكدة للسؤال ده. اختاري من الأسئلة السريعة، أو ابعتيه لفريق Claréa على واتساب. تقدري كمان تبحثي باسم المنتج وتشوفي تفاصيله."
-          : "I don't have a verified saved answer to that question. Choose a quick question or contact the Claréa team on WhatsApp. You can also search a product name to view its details.",
-    );
+    if (index >= 0) {
+      answer(query.trim(), faqs[index][1]);
+      return;
+    }
+    const question = query.trim();
+    const saved = ar
+      ? "ما عنديش إجابة جاهزة مؤكدة للسؤال ده. اختاري من الأسئلة السريعة، أو اسألي فريق Claréa على واتساب."
+      : "I don't have a verified saved answer. Use a quick question or ask the Claréa team on WhatsApp.";
+    if (!aiAvailable || !aiConsent) {
+      answer(question, saved);
+      return;
+    }
+    const turn = generation.current;
+    sending.current = true;
+    setPending(true);
+    setQuery("");
+    try {
+      const response = await fetch("/api/chat", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        signal: AbortSignal.timeout(20000),
+        body: JSON.stringify({
+          message: question,
+          lang: locale,
+          adultConfirmed: true,
+          consent: true,
+        }),
+      });
+      const body = await response.json();
+      if (!response.ok || typeof body.answer !== "string") throw new Error("Unavailable");
+      if (turn === generation.current)
+        setMessages((previous) => [
+          ...previous.slice(-19),
+          {
+            question,
+            answer: body.answer,
+            productIds: Array.isArray(body.productIds) ? body.productIds : [],
+            source: body.source,
+          },
+        ]);
+    } catch {
+      if (turn === generation.current)
+        setMessages((previous) => [...previous.slice(-19), { question, answer: saved }]);
+    } finally {
+      sending.current = false;
+      setPending(false);
+    }
   }
+
   function changeLanguage() {
+    generation.current++;
     setLocale(ar ? "en" : "ar");
     setMessages([]);
     setQuery("");
@@ -181,7 +242,13 @@ export default function ClareaHelp({
             <div className="min-w-0 flex-1">
               <h2 className="m-0 text-base">{ar ? "مساعد Claréa" : "Claréa helper"}</h2>
               <p className="m-0 mt-1 text-[11px] text-[#917c73]">
-                {ar ? "إجابات جاهزة من معلومات المتجر" : "Saved answers from our store"}
+                {aiAvailable && aiConsent
+                  ? ar
+                    ? "Gemini · قد يخطئ، أكدي التفاصيل معنا"
+                    : "Gemini · Confirm details with our team"
+                  : ar
+                    ? "إجابات جاهزة من معلومات المتجر"
+                    : "Saved answers from our store"}
               </p>
             </div>
             <button
@@ -207,7 +274,33 @@ export default function ClareaHelp({
                 ? "أهلًا بيكي في Claréa 🤍 اختاري سؤال أو اكتبي كلمة زي «شحن» أو «السعر». للمنتجات، ابحثي باسم المنتج أو الماركة."
                 : "Welcome to Claréa 🤍 Choose a question or type a keyword like shipping or price. Search a product or brand name to see its details."}
             </p>
+            {aiAvailable && (
+              <label className="mb-4 flex items-start gap-2 rounded-xl border border-[#e8ddd5] p-3 text-xs leading-6">
+                <input
+                  type="checkbox"
+                  checked={aiConsent}
+                  disabled={pending}
+                  onChange={(e) => setAiConsent(e.target.checked)}
+                  className="mt-1 size-4 shrink-0 accent-[#5C1A2B]"
+                />
+                <span>
+                  {ar
+                    ? "عمري 18+ وأوافق على إرسال أسئلتي غير الجاهزة إلى Google Gemini. قد تستخدم Google الأسئلة والردود لتحسين خدماتها. لا تكتبي بيانات شخصية أو صحية. الإجابات الجاهزة متاحة بدون AI."
+                    : "I am 18+ and agree to send questions without saved answers to Google Gemini. Google may use questions and replies to improve its services. Do not enter personal or health information. Saved answers work without AI."}
+                </span>
+              </label>
+            )}
             <div className="mb-4 flex flex-wrap gap-2">
+              <button
+                type="button"
+                onClick={() => {
+                  dialog.current?.close();
+                  document.getElementById("new-arrivals")?.scrollIntoView({ behavior: "smooth" });
+                }}
+                className="min-h-10 rounded-full bg-[#5C1A2B] px-3 py-2 text-xs text-white"
+              >
+                New to Claréa
+              </button>
               {[
                 {
                   label: ar ? "المتاح دلوقتي" : "Available now",
@@ -261,6 +354,11 @@ export default function ClareaHelp({
                   </p>
                   <p className="m-0 whitespace-pre-wrap break-words rounded-2xl bg-[#f5eee5] px-4 py-3 text-sm leading-7">
                     {m.answer}
+                    {m.source === "gemini" && (
+                      <span className="mt-2 block text-[10px] text-[#917c73]">
+                        {ar ? "رد مولّد بواسطة Gemini" : "Generated by Gemini"}
+                      </span>
+                    )}
                   </p>
                   {m.productIds
                     ?.map((id) => products.find((p) => p.id === id))
@@ -295,6 +393,11 @@ export default function ClareaHelp({
               ))}
             </div>
           </div>
+          {pending && (
+            <p role="status" className="m-0 px-4 py-2 text-xs text-[#917c73]">
+              {ar ? "Claréa بتجهز الرد…" : "Claréa is preparing a reply…"}
+            </p>
+          )}
           <div className="shrink-0 border-t border-[#e8ddd5] bg-[#fffdf9] p-3">
             {matches.length > 0 && (
               <div
@@ -321,7 +424,8 @@ export default function ClareaHelp({
             <form onSubmit={submit} className="flex gap-2">
               <input
                 aria-label={ar ? "سؤالك أو اسم المنتج" : "Question or product name"}
-                maxLength={300}
+                maxLength={500}
+                disabled={pending}
                 value={query}
                 onChange={(e) => setQuery(e.target.value)}
                 placeholder={ar ? "سؤال أو اسم منتج…" : "Question or product name…"}
@@ -329,7 +433,7 @@ export default function ClareaHelp({
               />
               <button
                 type="submit"
-                disabled={!search}
+                disabled={!search || pending}
                 aria-label={ar ? "إرسال السؤال" : "Send question"}
                 className="grid size-12 shrink-0 place-items-center rounded-xl bg-[#5C1A2B] text-white disabled:opacity-40"
               >

@@ -156,7 +156,7 @@ export default function GiftDialog({
             <>
               <p className="mb-2 text-xs text-muted">{t.reference}</p>
               <div className="flex items-center justify-between gap-2 rounded-lg border border-line p-3">
-                <code dir="ltr" className="select-all text-sm">
+                <code dir="ltr" className="min-w-0 select-all break-all text-sm">
                   {wheel.award.reference}
                 </code>
                 <button

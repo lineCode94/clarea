@@ -94,8 +94,20 @@ Numbers are format-checked, not verified by SMS. Match the entry phone to the ac
 
 For isolated API regression checks, run `node tests/rewards-api.cjs PATH_TO_REVIEW_ENV http://localhost:PORT`. The review environment must use a separate `rewards-test-…` namespace and include `ADMIN_TEST_PASSWORD`. The test creates and redeems test codes; never target production.
 
-
 The new transparent logo is `public/clarea-logo-transparent.png`. The floating WhatsApp link uses `app/config/site.ts`. The header has working search, category and gift controls, without placeholder account or cart actions.
 
 The three WebP product photos were supplied by the owner. Additional product-only packshots came from SKIN1004's official Shopify CDN; source pages are recorded in the product data. Additional selections are explicitly unavailable, not confirmed future inventory. Review the cleansing duo's ingredients against the supplied packaging before publishing.
 
+## Optional Gemini shopping assistant
+
+The helper retains local FAQs and product search. New arrivals point to the homepage's New to Claréa section. Unmatched questions can use Gemini 2.5 Flash-Lite through the server-only /api/chat route, after an explicit 18+ declaration and consent. This declaration is not age verification. The owner must ensure the AI audience satisfies Google's API age requirements; an adult purchaser alone does not establish this.
+
+Set GEMINI_API_KEY as a sensitive Production variable on Vercel, using a Google AI Studio project on the free tier with no billing enabled. Set GEMINI_ENABLED=true only when ready to activate, then redeploy. GEMINI_MODEL optionally overrides gemini-2.5-flash-lite. The existing ADMIN_SESSION_SECRET and BLOB_READ_WRITE_TOKEN support persistent request limits. Without configuration the helper remains fully local; it does not advertise AI. Never put the key in NEXT_PUBLIC variables or client code.
+
+Free quota varies by model/project. The app limits upstream requests to 10 per IP/hour and 40 globally per rolling day, and returns a saved fallback on rate limits, missing keys, blocked/malformed output or timeouts. These caps do not make a billing-enabled Google project free. There is no paid-provider fallback. Turn off GEMINI_ENABLED and redeploy to disable AI.
+
+Only the current question and up to 40 relevant published product summaries are sent; no private drafts, customer records, reward codes or conversation history. Questions and answers are kept only in browser memory, not stored by this app. Google may use free-tier input/output to improve its services. The UI discloses this and asks users not to enter personal/health data; obvious sensitive queries stay local, but keyword checks cannot guarantee all sensitive text is detected.
+
+Responses are plain text with validated public product IDs. The model cannot place orders, issue/redeem codes or mutate data. Prices and shipping are confirmed through WhatsApp. Product grounding reduces but does not eliminate incorrect model statements.
+
+Run node tests/gemini.cjs for schema, privacy checks, catalog filtering, response-ID validation and quota/timeout fallback tests. These use mocked provider responses; a live smoke test is still needed after supplying a real key.
