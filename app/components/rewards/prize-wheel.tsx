@@ -11,12 +11,14 @@ export default function PrizeWheel({
   rotation,
   duration,
   spinning,
+  showPointer,
   onComplete,
 }: {
   lang: Language;
   rotation: number;
   duration: number;
   spinning: boolean;
+  showPointer: boolean;
   onComplete: () => void;
 }) {
   const angle = useMotionValue(spinning ? 0 : rotation);
@@ -66,11 +68,14 @@ export default function PrizeWheel({
   ];
   return (
     <div className="prize-wheel-frame relative aspect-square w-full" dir="ltr">
-      <TbTriangleFilled
-        aria-hidden="true"
-        className="absolute -right-4 top-1/2 z-10 -translate-y-1/2 -rotate-90 text-champagne drop-shadow"
-        size={30}
-      />
+      {showPointer && (
+        <TbTriangleFilled
+          data-testid="prize-wheel-pointer"
+          aria-hidden="true"
+          className="absolute -right-4 top-1/2 z-10 -translate-y-1/2 -rotate-90 text-champagne drop-shadow"
+          size={30}
+        />
+      )}
       <div className="size-full overflow-hidden rounded-full border-[10px] border-[#F5E9E2] shadow-[0_0_0_6px_#f5f5f5,0_8px_24px_#00000020]">
         <motion.div
           data-testid="prize-wheel"

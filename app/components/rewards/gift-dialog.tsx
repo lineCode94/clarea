@@ -80,6 +80,7 @@ export default function GiftDialog({
             rotation={wheel.rotation}
             duration={wheel.duration}
             spinning={wheel.spinning}
+            showPointer={wheel.spinning || Boolean(wheel.award)}
             onComplete={wheel.finishSpin}
           />
         </div>
