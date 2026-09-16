@@ -1,4 +1,4 @@
-const CACHE = 'clarea-offline-v2';
+const CACHE = 'clarea-offline-v3';
 self.addEventListener('install', event => { event.waitUntil(caches.open(CACHE).then(cache => cache.add('/offline.html')).then(() => self.skipWaiting())); });
 self.addEventListener('activate', event => { event.waitUntil(Promise.all([caches.keys().then(keys => Promise.all(keys.filter(key => key.startsWith('clarea-offline-') && key !== CACHE).map(key => caches.delete(key)))), self.clients.claim()])); });
 self.addEventListener('fetch', event => {
