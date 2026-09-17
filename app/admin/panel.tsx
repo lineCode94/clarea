@@ -230,6 +230,10 @@ export default function AdminPanel({ authenticated }: { authenticated: boolean }
     setError("");
     setNotice("");
     setQuery("");
+    if (view === "inventory") {
+      window.location.assign("/admin/inventory");
+      return true;
+    }
     if (view === "codes") {
       window.location.assign("/admin/rewards");
       return true;

@@ -55,7 +55,7 @@ export default function ProductCard({
             />
           )}
         </motion.div>
-        
+
         {/* Premium Shine Overlay */}
         <motion.div
           variants={{
@@ -69,7 +69,15 @@ export default function ProductCard({
         <span
           className={`absolute start-3 top-3 z-20 rounded-full border border-white/50 px-3 py-1.5 text-xs backdrop-blur-md transition-transform duration-300 group-hover:scale-105 ${product.available ? "bg-white/90 text-[#365842]" : "bg-white/85 text-[#765961]"}`}
         >
-          {product.available ? t.available : t.unavailable}
+          {product.stock_status === "coming_soon"
+            ? lang === "ar"
+              ? "🔔 قريباً"
+              : "Coming soon"
+            : product.available
+              ? t.available
+              : lang === "ar"
+                ? "انتهى المخزون"
+                : "Out of stock"}
         </span>
         <span className="absolute bottom-3 end-3 z-20 grid size-11 place-items-center rounded-full bg-white text-brand shadow-sm transition-all duration-300 group-hover:scale-110 group-hover:bg-brand group-hover:text-white group-hover:shadow-md group-hover:rotate-90">
           <TbPlus size={22} />
@@ -88,4 +96,3 @@ export default function ProductCard({
     </>
   );
 }
-

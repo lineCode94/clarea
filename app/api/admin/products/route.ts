@@ -5,10 +5,17 @@ import { readCatalog, saveCatalog, ConflictError } from "../../../lib/catalog-st
 import { managedProductSchema } from "../../../lib/catalog-schema";
 import { failure } from "../../../lib/admin-response";
 export const runtime = "nodejs";
-export async function GET() {
+import { inventoryRows } from "../../../lib/inventory-service";
+export async function GET(request: Request) {
   try {
     await requireAdmin();
-    return NextResponse.json(await readCatalog(), { headers: { "Cache-Control": "no-store" } });
+    const catalog = await readCatalog();
+    return NextResponse.json(
+      new URL(request.url).searchParams.get("view") === "inventory"
+        ? inventoryRows(catalog)
+        : { products: catalog.products, version: catalog.version },
+      { headers: { "Cache-Control": "no-store" } },
+    );
   } catch (error) {
     return failure(error);
   }
@@ -29,7 +36,8 @@ export async function PUT(request: Request) {
     const products = create
       ? [product, ...current.products]
       : current.products.map((p) => (p.id === product.id ? product : p));
-    return NextResponse.json(await saveCatalog(products, version));
+    const saved = await saveCatalog(products, version);
+    return NextResponse.json({ products: saved.products, version: saved.version });
   } catch (error) {
     return failure(error);
   }

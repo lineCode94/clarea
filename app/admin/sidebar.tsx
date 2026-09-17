@@ -11,7 +11,7 @@ import {
   TbArrowUpRight,
 } from "react-icons/tb";
 
-export type AdminView = "all" | "published" | "draft" | "new" | "codes";
+export type AdminView = "all" | "published" | "draft" | "new" | "codes" | "inventory";
 type Props = { active: AdminView; onNavigate: (view: AdminView) => boolean; disabled: boolean };
 
 export default function AdminSidebar({ active, onNavigate, disabled }: Props) {
@@ -22,6 +22,7 @@ export default function AdminSidebar({ active, onNavigate, disabled }: Props) {
     { id: "published", label: "المنتجات المنشورة", Icon: TbCheck },
     { id: "draft", label: "المسودات", Icon: TbFileText },
     { id: "new", label: "إضافة منتج", Icon: TbPlus },
+    { id: "inventory", label: "المخزون والأسعار والتقارير", Icon: TbPackage },
     { id: "codes", label: "فحص أكواد الهدايا", Icon: TbCheck },
   ] as const;
   function close() {

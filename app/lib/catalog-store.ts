@@ -1,4 +1,5 @@
 import "server-only";
+import { ledgerSchema, type Ledger } from "./inventory-schema";
 import { get, put, BlobPreconditionFailedError } from "@vercel/blob";
 import { unstable_cache, revalidateTag } from "next/cache";
 import { products as seed } from "../data/products";
@@ -13,7 +14,9 @@ export class ConflictError extends Error {}
 // underlying storage ETag, which has the same value without the W/ prefix.
 export const storageETag = (etag: string) => etag.replace(/^W\//, "");
 
-export async function readCatalog(): Promise<{ products: ManagedProduct[]; version: string }> {
+export async function readCatalog(): Promise<
+  Ledger & { products: ManagedProduct[]; version: string }
+> {
   const result = await get(key, { access: "private", useCache: false });
   if (!result)
     return {
@@ -23,14 +26,24 @@ export async function readCatalog(): Promise<{ products: ManagedProduct[]; versi
         newArrival: homeCollections.newArrivals.includes(p.id),
       })),
       version: "seed",
+      ...ledgerSchema.parse({}),
     };
   if (result.statusCode !== 200) throw new Error("Unexpected catalog response");
   const parsed = catalogSchema.parse(await new Response(result.stream).json());
-  return { products: parsed.products, version: storageETag(result.blob.etag) };
+  return { ...parsed, version: storageETag(result.blob.etag) };
 }
 
-export async function saveCatalog(products: ManagedProduct[], version: string) {
-  const data = catalogSchema.parse({ products });
+export async function saveCatalog(products: ManagedProduct[], version: string, ledger?: Ledger) {
+  const current = ledger || (await readCatalog());
+  if (!ledger && "version" in current && current.version !== version)
+    throw new ConflictError("البيانات اتعدلت. حدّث القائمة.");
+  const data = catalogSchema.parse({
+    ...current,
+    products: products.map((p) => {
+      const stock = current.inventory[p.id]?.stock;
+      return stock ? { ...p, available: stock.status === "available" } : p;
+    }),
+  });
   let nextVersion: string;
   try {
     const saved = await put(key, JSON.stringify(data), {
@@ -51,14 +64,25 @@ export async function saveCatalog(products: ManagedProduct[], version: string) {
     throw error;
   }
   revalidateTag("clarea-catalog");
-  return { products: data.products, version: nextVersion };
+  return { ...data, version: nextVersion };
 }
 
 export const publicCatalog = unstable_cache(
   async () => {
     const catalog = await readCatalog();
-    return catalog.products.filter((p) => p.published);
+    return catalog.products
+      .filter((p) => p.published)
+      .map((p) => {
+        const stock = catalog.inventory[p.id]?.stock;
+        // Explicit public projection: private inventory/prices/history never leave the server.
+        const clean = catalogSchema.shape.products.element.parse(p);
+        return {
+          ...clean,
+          available: stock ? stock.status === "available" : clean.available,
+          stock_status: stock?.status || (clean.available ? "available" : "out_of_stock"),
+        };
+      });
   },
-  ["clarea-public-catalog", namespace],
+  ["clarea-public-catalog-v2", namespace],
   { revalidate: 30, tags: ["clarea-catalog"] },
 );

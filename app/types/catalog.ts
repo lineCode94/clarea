@@ -13,6 +13,7 @@ export type Product = {
   name: string;
   category: "skin" | "hair" | "supplements";
   available: boolean;
+  stock_status?: "available" | "coming_soon" | "out_of_stock";
   images: string[];
   tone: string;
   label: Record<Language, string>;
@@ -21,4 +22,3 @@ export type Product = {
   details?: ProductDetails;
   imageTransform?: string;
 };
-

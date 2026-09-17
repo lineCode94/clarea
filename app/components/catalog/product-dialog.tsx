@@ -131,7 +131,15 @@ export default function ProductDialog({
           <span
             className={`inline-flex rounded-full px-3 py-1 text-sm ${product.available ? "bg-[#edf4ed] text-[#365842]" : "bg-[#f3efef] text-[#765961]"}`}
           >
-            {product.available ? t.available : t.unavailable}
+            {product.stock_status === "coming_soon"
+              ? lang === "ar"
+                ? "🔔 قريباً"
+                : "Coming soon"
+              : product.available
+                ? t.available
+                : lang === "ar"
+                  ? "انتهى المخزون"
+                  : "Out of stock"}
           </span>
           <p className="mt-5 leading-loose text-muted">{product.description[lang]}</p>
           {product.details && (
@@ -176,4 +184,3 @@ export default function ProductDialog({
     </dialog>
   );
 }
-

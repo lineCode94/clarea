@@ -50,4 +50,7 @@ export const managedProductSchema = z.object({
     .optional(),
 });
 export type ManagedProduct = z.infer<typeof managedProductSchema>;
-export const catalogSchema = z.object({ products: z.array(managedProductSchema).max(2000) });
+import { ledgerSchema } from "./inventory-schema";
+export const catalogSchema = ledgerSchema.extend({
+  products: z.array(managedProductSchema).max(2000),
+});
