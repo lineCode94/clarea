@@ -35,6 +35,7 @@ type Report = {
   total_cost: number;
   total_profit: number;
   units_sold: number;
+  orders_count?: number;
   profit_margin: number | null;
   products: {
     id: string;
@@ -81,10 +82,7 @@ export default function InventoryPanel() {
     [coming, setComing] = useState(false),
     [cost, setCost] = useState(""),
     [price, setPrice] = useState(""),
-    [discount, setDiscount] = useState("0"),
-    [units, setUnits] = useState("1"),
-    [order, setOrder] = useState(""),
-    [requestId, setRequestId] = useState("");
+    [discount, setDiscount] = useState("0");
   const [month, setMonth] = useState(() => dayInCairo(new Date().toISOString()).slice(0, 7)),
     [date, setDate] = useState(() => dayInCairo(new Date().toISOString())),
     [report, setReport] = useState<Report | null>(null),
@@ -131,20 +129,12 @@ export default function InventoryPanel() {
     setCost(p.cost_price == null ? "" : String(p.cost_price));
     setPrice(p.selling_price == null ? "" : String(p.selling_price));
     setDiscount(String(p.discount ?? 0));
-    setUnits("1");
-    setOrder("");
-    setRequestId(crypto.randomUUID());
     setNotice("");
     setError("");
   }
-  async function save(e: FormEvent, kind: "stock" | "pricing" | "sale") {
+  async function save(e: FormEvent, kind: "stock" | "pricing") {
     e.preventDefault();
     if (!selected || !data || busy) return;
-    if (
-      kind === "sale" &&
-      !window.confirm(`تسجيل بيع ${units} من ${selected.name} للطلب ${order} وخصمها من المخزون؟`)
-    )
-      return;
     setBusy(true);
     setError("");
     setNotice("");
@@ -157,34 +147,35 @@ export default function InventoryPanel() {
               status: coming ? "coming_soon" : Number(quantity) > 0 ? "available" : "out_of_stock",
               version: data.version,
             }
-          : kind === "pricing"
-            ? {
-                cost_price: Number(cost),
-                selling_price: Number(price),
-                discount: Number(discount),
-                version: data.version,
-              }
-            : {
-                product_id: selected.id,
-                quantity_sold: Number(units),
-                order_reference: order,
-                request_id: requestId,
-              };
-      await api(
-        kind === "sale" ? "/api/admin/sales" : `/api/admin/products/${selected.id}/${kind}`,
-        {
-          method: kind === "sale" ? "POST" : "PUT",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(body),
-        },
+          : {
+              cost_price: Number(cost),
+              selling_price: Number(price),
+              discount: Number(discount),
+              version: data.version,
+            };
+      const saved = await api(`/api/admin/products/${selected.id}/${kind}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(body),
+      });
+      // Update saved metadata only. Never reinitialize the independent input drafts.
+      setSelected(saved.product);
+      setData((current) =>
+        current
+          ? {
+              ...current,
+              version: saved.version,
+              priceHistory: saved.priceHistory || current.priceHistory,
+              products: current.products.map((p) =>
+                p.id === saved.product.id ? saved.product : p,
+              ),
+            }
+          : current,
       );
-      const next = await load(),
-        p = next.products.find((x) => x.id === selected.id);
-      if (p) pick(p);
       setNotice(
-        kind === "sale"
-          ? "تم تسجيل البيع وخصم الكمية. لا تعيدي تسجيل نفس الطلب."
-          : "تم الحفظ بنجاح",
+        kind === "stock"
+          ? "تم حفظ المخزون فقط. بيانات الأسعار التي كتبتها كما هي."
+          : "تم حفظ الأسعار فقط. بيانات المخزون التي كتبتها كما هي.",
       );
     } catch (e) {
       setError(e instanceof Error ? e.message : "تعذر الحفظ");
@@ -208,6 +199,10 @@ export default function InventoryPanel() {
         p.name.toLowerCase().includes(query.toLowerCase()),
     ) || [];
   function navigate(view: AdminView) {
+    if (view === "orders") {
+      window.location.assign("/admin/orders");
+      return true;
+    }
     if (view !== "inventory")
       window.location.assign(view === "codes" ? "/admin/rewards" : `/admin?view=${view}`);
     return true;
@@ -250,7 +245,11 @@ export default function InventoryPanel() {
             onClick={() => {
               setBusy(true);
               load()
-                .then(() => setSelected(null))
+                .then((next) =>
+                  setSelected((current) =>
+                    current ? next.products.find((p) => p.id === current.id) || current : null,
+                  ),
+                )
                 .catch((e) => setError(e.message))
                 .finally(() => setBusy(false));
             }}
@@ -295,6 +294,8 @@ export default function InventoryPanel() {
                 <option value="skin">العناية بالبشرة</option>
                 <option value="hair">العناية بالشعر</option>
                 <option value="supplements">المكملات</option>
+                <option value="oral">العناية بالفم</option>
+                <option value="drinks">المشروبات والماتشا</option>
               </select>
             </label>
             {tab === "inventory" && (
@@ -434,62 +435,22 @@ export default function InventoryPanel() {
                           حفظ الأسعار
                         </button>
                       </form>
-                      <form onSubmit={(e) => save(e, "sale")} className={card}>
-                        <h3 className="mt-0">تسجيل بيع مُسلّم</h3>
+                      <section className={card}>
+                        <h3 className="mt-0">الطلبات والتسليم</h3>
                         <p className="text-sm leading-7">
-                          سجّل البيع الفعلي فقط. فتح واتساب لا يسجل بيعاً. ستُخصم الكمية ويُحفظ
-                          السعر الحالي بعد الخصم.
+                          أنشئ طلباً برقم تلقائي، وأضف كل المنتجات وكمياتها. عند اختيار «تم تسليمه»
+                          يتم خصم الكميات وتسجيل المبيعات للطلب كله.
                         </p>
-                        <label className="block">
-                          مرجع الطلب
-                          <input
-                            required
-                            maxLength={100}
-                            className={field}
-                            value={order}
-                            onChange={(e) => {
-                              setOrder(e.target.value);
-                              setRequestId(crypto.randomUUID());
-                            }}
-                            placeholder="مثال: CL-1001"
-                          />
-                        </label>
-                        <label className="mt-4 block">
-                          عدد القطع
-                          <input
-                            required
-                            type="number"
-                            min="1"
-                            max={selected.stock || 1}
-                            step="1"
-                            className={field}
-                            value={units}
-                            onChange={(e) => {
-                              setUnits(e.target.value);
-                              setRequestId(crypto.randomUUID());
-                            }}
-                          />
-                        </label>
-                        <p className="text-sm">
-                          إجمالي البيع: {money((selected.effective_price || 0) * Number(units))} ج
-                          <br />
-                          مجمل ربح البيع: {money((selected.profit_per_unit || 0) * Number(units))} ج
-                        </p>
-                        <button
-                          disabled={
-                            busy ||
-                            !selected.stock_initialized ||
-                            !selected.pricing_initialized ||
-                            selected.status !== "available"
-                          }
-                          className={button}
+                        <a
+                          className={button + " inline-block"}
+                          href={`/admin/orders?product=${selected.id}`}
                         >
-                          تسجيل البيع وخصم المخزون
-                        </button>
-                        <p className="mb-0 mt-3 text-xs">
-                          مرجع الطلب يمنع تكرار تسجيل نفس المنتج لنفس الطلب.
-                        </p>
-                      </form>
+                          إنشاء طلب بهذا المنتج
+                        </a>
+                        <a className="mt-4 block text-sm underline" href="/admin/orders">
+                          عرض كل الطلبات
+                        </a>
+                      </section>
                     </div>
                   </section>
                 )}
@@ -535,6 +496,7 @@ export default function InventoryPanel() {
                         ["تكلفة البضاعة", report.total_cost],
                         ["مجمل الربح", report.total_profit],
                         ["القطع المباعة", report.units_sold],
+                        ["عدد الطلبات", report.orders_count || 0],
                       ].map(([title, n]) => (
                         <div className={card} key={title}>
                           <p className="text-sm">{title}</p>

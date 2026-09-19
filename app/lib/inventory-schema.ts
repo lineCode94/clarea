@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { orderSchema } from "./order-schema";
 const money = z
   .number()
   .finite()
@@ -44,6 +45,7 @@ export const saleInput = z
   })
   .strict();
 export const saleSchema = z.object({
+  order_id: z.string().optional(),
   id: z.string(),
   request_id: z.string(),
   order_reference: z.string(),
@@ -68,6 +70,8 @@ export const historySchema = z.object({
   changed_at: z.string(),
 });
 export const ledgerSchema = z.object({
+  orders: z.array(orderSchema).default([]),
+  orderSequence: z.number().int().nonnegative().default(0),
   inventory: z.record(z.string(), inventoryEntry).default({}),
   priceHistory: z.array(historySchema).default([]),
   sales: z.array(saleSchema).default([]),
@@ -114,6 +118,7 @@ export function totals(sales: Sale[]) {
     total_cost = round(sales.reduce((s, x) => s + x.cost, 0));
   return {
     total_revenue,
+    orders_count: new Set(sales.map((s) => s.order_reference)).size,
     total_cost,
     total_profit: round(total_revenue - total_cost),
     units_sold: sales.reduce((s, x) => s + x.quantity_sold, 0),

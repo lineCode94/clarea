@@ -11,7 +11,7 @@ export type Product = {
   id: string;
   brand: string;
   name: string;
-  category: "skin" | "hair" | "supplements";
+  category: "skin" | "hair" | "supplements" | "oral" | "drinks";
   available: boolean;
   stock_status?: "available" | "coming_soon" | "out_of_stock";
   images: string[];

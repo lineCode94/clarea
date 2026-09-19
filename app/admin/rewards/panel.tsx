@@ -85,6 +85,10 @@ export default function RewardVerification() {
     }
   }
   function navigate(view: AdminView) {
+    if (view === "orders") {
+      window.location.assign("/admin/orders");
+      return true;
+    }
     if (view === "inventory") {
       window.location.assign("/admin/inventory");
       return true;

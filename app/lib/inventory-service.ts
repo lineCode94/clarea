@@ -92,6 +92,7 @@ export async function updateInventory(request: Request, id: string, kind: "stock
       success: true,
       version: saved.version,
       product: inventoryRows(saved).find((p) => p.id === id),
+      priceHistory: saved.priceHistory.slice(-200).reverse(),
       ...(kind === "pricing" ? { ...figures(c.inventory[id].pricing!), price_updated: true } : {}),
     });
   } catch (e) {
@@ -104,6 +105,8 @@ export async function recordSale(request: Request) {
     await requireAdmin();
     const input = saleInput.parse(await limitedJson(request));
     const c = await readCatalog();
+    if (c.orders.some((o) => o.reference === input.order_reference))
+      throw new AdminError("سجّل تسليم الطلب من صفحة الطلبات", 409);
     const previous = c.sales.find((s) => s.request_id === input.request_id);
     if (previous) {
       if (
@@ -174,7 +177,7 @@ export async function report(request: Request, kind: string) {
       q = new URL(request.url).searchParams,
       today = dayInCairo(new Date().toISOString());
     const category = z
-      .enum(["all", "skin", "hair", "supplements"])
+      .enum(["all", "skin", "hair", "supplements", "oral", "drinks"])
       .parse(q.get("category") || "all");
     const month = z
       .string()

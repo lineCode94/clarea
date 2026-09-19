@@ -24,6 +24,8 @@ const categories = {
   skin: "العناية بالبشرة",
   hair: "العناية بالشعر",
   supplements: "مكملات غذائية",
+  oral: "العناية بالفم",
+  drinks: "المشروبات والماتشا",
 };
 
 export default function AdminPanel({ authenticated }: { authenticated: boolean }) {
@@ -230,6 +232,10 @@ export default function AdminPanel({ authenticated }: { authenticated: boolean }
     setError("");
     setNotice("");
     setQuery("");
+    if (view === "orders") {
+      window.location.assign("/admin/orders");
+      return true;
+    }
     if (view === "inventory") {
       window.location.assign("/admin/inventory");
       return true;

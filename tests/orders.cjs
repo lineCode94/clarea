@@ -1,0 +1,287 @@
+const fs = require("fs"),
+  path = require("path"),
+  vm = require("vm"),
+  assert = require("assert/strict");
+const root = process.env.TEST_SOURCE_ROOT || path.resolve(__dirname, ".."),
+  ts = require(path.join(root, "node_modules/typescript")),
+  z = require(path.join(root, "node_modules/zod"));
+let stored = null,
+  etag = 0,
+  authorized = true,
+  invalidations = 0,
+  forceConflict = false;
+class Precondition extends Error {}
+const modules = {};
+const nextResponse = {
+  json: (body, options = {}) => ({ body, status: options.status || 200, headers: options.headers }),
+};
+const blob = {
+  get: async () =>
+    stored
+      ? { statusCode: 200, stream: JSON.stringify(stored), blob: { etag: `W/"${etag}"` } }
+      : null,
+  put: async (key, text, options) => {
+    if (forceConflict) {
+      forceConflict = false;
+      throw new Precondition();
+    }
+    if ((stored && !options.allowOverwrite) || (stored && options.ifMatch !== `"${etag}"`))
+      throw new Precondition();
+    stored = JSON.parse(text);
+    etag++;
+    return { etag: `"${etag}"` };
+  },
+  BlobPreconditionFailedError: Precondition,
+};
+class AdminError extends Error {
+  constructor(message, status = 400) {
+    super(message);
+    this.status = status;
+  }
+}
+const auth = {
+  AdminError,
+  requireAdmin: async () => {
+    if (!authorized) throw new AdminError("unauthorized", 401);
+  },
+  sameOrigin: (r) => {
+    if (r.headers.get("origin") !== new URL(r.url).origin) throw new AdminError("origin", 403);
+  },
+  limitedJson: async (r) => r.json(),
+};
+const product = {
+  id: "sample",
+  name: "Sample",
+  brand: "Test",
+  category: "skin",
+  available: true,
+  published: true,
+  newArrival: false,
+  images: ["/test.png"],
+  tone: "#ffffff",
+  label: { ar: "ع", en: "x" },
+  description: { ar: "وصف", en: "Description" },
+};
+function load(file) {
+  const full = path.resolve(root, file);
+  if (modules[full]) return modules[full].exports;
+  const m = { exports: {} };
+  modules[full] = m;
+  const source = ts.transpileModule(fs.readFileSync(full, "utf8"), {
+    compilerOptions: { module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2022 },
+  }).outputText;
+  vm.runInNewContext(source, {
+    exports: m.exports,
+    require(name) {
+      if (name === "server-only") return {};
+      if (name === "zod") return z;
+      if (name === "@vercel/blob") return blob;
+      if (name === "next/cache")
+        return { unstable_cache: (fn) => fn, revalidateTag: () => invalidations++ };
+      if (name === "next/server") return { NextResponse: nextResponse };
+      if (name.endsWith("/admin-auth") || name === "./admin-auth") return auth;
+      if (name === "../data/products")
+        return { products: [product, { ...product, id: "draft", published: false }] };
+      if (name === "../config/home-collections") return { homeCollections: { newArrivals: [] } };
+      if (name.startsWith("."))
+        return load(path.relative(root, path.resolve(path.dirname(full), name + ".ts")));
+      return require(name);
+    },
+    process: { env: { CATALOG_NAMESPACE: "unit-test" } },
+    Response,
+    Request,
+    URL,
+    console,
+    Buffer,
+    Intl,
+    Date,
+  });
+  return m.exports;
+}
+const schema = load("app/lib/inventory-schema.ts"),
+  store = load("app/lib/catalog-store.ts"),
+  service = load("app/lib/inventory-service.ts");
+function req(body, pathname = "/api/admin/sales", origin = "https://test.local") {
+  return new Request("https://test.local" + pathname, {
+    method: "POST",
+    headers: { origin, "Content-Type": "application/json" },
+    body: JSON.stringify(body),
+  });
+}
+const get = (path) => new Request("https://test.local" + path);
+
+const orders = load("app/lib/order-service.ts");
+(async () => {
+  let c = await store.readCatalog();
+  c.products = [product, { ...product, id: "second", name: "Second", category: "hair" }];
+  await store.saveCatalog(c.products, c.version, c);
+  const orderInput = {
+    request_id: crypto.randomUUID(),
+    customer: { name: "Private customer", phone: "01000000000", address: "Private address" },
+    notes: "Private note",
+    items: [
+      { product_id: "sample", quantity: 2 },
+      { product_id: "second", quantity: 3 },
+    ],
+  };
+  authorized = false;
+  assert.equal((await orders.listOrders(get("/"))).status, 401);
+  assert.equal((await orders.createOrder(req(orderInput))).status, 401);
+  assert.equal((await orders.changeOrder(req({ status: "delivered" }), "missing")).status, 401);
+  authorized = true;
+  assert.equal((await orders.createOrder(req(orderInput, "/", "https://evil.test"))).status, 403);
+  assert.equal((await orders.createOrder(req(orderInput))).status, 400);
+  for (const id of ["sample", "second"])
+    await service.updateInventory(req({ quantity: 10, min_stock_alert: 2 }), id, "stock");
+  await service.updateInventory(
+    req({ cost_price: 100, selling_price: 250, discount: 10 }),
+    "sample",
+    "pricing",
+  );
+  await service.updateInventory(req({ cost_price: 50, selling_price: 100 }), "second", "pricing");
+  assert.equal((await orders.createOrder(req({ ...orderInput, items: [] }))).status, 400);
+  assert.equal(
+    (
+      await orders.createOrder(
+        req({ ...orderInput, items: [{ product_id: "sample", quantity: 1.5 }] }),
+      )
+    ).status,
+    400,
+  );
+  assert.equal(
+    (
+      await orders.createOrder(
+        req({
+          ...orderInput,
+          items: [
+            { product_id: "sample", quantity: 1 },
+            { product_id: "sample", quantity: 2 },
+          ],
+        }),
+      )
+    ).status,
+    400,
+  );
+  assert.equal(
+    (
+      await orders.createOrder(
+        req({ ...orderInput, items: [{ product_id: "sample", quantity: 11 }] }),
+      )
+    ).status,
+    409,
+  );
+  assert.equal((await orders.createOrder(req({ ...orderInput, version: "stale" }))).status, 409);
+  const created = await orders.createOrder(req(orderInput));
+  assert.equal(created.status, 200);
+  const order = created.body.order;
+  assert.match(order.reference, /^CL-\d{8}-000001$/);
+  assert.equal(order.revenue, 750);
+  assert.equal(order.cost, 350);
+  assert.equal(order.profit, 400);
+  assert.equal(order.status, "pending");
+  c = await store.readCatalog();
+  assert.equal(c.inventory.sample.stock.quantity, 10);
+  assert.equal(c.sales.length, 0);
+  assert.equal((await orders.createOrder(req(orderInput))).body.duplicate, true);
+  assert.equal((await orders.createOrder(req({ ...orderInput, notes: "different" }))).status, 409);
+  assert.equal((await store.readCatalog()).orders.length, 1);
+  // Product price changes must not rewrite already-agreed order totals.
+  await service.updateInventory(req({ cost_price: 200, selling_price: 400 }), "sample", "pricing");
+  await service.updateInventory(req({ quantity: 2, min_stock_alert: 2 }), "second", "stock");
+  assert.equal((await orders.changeOrder(req({ status: "delivered" }), order.id)).status, 409);
+  c = await store.readCatalog();
+  assert.equal(c.inventory.sample.stock.quantity, 10);
+  assert.equal(c.sales.length, 0);
+  assert.equal(c.orders[0].status, "pending");
+  await service.updateInventory(req({ quantity: 10, min_stock_alert: 2 }), "second", "stock");
+  forceConflict = true;
+  assert.equal((await orders.changeOrder(req({ status: "delivered" }), order.id)).status, 409);
+  assert.equal((await store.readCatalog()).sales.length, 0);
+  assert.equal((await orders.changeOrder(req({ status: "delivered" }), order.id)).status, 200);
+  c = await store.readCatalog();
+  assert.equal(c.sales.length, 2);
+  assert.equal(c.inventory.sample.stock.quantity, 8);
+  assert.equal(c.inventory.second.stock.quantity, 7);
+  assert.equal(c.sales.find((s) => s.product_id === "sample").selling_price, 225);
+  assert.equal(c.sales.find((s) => s.product_id === "sample").cost_price, 100);
+  assert.equal(
+    (await orders.changeOrder(req({ status: "delivered" }), order.id)).body.duplicate,
+    true,
+  );
+  assert.equal((await orders.changeOrder(req({ status: "cancelled" }), order.id)).status, 409);
+  assert.equal((await store.readCatalog()).sales.length, 2);
+  const report = (await service.report(get("/"), "monthly-profit")).body;
+  assert.equal(report.total_revenue, 750);
+  assert.equal(report.total_profit, 400);
+  assert.equal(report.units_sold, 5);
+  assert.equal(report.orders_count, 1);
+  assert.equal(
+    (
+      await service.recordSale(
+        req({
+          product_id: "sample",
+          quantity_sold: 1,
+          request_id: crypto.randomUUID(),
+          order_reference: order.reference,
+        }),
+      )
+    ).status,
+    409,
+  );
+  const another = {
+    ...orderInput,
+    request_id: crypto.randomUUID(),
+    items: [
+      { product_id: "sample", quantity: 1 },
+      { product_id: "second", quantity: 1 },
+    ],
+  };
+  const cancelled = (await orders.createOrder(req(another))).body.order;
+  assert.equal((await orders.changeOrder(req({ status: "cancelled" }), cancelled.id)).status, 200);
+  assert.equal((await orders.changeOrder(req({ status: "delivered" }), cancelled.id)).status, 409);
+  assert.equal((await store.readCatalog()).inventory.sample.stock.quantity, 8);
+  const pending = (await orders.createOrder(req({ ...another, request_id: crypto.randomUUID() })))
+    .body.order;
+  const deliveries = await Promise.all([
+    orders.changeOrder(req({ status: "delivered" }), pending.id),
+    orders.changeOrder(req({ status: "delivered" }), pending.id),
+  ]);
+  assert.equal(deliveries.filter((r) => r.status === 200).length, 1);
+  c = await store.readCatalog();
+  assert.equal(c.sales.length, 4);
+  assert.equal(c.inventory.sample.stock.quantity, 7);
+  assert.equal(c.inventory.second.stock.quantity, 6);
+  const concurrent = [
+    { ...another, request_id: crypto.randomUUID() },
+    { ...another, request_id: crypto.randomUUID() },
+  ];
+  const results = await Promise.all(concurrent.map((i) => orders.createOrder(req(i))));
+  assert.equal(results.filter((r) => r.status === 200).length, 1);
+  const failed = results.findIndex((r) => r.status === 409);
+  assert.equal((await orders.createOrder(req(concurrent[failed]))).status, 200);
+  c = await store.readCatalog();
+  assert.equal(new Set(c.orders.map((o) => o.reference)).size, c.orders.length);
+  const before = c.orders.length;
+  await store.saveCatalog(c.products, c.version);
+  assert.equal((await store.readCatalog()).orders.length, before);
+  const publicJSON = JSON.stringify(await store.publicCatalog());
+  for (const token of [
+    "Private customer",
+    "Private address",
+    "Private note",
+    "01000000000",
+    "orders",
+    "customer",
+    "orderSequence",
+  ])
+    assert(!publicJSON.includes(token), token + " leaked");
+  assert.equal((await orders.listOrders(get("/?status=cancelled"))).body.total, 1);
+  assert.equal((await orders.listOrders(get("/?q=" + order.reference))).body.total, 1);
+  assert.equal((await orders.listOrders(get("/?offset=999"))).body.orders.length, 0);
+  console.log(
+    "PASS orders: private auth, automatic unique numbering, creation replay safety, multi-item discount totals, immutable snapshots, all-or-nothing delivery, concurrency, cancellation, one-order report counts and no public customer leakage",
+  );
+})().catch((e) => {
+  console.error(e);
+  process.exitCode = 1;
+});

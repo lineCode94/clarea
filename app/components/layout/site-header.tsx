@@ -87,7 +87,7 @@ export default function SiteHeader({
             <button className="min-h-10 hover:text-brand" onClick={() => onCategoryChange("skin")}>
               {t.skin}
             </button>
-            {(["hair", "supplements"] as const).map((category) => (
+            {(["hair", "supplements", "oral", "drinks"] as const).map((category) => (
               <button key={category} className="min-h-10 hover:text-brand" onClick={() => onCategoryChange(category)}>{t[category]}</button>
             ))}
             <a className="inline-flex min-h-10 items-center hover:text-brand" href="#about">
