@@ -8,6 +8,7 @@ type Product = {
   id: string;
   name: string;
   brand?: string;
+  image?: string;
   stock: number | null;
   status: string;
   stock_initialized: boolean;
@@ -107,6 +108,10 @@ export default function OrdersPanel({ mode = "list" }: { mode?: "list" | "new" }
   async function create(e: FormEvent) {
     e.preventDefault();
     if (busy || !version) return;
+    if (lines.some((line) => !line.product_id)) {
+      setError("اختر منتجاً لكل سطر من نتائج البحث أولاً.");
+      return;
+    }
     setBusy(true);
     setError("");
     setNotice("");
@@ -318,9 +323,7 @@ export default function OrdersPanel({ mode = "list" }: { mode?: "list" | "new" }
                   const matches = products.filter((product) =>
                     matchesAdminProduct(product, line.search || ""),
                   );
-                  const options = products.filter(
-                    (product) => product.id === line.product_id || matches.includes(product),
-                  );
+
                   return (
                     <div key={i} className="rounded-xl border border-[#e8ddd5] p-4">
                       <label className="mb-4 block">
@@ -342,7 +345,7 @@ export default function OrdersPanel({ mode = "list" }: { mode?: "list" | "new" }
                         />
                         <span role="status" className="mt-2 block text-xs text-[#806b63]">
                           {matches.length
-                            ? matches.length + " منتج مطابق — اختر من القائمة"
+                            ? matches.length + " منتج مطابق — اضغط على المنتج لاختياره"
                             : "لا توجد نتائج مطابقة. جرّب اسم المنتج أو الماركة."}
                           {line.product_id &&
                           line.search &&
@@ -352,37 +355,12 @@ export default function OrdersPanel({ mode = "list" }: { mode?: "list" | "new" }
                         </span>
                       </label>
                       <div className="grid grid-cols-1 gap-3 md:grid-cols-[minmax(0,1fr)_120px_auto]">
-                        <label>
-                          المنتج {i + 1}
-                          <select
-                            required
-                            className={field}
-                            aria-label={`المنتج ${i + 1}`}
-                            value={line.product_id}
-                            onChange={(e) => changeLine(i, { product_id: e.target.value })}
-                          >
-                            <option value="">اختر المنتج</option>
-                            {options.map((p) => (
-                              <option
-                                key={p.id}
-                                value={p.id}
-                                disabled={
-                                  !p.pricing_initialized ||
-                                  !p.stock_initialized ||
-                                  p.status !== "available" ||
-                                  lines.some((l, j) => j !== i && l.product_id === p.id)
-                                }
-                              >
-                                {p.name}
-                                {!p.pricing_initialized || !p.stock_initialized
-                                  ? " — أكمل الأسعار والمخزون"
-                                  : p.status !== "available"
-                                    ? " — غير متوفر"
-                                    : ""}
-                              </option>
-                            ))}
-                          </select>
-                        </label>
+                        <div className="min-w-0">
+                          <p className="m-0 text-sm">المنتج المختار {i + 1}</p>
+                          <div className="mt-2 rounded-xl bg-[#f8f5f1] p-3 font-bold">
+                            {p?.name || "ابحث واختر منتجاً من النتائج"}
+                          </div>
+                        </div>
                         <label>
                           الكمية {i + 1}
                           <input
