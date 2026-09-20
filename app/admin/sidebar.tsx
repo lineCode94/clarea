@@ -9,6 +9,13 @@ import {
   TbFileText,
   TbPlus,
   TbArrowUpRight,
+  TbShoppingCartPlus,
+  TbClipboardList,
+  TbBuildingWarehouse,
+  TbTags,
+  TbChartBar,
+  TbReceipt,
+  TbGift,
 } from "react-icons/tb";
 
 export const adminExtraPaths = {
@@ -36,13 +43,13 @@ export default function AdminSidebar({ active, onNavigate, disabled }: Props) {
     { id: "published", label: "المنتجات المنشورة", Icon: TbCheck },
     { id: "draft", label: "المسودات", Icon: TbFileText },
     { id: "new", label: "إضافة منتج", Icon: TbPlus },
-    { id: "new-order", label: "إدخال طلب جديد", Icon: TbPlus },
-    { id: "orders", label: "سجل الطلبات", Icon: TbPackage },
-    { id: "inventory", label: "المخزون", Icon: TbPackage },
-    { id: "pricing", label: "الأسعار والخصومات", Icon: TbFileText },
-    { id: "reports", label: "التقارير والمبيعات", Icon: TbFileText },
-    { id: "supplier", label: "حساب المورد", Icon: TbFileText },
-    { id: "codes", label: "فحص أكواد الهدايا", Icon: TbCheck },
+    { id: "new-order", label: "إدخال طلب جديد", Icon: TbShoppingCartPlus },
+    { id: "orders", label: "سجل الطلبات", Icon: TbClipboardList },
+    { id: "inventory", label: "المخزون", Icon: TbBuildingWarehouse },
+    { id: "pricing", label: "الأسعار والخصومات", Icon: TbTags },
+    { id: "reports", label: "التقارير والمبيعات", Icon: TbChartBar },
+    { id: "supplier", label: "حساب المورد", Icon: TbReceipt },
+    { id: "codes", label: "فحص أكواد الهدايا", Icon: TbGift },
   ] as const;
   function close() {
     drawer.current?.close();
