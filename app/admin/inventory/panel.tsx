@@ -2,7 +2,7 @@
 import { useEffect, useState, type FormEvent } from "react";
 import SupplierPanel from "./supplier-panel";
 import { matchesAdminProduct } from "../../lib/admin-search";
-import AdminSidebar, { type AdminView } from "../sidebar";
+import AdminSidebar, { adminExtraPaths, type AdminView } from "../sidebar";
 import { figures, dayInCairo, type Sale } from "../../lib/inventory-schema";
 type Row = {
   id: string;
@@ -70,12 +70,22 @@ async function api(url: string, init?: RequestInit) {
   if (!r.ok) throw new Error(b.error || "تعذر إكمال الطلب");
   return b;
 }
-export default function InventoryPanel() {
+export default function InventoryPanel({
+  mode = "inventory",
+}: {
+  mode?: "inventory" | "pricing" | "reports" | "supplier";
+}) {
+  const title = {
+    inventory: "المخزون",
+    pricing: "الأسعار والخصومات",
+    reports: "التقارير والمبيعات",
+    supplier: "حساب المورد",
+  }[mode];
   const [data, setData] = useState<Data | null>(null),
     [error, setError] = useState(""),
     [notice, setNotice] = useState(""),
     [busy, setBusy] = useState(false),
-    [tab, setTab] = useState("inventory"),
+    [tab, setTab] = useState<string>(mode),
     [query, setQuery] = useState(""),
     [lowOnly, setLowOnly] = useState(false),
     [category, setCategory] = useState("all");
@@ -175,11 +185,7 @@ export default function InventoryPanel() {
             }
           : current,
       );
-      setNotice(
-        kind === "stock"
-          ? "تم حفظ المخزون فقط. بيانات الأسعار التي كتبتها كما هي."
-          : "تم حفظ الأسعار فقط. بيانات المخزون التي كتبتها كما هي.",
-      );
+      setNotice(kind === "stock" ? "تم حفظ المخزون." : "تم حفظ الأسعار والخصم.");
     } catch (e) {
       setError(e instanceof Error ? e.message : "تعذر الحفظ");
     } finally {
@@ -202,8 +208,16 @@ export default function InventoryPanel() {
         matchesAdminProduct(p, query),
     ) || [];
   function navigate(view: AdminView) {
+    if (view in adminExtraPaths) {
+      window.location.assign(adminExtraPaths[view as keyof typeof adminExtraPaths]);
+      return true;
+    }
     if (view === "orders") {
       window.location.assign("/admin/orders");
+      return true;
+    }
+    if (view === "inventory" && mode !== "inventory") {
+      window.location.assign("/admin/inventory");
       return true;
     }
     if (view !== "inventory")
@@ -216,31 +230,33 @@ export default function InventoryPanel() {
       className="admin-panel min-h-dvh bg-[#f8f5f1] font-arabic text-[#412832] lg:pr-64"
     >
       <style>{`.admin-panel,.admin-panel *{cursor:auto}.admin-panel button,.admin-panel a{cursor:pointer}.admin-panel input{cursor:text}`}</style>
-      <AdminSidebar active="inventory" onNavigate={navigate} disabled={busy} />
+      <AdminSidebar active={mode} onNavigate={navigate} disabled={busy} />
       <header className="border-b border-[#e8ddd5] bg-white py-5 pl-5 pr-16 lg:px-8">
-        <h1 className="m-0 text-xl">المخزون والأسعار</h1>
+        <h1 className="m-0 text-xl">{title}</h1>
         <p className="mb-0 mt-2 text-sm text-[#917c73]">
           بيانات خاصة بالإدارة · الأسعار لا تظهر للعملاء
         </p>
       </header>
       <div className="mx-auto max-w-7xl space-y-5 p-4 sm:p-8">
         <div className="flex flex-wrap gap-2">
-          {[
-            ["inventory", "المخزون"],
-            ["reports", "التقارير"],
-            ["supplier", "حساب المورد"],
-            ["sales", "سجل المبيعات"],
-            ["history", "تاريخ الأسعار"],
-          ].map(([id, title]) => (
+          {(mode === "reports"
+            ? [
+                ["reports", "ملخص التقارير"],
+                ["sales", "سجل المبيعات"],
+              ]
+            : mode === "pricing"
+              ? [
+                  ["pricing", "تعديل الأسعار"],
+                  ["history", "تاريخ الأسعار"],
+                ]
+              : []
+          ).map(([id, label]) => (
             <button
               key={id}
-              disabled={busy}
+              className={tab === id ? button : "rounded-xl border px-5 py-3"}
               onClick={() => setTab(id)}
-              className={
-                tab === id ? button : "rounded-xl border border-[#dfd2c8] bg-white px-5 py-3"
-              }
             >
-              {title}
+              {label}
             </button>
           ))}
           <button
@@ -302,12 +318,18 @@ export default function InventoryPanel() {
                 <option value="drinks">المشروبات والماتشا</option>
               </select>
             </label>
-            {tab === "inventory" && (
+            {(tab === "inventory" || tab === "pricing") && (
               <>
                 <p className="text-sm leading-7 text-[#806b63]">
-                  أدخل الكمية المؤكدة عندك أو لدى المورد. المنتج غير المهيأ يحتفظ بحالة توفره
-                  الحالية. بعد تهيئة المخزون، الكمية هي التي تحدد التوفر على الموقع. تنبيهات المخزون
-                  تظهر هنا داخل الإدارة.
+                  {mode === "pricing" ? (
+                    "اختر المنتج لتعديل سعر الشراء والبيع والخصم. الأسعار الجديدة لا تغير حسابات الطلبات السابقة."
+                  ) : (
+                    <>
+                      أدخل الكمية المؤكدة عندك أو لدى المورد. المنتج غير المهيأ يحتفظ بحالة توفره
+                      الحالية. بعد تهيئة المخزون، الكمية هي التي تحدد التوفر على الموقع. تنبيهات
+                      المخزون تظهر هنا داخل الإدارة.
+                    </>
+                  )}
                 </p>
                 <div className="flex flex-wrap items-center gap-4">
                   <input
@@ -317,7 +339,7 @@ export default function InventoryPanel() {
                     value={query}
                     onChange={(e) => setQuery(e.target.value)}
                   />
-                  <label className="flex items-center gap-2">
+                  <label className={mode === "inventory" ? "flex items-center gap-2" : "hidden"}>
                     <input
                       type="checkbox"
                       checked={lowOnly}
@@ -351,10 +373,12 @@ export default function InventoryPanel() {
                         الكمية: {p.stock ?? "غير مسجلة"}{" "}
                         {p.low_stock && <span className="text-red-700"> · مخزون منخفض</span>}
                       </p>
-                      <p className="mb-0 text-sm">
-                        البيع بعد الخصم: {money(p.effective_price)} ج · ربح الوحدة:{" "}
-                        {money(p.profit_per_unit)} ج
-                      </p>
+                      {mode === "pricing" && (
+                        <p className="mb-0 text-sm">
+                          البيع بعد الخصم: {money(p.effective_price)} ج · ربح الوحدة:{" "}
+                          {money(p.profit_per_unit)} ج
+                        </p>
+                      )}
                     </button>
                   ))}
                 </div>
@@ -362,99 +386,87 @@ export default function InventoryPanel() {
                 {selected && (
                   <section className="space-y-4" aria-label="إدارة المنتج">
                     <h2 className="break-words text-xl">{selected.name}</h2>
-                    <div className="grid gap-4 xl:grid-cols-3">
-                      <form onSubmit={(e) => save(e, "stock")} className={card}>
-                        <h3 className="mt-0">المخزون</h3>
-                        <label className="block">
-                          الكمية المؤكدة
-                          <input
-                            required
-                            type="number"
-                            min="0"
-                            max="1000000"
-                            step="1"
-                            className={field}
-                            value={quantity}
-                            onChange={(e) => setQuantity(e.target.value)}
-                          />
-                        </label>
-                        <label className="mt-4 block">
-                          تنبيه عندما تقل الكمية عن
-                          <input
-                            required
-                            type="number"
-                            min="0"
-                            max="1000000"
-                            step="1"
-                            className={field}
-                            value={min}
-                            onChange={(e) => setMin(e.target.value)}
-                          />
-                        </label>
-                        <label className="my-5 flex gap-2">
-                          <input
-                            type="checkbox"
-                            checked={coming}
-                            onChange={(e) => setComing(e.target.checked)}
-                          />
-                          قريباً (عند كمية صفر)
-                        </label>
-                        <button disabled={busy} className={button}>
-                          حفظ المخزون
-                        </button>
-                      </form>
-                      <form onSubmit={(e) => save(e, "pricing")} className={card}>
-                        <h3 className="mt-0">الأسعار بالجنيه المصري</h3>
-                        {[
-                          ["سعر الشراء", cost, setCost],
-                          ["سعر البيع قبل الخصم", price, setPrice],
-                          ["الخصم %", discount, setDiscount],
-                        ].map(([label, value, set], i) => (
-                          <label key={String(label)} className="mb-3 block">
-                            {String(label)}
+                    <div className="max-w-2xl space-y-4">
+                      {mode === "inventory" && (
+                        <form onSubmit={(e) => save(e, "stock")} className={card}>
+                          <h3 className="mt-0">المخزون</h3>
+                          <label className="block">
+                            الكمية المؤكدة
                             <input
                               required
                               type="number"
                               min="0"
-                              max={i === 2 ? 100 : 10000000}
-                              step="0.01"
+                              max="1000000"
+                              step="1"
                               className={field}
-                              value={String(value)}
-                              onChange={(e) => (set as (v: string) => void)(e.target.value)}
+                              value={quantity}
+                              onChange={(e) => setQuantity(e.target.value)}
                             />
                           </label>
-                        ))}
-                        {preview && (
-                          <div className="mb-4 rounded-xl bg-[#f8f5f1] p-3 text-sm leading-7">
-                            البيع الفعلي: {money(preview.effective_price)} ج<br />
-                            ربح الوحدة: {money(preview.profit_per_unit)} ج<br />
-                            نسبة الربح على التكلفة: {money(preview.profit_margin)}%<br />
-                            هامش المبيعات: {money(preview.sales_margin)}%
-                            {preview.profit_per_unit < 0 && (
-                              <p className="text-red-700">السعر بعد الخصم أقل من تكلفة الشراء.</p>
-                            )}
-                          </div>
-                        )}
-                        <button disabled={busy} className={button}>
-                          حفظ الأسعار
-                        </button>
-                      </form>
-                      <section className={card}>
-                        <h3 className="mt-0">الطلبات والتسليم</h3>
-                        <p className="text-sm leading-7">
-                          أنشئ طلباً برقم تلقائي، وأضف كل المنتجات وكمياتها. عند اختيار «تم تسليمه»
-                          يتم خصم الكميات وتسجيل المبيعات للطلب كله.
-                        </p>
-                        <a
-                          className={button + " inline-block"}
-                          href={`/admin/orders?product=${selected.id}`}
-                        >
-                          إنشاء طلب بهذا المنتج
-                        </a>
-                        <a className="mt-4 block text-sm underline" href="/admin/orders">
-                          عرض كل الطلبات
-                        </a>
-                      </section>
+                          <label className="mt-4 block">
+                            تنبيه عندما تقل الكمية عن
+                            <input
+                              required
+                              type="number"
+                              min="0"
+                              max="1000000"
+                              step="1"
+                              className={field}
+                              value={min}
+                              onChange={(e) => setMin(e.target.value)}
+                            />
+                          </label>
+                          <label className="my-5 flex gap-2">
+                            <input
+                              type="checkbox"
+                              checked={coming}
+                              onChange={(e) => setComing(e.target.checked)}
+                            />
+                            قريباً (عند كمية صفر)
+                          </label>
+                          <button disabled={busy} className={button}>
+                            حفظ المخزون
+                          </button>
+                        </form>
+                      )}
+                      {mode === "pricing" && (
+                        <form onSubmit={(e) => save(e, "pricing")} className={card}>
+                          <h3 className="mt-0">الأسعار بالجنيه المصري</h3>
+                          {[
+                            ["سعر الشراء", cost, setCost],
+                            ["سعر البيع قبل الخصم", price, setPrice],
+                            ["الخصم %", discount, setDiscount],
+                          ].map(([label, value, set], i) => (
+                            <label key={String(label)} className="mb-3 block">
+                              {String(label)}
+                              <input
+                                required
+                                type="number"
+                                min="0"
+                                max={i === 2 ? 100 : 10000000}
+                                step="0.01"
+                                className={field}
+                                value={String(value)}
+                                onChange={(e) => (set as (v: string) => void)(e.target.value)}
+                              />
+                            </label>
+                          ))}
+                          {preview && (
+                            <div className="mb-4 rounded-xl bg-[#f8f5f1] p-3 text-sm leading-7">
+                              البيع الفعلي: {money(preview.effective_price)} ج<br />
+                              ربح الوحدة: {money(preview.profit_per_unit)} ج<br />
+                              نسبة الربح على التكلفة: {money(preview.profit_margin)}%<br />
+                              هامش المبيعات: {money(preview.sales_margin)}%
+                              {preview.profit_per_unit < 0 && (
+                                <p className="text-red-700">السعر بعد الخصم أقل من تكلفة الشراء.</p>
+                              )}
+                            </div>
+                          )}
+                          <button disabled={busy} className={button}>
+                            حفظ الأسعار
+                          </button>
+                        </form>
+                      )}
                     </div>
                   </section>
                 )}

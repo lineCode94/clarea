@@ -11,7 +11,21 @@ import {
   TbArrowUpRight,
 } from "react-icons/tb";
 
-export type AdminView = "all" | "published" | "draft" | "new" | "codes" | "inventory" | "orders";
+export const adminExtraPaths = {
+  pricing: "/admin/pricing",
+  reports: "/admin/reports",
+  supplier: "/admin/supplier",
+  "new-order": "/admin/orders/new",
+};
+export type AdminView =
+  | "all"
+  | "published"
+  | "draft"
+  | "new"
+  | "codes"
+  | "inventory"
+  | "orders"
+  | keyof typeof adminExtraPaths;
 type Props = { active: AdminView; onNavigate: (view: AdminView) => boolean; disabled: boolean };
 
 export default function AdminSidebar({ active, onNavigate, disabled }: Props) {
@@ -22,8 +36,12 @@ export default function AdminSidebar({ active, onNavigate, disabled }: Props) {
     { id: "published", label: "المنتجات المنشورة", Icon: TbCheck },
     { id: "draft", label: "المسودات", Icon: TbFileText },
     { id: "new", label: "إضافة منتج", Icon: TbPlus },
-    { id: "orders", label: "الطلبات", Icon: TbPackage },
-    { id: "inventory", label: "المخزون والأسعار والتقارير", Icon: TbPackage },
+    { id: "new-order", label: "إدخال طلب جديد", Icon: TbPlus },
+    { id: "orders", label: "سجل الطلبات", Icon: TbPackage },
+    { id: "inventory", label: "المخزون", Icon: TbPackage },
+    { id: "pricing", label: "الأسعار والخصومات", Icon: TbFileText },
+    { id: "reports", label: "التقارير والمبيعات", Icon: TbFileText },
+    { id: "supplier", label: "حساب المورد", Icon: TbFileText },
     { id: "codes", label: "فحص أكواد الهدايا", Icon: TbCheck },
   ] as const;
   function close() {

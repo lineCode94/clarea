@@ -13,7 +13,7 @@ import {
   TbLock,
 } from "react-icons/tb";
 import { matchesAdminProduct } from "../lib/admin-search";
-import AdminSidebar, { type AdminView } from "./sidebar";
+import AdminSidebar, { adminExtraPaths, type AdminView } from "./sidebar";
 import type { ManagedProduct } from "../lib/catalog-schema";
 
 type Catalog = { products: ManagedProduct[]; version: string };
@@ -230,6 +230,10 @@ export default function AdminPanel({ authenticated }: { authenticated: boolean }
 
   function navigate(view: AdminView) {
     if (busy || uploading || loading || !canLeave()) return false;
+    if (view in adminExtraPaths) {
+      window.location.assign(adminExtraPaths[view as keyof typeof adminExtraPaths]);
+      return true;
+    }
     setError("");
     setNotice("");
     setQuery("");

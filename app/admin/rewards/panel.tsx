@@ -1,7 +1,7 @@
 "use client";
 import { useState, type FormEvent } from "react";
 import { TbSearch, TbCheck, TbLogout } from "react-icons/tb";
-import AdminSidebar, { type AdminView } from "../sidebar";
+import AdminSidebar, { adminExtraPaths, type AdminView } from "../sidebar";
 import { rewardsConfig } from "../../config/rewards";
 type Result = {
   status: "valid" | "used" | "invalid" | "legacy" | "inactive";
@@ -85,6 +85,10 @@ export default function RewardVerification() {
     }
   }
   function navigate(view: AdminView) {
+    if (view in adminExtraPaths) {
+      window.location.assign(adminExtraPaths[view as keyof typeof adminExtraPaths]);
+      return true;
+    }
     if (view === "orders") {
       window.location.assign("/admin/orders");
       return true;

@@ -1,6 +1,6 @@
 "use client";
 import { useEffect, useState, type FormEvent } from "react";
-import AdminSidebar, { type AdminView } from "../sidebar";
+import AdminSidebar, { adminExtraPaths, type AdminView } from "../sidebar";
 import type { Order } from "../../lib/order-schema";
 import { round } from "../../lib/inventory-schema";
 type Product = {
@@ -25,7 +25,7 @@ async function api(url: string, init?: RequestInit) {
   if (!r.ok) throw new Error(data.error || "تعذر إكمال الطلب");
   return data;
 }
-export default function OrdersPanel() {
+export default function OrdersPanel({ mode = "list" }: { mode?: "list" | "new" }) {
   const [products, setProducts] = useState<Product[]>([]),
     [version, setVersion] = useState(""),
     [orders, setOrders] = useState<Order[]>([]),
@@ -51,6 +51,7 @@ export default function OrdersPanel() {
     setVersion(data.version);
   }
   async function loadOrders() {
+    if (mode === "new") return;
     const data = await api(
       `/api/admin/orders?offset=${offset}&status=${filter}&q=${encodeURIComponent(query)}`,
     );
@@ -64,6 +65,10 @@ export default function OrdersPanel() {
     loadProducts().catch((e) => setError(e.message));
   }, []);
   useEffect(() => {
+    if (mode === "new") {
+      setLoading(false);
+      return;
+    }
     let active = true;
     setLoading(true);
     api(`/api/admin/orders?offset=${offset}&status=${filter}&q=${encodeURIComponent(query)}`)
@@ -82,7 +87,7 @@ export default function OrdersPanel() {
     return () => {
       active = false;
     };
-  }, [offset, filter, query]);
+  }, [offset, filter, query, mode]);
   function changed() {
     setRequestId(crypto.randomUUID());
   }
@@ -167,6 +172,14 @@ export default function OrdersPanel() {
     }
   }
   function navigate(view: AdminView) {
+    if (view in adminExtraPaths) {
+      window.location.assign(adminExtraPaths[view as keyof typeof adminExtraPaths]);
+      return true;
+    }
+    if (view === "orders" && mode === "new") {
+      window.location.assign("/admin/orders");
+      return true;
+    }
     if (view !== "orders")
       window.location.assign(
         view === "inventory"
@@ -183,9 +196,13 @@ export default function OrdersPanel() {
       className="admin-panel min-h-dvh bg-[#f8f5f1] font-arabic text-[#412832] lg:pr-64"
     >
       <style>{`.admin-panel,.admin-panel *{cursor:auto}.admin-panel button,.admin-panel a{cursor:pointer}`}</style>
-      <AdminSidebar active="orders" onNavigate={navigate} disabled={busy} />
+      <AdminSidebar
+        active={mode === "new" ? "new-order" : "orders"}
+        onNavigate={navigate}
+        disabled={busy}
+      />
       <header className="border-b border-[#e8ddd5] bg-white py-5 pl-5 pr-16 lg:px-8">
-        <h1 className="m-0 text-xl">إدارة الطلبات</h1>
+        <h1 className="m-0 text-xl">{mode === "new" ? "إدخال طلب جديد" : "سجل الطلبات"}</h1>
         <p className="mb-0 mt-2 text-sm text-[#917c73]">
           رقم تلقائي لكل طلب · منتجات متعددة · حساب موحد
         </p>
@@ -215,6 +232,12 @@ export default function OrdersPanel() {
         >
           تحديث البيانات والأسعار
         </button>
+        <a
+          className="inline-block rounded-xl border bg-white px-5 py-3"
+          href={mode === "new" ? "/admin/orders" : "/admin/orders/new"}
+        >
+          {mode === "new" ? "عرض سجل الطلبات" : "إدخال طلب جديد"}
+        </a>
         {created && (
           <section className={card}>
             <p className="mt-0 text-sm">آخر طلب أنشأته</p>
@@ -226,304 +249,311 @@ export default function OrdersPanel() {
             </p>
           </section>
         )}
-        <form onSubmit={create} className={card}>
-          <fieldset disabled={busy || !version} className="min-w-0 border-0 p-0">
-            <legend className="mb-4 text-xl font-bold">إنشاء طلب جديد</legend>
-            <p className="mt-0 text-sm leading-7">
-              رقم الطلب يظهر تلقائياً بعد الحفظ. الطلب قيد التجهيز لا يحجز أو يخصم المخزون؛ الخصم
-              وتسجيل الأرباح عند «تم تسليمه». الأسعار تُثبت وقت إنشاء الطلب.
-            </p>
-            <div className="grid gap-4 md:grid-cols-2">
-              <label>
-                اسم العميل
-                <input
-                  required
-                  maxLength={120}
-                  className={field}
-                  value={name}
-                  onChange={(e) => {
-                    setName(e.target.value);
-                    changed();
-                  }}
-                />
-              </label>
-              <label>
-                رقم الهاتف (اختياري)
-                <input
-                  type="tel"
-                  maxLength={40}
-                  className={field}
-                  value={phone}
-                  onChange={(e) => {
-                    setPhone(e.target.value);
-                    changed();
-                  }}
-                />
-              </label>
-              <label>
-                العنوان (اختياري)
-                <input
-                  maxLength={500}
-                  className={field}
-                  value={address}
-                  onChange={(e) => {
-                    setAddress(e.target.value);
-                    changed();
-                  }}
-                />
-              </label>
-              <label>
-                ملاحظات (اختياري)
-                <input
-                  maxLength={1000}
-                  className={field}
-                  value={notes}
-                  onChange={(e) => {
-                    setNotes(e.target.value);
-                    changed();
-                  }}
-                />
-              </label>
-            </div>
-            <h2 className="mt-6 text-lg">منتجات الطلب</h2>
-            <div className="space-y-3">
-              {lines.map((line, i) => {
-                const p = products.find((p) => p.id === line.product_id);
-                return (
-                  <div key={i} className="rounded-xl border border-[#e8ddd5] p-4">
-                    <div className="grid grid-cols-1 gap-3 md:grid-cols-[minmax(0,1fr)_120px_auto]">
-                      <label>
-                        المنتج {i + 1}
-                        <select
-                          required
-                          className={field}
-                          aria-label={`المنتج ${i + 1}`}
-                          value={line.product_id}
-                          onChange={(e) => changeLine(i, { product_id: e.target.value })}
+        {mode === "new" && (
+          <form onSubmit={create} className={card}>
+            <fieldset disabled={busy || !version} className="min-w-0 border-0 p-0">
+              <legend className="mb-4 text-xl font-bold">إنشاء طلب جديد</legend>
+              <p className="mt-0 text-sm leading-7">
+                رقم الطلب يظهر تلقائياً بعد الحفظ. الطلب قيد التجهيز لا يحجز أو يخصم المخزون؛ الخصم
+                وتسجيل الأرباح عند «تم تسليمه». الأسعار تُثبت وقت إنشاء الطلب.
+              </p>
+              <div className="grid gap-4 md:grid-cols-2">
+                <label>
+                  اسم العميل
+                  <input
+                    required
+                    maxLength={120}
+                    className={field}
+                    value={name}
+                    onChange={(e) => {
+                      setName(e.target.value);
+                      changed();
+                    }}
+                  />
+                </label>
+                <label>
+                  رقم الهاتف (اختياري)
+                  <input
+                    type="tel"
+                    maxLength={40}
+                    className={field}
+                    value={phone}
+                    onChange={(e) => {
+                      setPhone(e.target.value);
+                      changed();
+                    }}
+                  />
+                </label>
+                <label>
+                  العنوان (اختياري)
+                  <input
+                    maxLength={500}
+                    className={field}
+                    value={address}
+                    onChange={(e) => {
+                      setAddress(e.target.value);
+                      changed();
+                    }}
+                  />
+                </label>
+                <label>
+                  ملاحظات (اختياري)
+                  <input
+                    maxLength={1000}
+                    className={field}
+                    value={notes}
+                    onChange={(e) => {
+                      setNotes(e.target.value);
+                      changed();
+                    }}
+                  />
+                </label>
+              </div>
+              <h2 className="mt-6 text-lg">منتجات الطلب</h2>
+              <div className="space-y-3">
+                {lines.map((line, i) => {
+                  const p = products.find((p) => p.id === line.product_id);
+                  return (
+                    <div key={i} className="rounded-xl border border-[#e8ddd5] p-4">
+                      <div className="grid grid-cols-1 gap-3 md:grid-cols-[minmax(0,1fr)_120px_auto]">
+                        <label>
+                          المنتج {i + 1}
+                          <select
+                            required
+                            className={field}
+                            aria-label={`المنتج ${i + 1}`}
+                            value={line.product_id}
+                            onChange={(e) => changeLine(i, { product_id: e.target.value })}
+                          >
+                            <option value="">اختر المنتج</option>
+                            {products.map((p) => (
+                              <option
+                                key={p.id}
+                                value={p.id}
+                                disabled={
+                                  !p.pricing_initialized ||
+                                  !p.stock_initialized ||
+                                  p.status !== "available" ||
+                                  lines.some((l, j) => j !== i && l.product_id === p.id)
+                                }
+                              >
+                                {p.name}
+                                {!p.pricing_initialized || !p.stock_initialized
+                                  ? " — أكمل الأسعار والمخزون"
+                                  : p.status !== "available"
+                                    ? " — غير متوفر"
+                                    : ""}
+                              </option>
+                            ))}
+                          </select>
+                        </label>
+                        <label>
+                          الكمية {i + 1}
+                          <input
+                            required
+                            type="number"
+                            min="1"
+                            max={p?.stock || 1000000}
+                            step="1"
+                            className={field}
+                            value={line.quantity}
+                            onChange={(e) => changeLine(i, { quantity: e.target.value })}
+                          />
+                        </label>
+                        <button
+                          type="button"
+                          className="self-end rounded-xl border px-4 py-3 disabled:opacity-40"
+                          disabled={lines.length === 1}
+                          aria-label={`حذف المنتج ${i + 1}`}
+                          onClick={() => {
+                            changed();
+                            setLines((old) => old.filter((_, j) => j !== i));
+                          }}
                         >
-                          <option value="">اختر المنتج</option>
-                          {products.map((p) => (
-                            <option
-                              key={p.id}
-                              value={p.id}
-                              disabled={
-                                !p.pricing_initialized ||
-                                !p.stock_initialized ||
-                                p.status !== "available" ||
-                                lines.some((l, j) => j !== i && l.product_id === p.id)
-                              }
-                            >
-                              {p.name}
-                              {!p.pricing_initialized || !p.stock_initialized
-                                ? " — أكمل الأسعار والمخزون"
-                                : p.status !== "available"
-                                  ? " — غير متوفر"
-                                  : ""}
-                            </option>
-                          ))}
-                        </select>
-                      </label>
-                      <label>
-                        الكمية {i + 1}
-                        <input
-                          required
-                          type="number"
-                          min="1"
-                          max={p?.stock || 1000000}
-                          step="1"
-                          className={field}
-                          value={line.quantity}
-                          onChange={(e) => changeLine(i, { quantity: e.target.value })}
-                        />
-                      </label>
-                      <button
-                        type="button"
-                        className="self-end rounded-xl border px-4 py-3 disabled:opacity-40"
-                        disabled={lines.length === 1}
-                        aria-label={`حذف المنتج ${i + 1}`}
-                        onClick={() => {
-                          changed();
-                          setLines((old) => old.filter((_, j) => j !== i));
-                        }}
-                      >
-                        حذف
-                      </button>
+                          حذف
+                        </button>
+                      </div>
+                      {p && (
+                        <p className="mb-0 text-sm leading-7">
+                          سعر الوحدة بعد الخصم {fmt(p.effective_price || 0)} ج · المتوفر{" "}
+                          {p.stock ?? "غير مسجل"} · إجمالي السطر {fmt(amounts[i].revenue)} ج
+                        </p>
+                      )}
                     </div>
-                    {p && (
-                      <p className="mb-0 text-sm leading-7">
-                        سعر الوحدة بعد الخصم {fmt(p.effective_price || 0)} ج · المتوفر{" "}
-                        {p.stock ?? "غير مسجل"} · إجمالي السطر {fmt(amounts[i].revenue)} ج
-                      </p>
-                    )}
-                  </div>
-                );
-              })}
-            </div>
-            <button
-              type="button"
-              className="my-4 rounded-xl border bg-[#f8f5f1] px-4 py-3"
-              disabled={lines.length >= 50}
-              onClick={() => {
-                changed();
-                setLines((old) => [...old, { product_id: "", quantity: "1" }]);
-              }}
-            >
-              إضافة منتج آخر
-            </button>
-            <div className="mb-5 grid gap-3 rounded-xl bg-[#f8f5f1] p-4 sm:grid-cols-3">
-              <p>
-                إجمالي المنتجات
-                <br />
-                <strong>{fmt(revenue)} ج</strong>
-              </p>
-              <p>
-                تكلفة البضاعة
-                <br />
-                <strong>{fmt(cost)} ج</strong>
-              </p>
-              <p>
-                مجمل الربح المتوقع
-                <br />
-                <strong>{fmt(round(revenue - cost))} ج</strong>
-              </p>
-            </div>
-            <p className="text-xs leading-6">
-              الإجمالي للمنتجات فقط، بدون الشحن. مجمل الربح لا يخصم التغليف والإعلان وباقي المصاريف.
-            </p>
-            <button disabled={!version || busy} className={button}>
-              إنشاء الطلب وإصدار رقمه
-            </button>
-          </fieldset>
-        </form>
-        <section className="space-y-4">
-          <h2 className="text-xl">الطلبات المسجلة</h2>
-          <form
-            className="flex flex-wrap items-end gap-3"
-            onSubmit={(e) => {
-              e.preventDefault();
-              setQuery(search);
-              setOffset(0);
-            }}
-          >
-            <label className="min-w-0 flex-1">
-              ابحث برقم الطلب أو اسم العميل
-              <input
-                className={field}
-                maxLength={120}
-                value={search}
-                onChange={(e) => setSearch(e.target.value)}
-              />
-            </label>
-            <button className={button}>بحث</button>
-            <label>
-              الحالة
-              <select
-                className={field}
-                value={filter}
-                onChange={(e) => {
-                  setFilter(e.target.value);
-                  setOffset(0);
+                  );
+                })}
+              </div>
+              <button
+                type="button"
+                className="my-4 rounded-xl border bg-[#f8f5f1] px-4 py-3"
+                disabled={lines.length >= 50}
+                onClick={() => {
+                  changed();
+                  setLines((old) => [...old, { product_id: "", quantity: "1" }]);
                 }}
               >
-                <option value="all">الكل</option>
-                {Object.entries(labels).map(([value, label]) => (
-                  <option key={value} value={value}>
-                    {label}
-                  </option>
-                ))}
-              </select>
-            </label>
+                إضافة منتج آخر
+              </button>
+              <div className="mb-5 grid gap-3 rounded-xl bg-[#f8f5f1] p-4 sm:grid-cols-3">
+                <p>
+                  إجمالي المنتجات
+                  <br />
+                  <strong>{fmt(revenue)} ج</strong>
+                </p>
+                <p>
+                  تكلفة البضاعة
+                  <br />
+                  <strong>{fmt(cost)} ج</strong>
+                </p>
+                <p>
+                  مجمل الربح المتوقع
+                  <br />
+                  <strong>{fmt(round(revenue - cost))} ج</strong>
+                </p>
+              </div>
+              <p className="text-xs leading-6">
+                الإجمالي للمنتجات فقط، بدون الشحن. مجمل الربح لا يخصم التغليف والإعلان وباقي
+                المصاريف.
+              </p>
+              <button disabled={!version || busy} className={button}>
+                إنشاء الطلب وإصدار رقمه
+              </button>
+            </fieldset>
           </form>
-          {loading ? (
-            <p>جارٍ تحميل الطلبات…</p>
-          ) : orders.length === 0 ? (
-            <p>لا توجد طلبات مطابقة.</p>
-          ) : (
-            orders.map((order) => (
-              <article className={card} key={order.id}>
-                <div className="flex flex-wrap items-center justify-between gap-3">
-                  <h3 dir="ltr" className="m-0 break-all text-lg">
-                    {order.reference}
-                  </h3>
-                  <span
-                    className={`rounded-full px-3 py-2 text-sm ${order.status === "delivered" ? "bg-green-50 text-green-800" : order.status === "cancelled" ? "bg-gray-100" : "bg-amber-50 text-amber-900"}`}
-                  >
-                    {labels[order.status]}
-                  </span>
-                </div>
-                <p className="break-words">
-                  {order.customer.name} {order.customer.phone && `· ${order.customer.phone}`}
-                </p>
-                {order.customer.address && (
-                  <p className="break-words text-sm">{order.customer.address}</p>
-                )}
-                {order.notes && <p className="break-words text-sm">{order.notes}</p>}
-                <p className="text-xs text-[#917c73]">
-                  إنشاء:{" "}
-                  {new Date(order.created_at).toLocaleString("ar-EG", { timeZone: "Africa/Cairo" })}
-                  {order.delivered_at &&
-                    ` · تسليم: ${new Date(order.delivered_at).toLocaleString("ar-EG", { timeZone: "Africa/Cairo" })}`}
-                </p>
-                <ul className="space-y-3 p-0">
-                  {order.items.map((item) => (
-                    <li
-                      key={item.product_id}
-                      className="list-none rounded-xl bg-[#f8f5f1] p-3 text-sm"
-                    >
-                      <strong className="break-words">{item.name}</strong>
-                      <p className="mb-0">
-                        {item.quantity} × {fmt(item.selling_price)} ج = {fmt(item.revenue)} ج · ربح{" "}
-                        {fmt(item.profit)} ج
-                      </p>
-                    </li>
+        )}
+        {mode === "list" && (
+          <section className="space-y-4">
+            <h2 className="text-xl">الطلبات المسجلة</h2>
+            <form
+              className="flex flex-wrap items-end gap-3"
+              onSubmit={(e) => {
+                e.preventDefault();
+                setQuery(search);
+                setOffset(0);
+              }}
+            >
+              <label className="min-w-0 flex-1">
+                ابحث برقم الطلب أو اسم العميل
+                <input
+                  className={field}
+                  maxLength={120}
+                  value={search}
+                  onChange={(e) => setSearch(e.target.value)}
+                />
+              </label>
+              <button className={button}>بحث</button>
+              <label>
+                الحالة
+                <select
+                  className={field}
+                  value={filter}
+                  onChange={(e) => {
+                    setFilter(e.target.value);
+                    setOffset(0);
+                  }}
+                >
+                  <option value="all">الكل</option>
+                  {Object.entries(labels).map(([value, label]) => (
+                    <option key={value} value={value}>
+                      {label}
+                    </option>
                   ))}
-                </ul>
-                <p className="text-sm">
-                  إجمالي المنتجات: <strong>{fmt(order.revenue)} ج</strong> · مجمل الربح{" "}
-                  {order.status === "pending" ? "المتوقع" : ""}:{" "}
-                  <strong>{fmt(order.profit)} ج</strong>
-                </p>
-                {order.status === "pending" && (
-                  <div className="flex flex-wrap gap-3">
-                    <button
-                      type="button"
-                      disabled={busy}
-                      className={button}
-                      onClick={() => status(order, "delivered")}
+                </select>
+              </label>
+            </form>
+            {loading ? (
+              <p>جارٍ تحميل الطلبات…</p>
+            ) : orders.length === 0 ? (
+              <p>لا توجد طلبات مطابقة.</p>
+            ) : (
+              orders.map((order) => (
+                <article className={card} key={order.id}>
+                  <div className="flex flex-wrap items-center justify-between gap-3">
+                    <h3 dir="ltr" className="m-0 break-all text-lg">
+                      {order.reference}
+                    </h3>
+                    <span
+                      className={`rounded-full px-3 py-2 text-sm ${order.status === "delivered" ? "bg-green-50 text-green-800" : order.status === "cancelled" ? "bg-gray-100" : "bg-amber-50 text-amber-900"}`}
                     >
-                      تم تسليمه
-                    </button>
-                    <button
-                      type="button"
-                      disabled={busy}
-                      className="rounded-xl border px-5 py-3"
-                      onClick={() => status(order, "cancelled")}
-                    >
-                      إلغاء الطلب
-                    </button>
+                      {labels[order.status]}
+                    </span>
                   </div>
-                )}
-              </article>
-            ))
-          )}
-          <div className="flex flex-wrap items-center gap-3">
-            <button
-              disabled={loading || offset === 0}
-              className="rounded-xl border p-3 disabled:opacity-40"
-              onClick={() => setOffset(Math.max(0, offset - 50))}
-            >
-              السابق
-            </button>
-            <span className="text-sm">{total} طلب</span>
-            <button
-              disabled={loading || offset + 50 >= total}
-              className="rounded-xl border p-3 disabled:opacity-40"
-              onClick={() => setOffset(offset + 50)}
-            >
-              التالي
-            </button>
-          </div>
-        </section>
+                  <p className="break-words">
+                    {order.customer.name} {order.customer.phone && `· ${order.customer.phone}`}
+                  </p>
+                  {order.customer.address && (
+                    <p className="break-words text-sm">{order.customer.address}</p>
+                  )}
+                  {order.notes && <p className="break-words text-sm">{order.notes}</p>}
+                  <p className="text-xs text-[#917c73]">
+                    إنشاء:{" "}
+                    {new Date(order.created_at).toLocaleString("ar-EG", {
+                      timeZone: "Africa/Cairo",
+                    })}
+                    {order.delivered_at &&
+                      ` · تسليم: ${new Date(order.delivered_at).toLocaleString("ar-EG", { timeZone: "Africa/Cairo" })}`}
+                  </p>
+                  <ul className="space-y-3 p-0">
+                    {order.items.map((item) => (
+                      <li
+                        key={item.product_id}
+                        className="list-none rounded-xl bg-[#f8f5f1] p-3 text-sm"
+                      >
+                        <strong className="break-words">{item.name}</strong>
+                        <p className="mb-0">
+                          {item.quantity} × {fmt(item.selling_price)} ج = {fmt(item.revenue)} ج ·
+                          ربح {fmt(item.profit)} ج
+                        </p>
+                      </li>
+                    ))}
+                  </ul>
+                  <p className="text-sm">
+                    إجمالي المنتجات: <strong>{fmt(order.revenue)} ج</strong> · مجمل الربح{" "}
+                    {order.status === "pending" ? "المتوقع" : ""}:{" "}
+                    <strong>{fmt(order.profit)} ج</strong>
+                  </p>
+                  {order.status === "pending" && (
+                    <div className="flex flex-wrap gap-3">
+                      <button
+                        type="button"
+                        disabled={busy}
+                        className={button}
+                        onClick={() => status(order, "delivered")}
+                      >
+                        تم تسليمه
+                      </button>
+                      <button
+                        type="button"
+                        disabled={busy}
+                        className="rounded-xl border px-5 py-3"
+                        onClick={() => status(order, "cancelled")}
+                      >
+                        إلغاء الطلب
+                      </button>
+                    </div>
+                  )}
+                </article>
+              ))
+            )}
+            <div className="flex flex-wrap items-center gap-3">
+              <button
+                disabled={loading || offset === 0}
+                className="rounded-xl border p-3 disabled:opacity-40"
+                onClick={() => setOffset(Math.max(0, offset - 50))}
+              >
+                السابق
+              </button>
+              <span className="text-sm">{total} طلب</span>
+              <button
+                disabled={loading || offset + 50 >= total}
+                className="rounded-xl border p-3 disabled:opacity-40"
+                onClick={() => setOffset(offset + 50)}
+              >
+                التالي
+              </button>
+            </div>
+          </section>
+        )}
       </div>
     </main>
   );
