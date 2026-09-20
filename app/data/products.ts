@@ -81,4 +81,3 @@ export const products: Product[] = [
     source: "https://www.skin1004.com/products/centella-teca-soothing-toner",
   },
 ];
-

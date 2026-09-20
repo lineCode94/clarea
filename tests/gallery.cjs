@@ -24,9 +24,9 @@ const fs = require("node:fs");
       if (lang === "en") await page.locator(".language-button").click();
       await page.evaluate(() => document.fonts.ready);
       assert.equal(await page.locator(".product-card").count(), 12);
-      assert.equal(await page.locator('#collection [data-product-price]').count(), 0);
+      assert.equal(await page.locator("#collection [data-product-price]").count(), 0);
       await page.screenshot({ path: `test-results/gallery-${width}-${lang}.png` });
-      const skin = page.locator('#collection').getByRole("button", {
+      const skin = page.locator("#collection").getByRole("button", {
         name: lang === "ar" ? "البشرة والوجه" : "Skin & face",
         exact: true,
       });
@@ -64,13 +64,13 @@ const fs = require("node:fs");
       }
       await page.locator("footer").scrollIntoViewIfNeeded();
       await page.waitForTimeout(400);
-      const broken = await page
-        .locator("img")
-        .evaluateAll(async (els) => {
-          els.forEach((e) => { e.loading = 'eager'; });
-          await Promise.all(els.map((e) => e.decode().catch(() => {})));
-          return els.filter((e) => !e.complete || e.naturalWidth === 0).map((e) => e.src);
+      const broken = await page.locator("img").evaluateAll(async (els) => {
+        els.forEach((e) => {
+          e.loading = "eager";
         });
+        await Promise.all(els.map((e) => e.decode().catch(() => {})));
+        return els.filter((e) => !e.complete || e.naturalWidth === 0).map((e) => e.src);
+      });
       assert.deepEqual(broken, []);
       // Carousels and zoomed photos intentionally extend inside clipped containers.
       assert.ok(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth));
@@ -84,4 +84,3 @@ const fs = require("node:fs");
   console.error(e);
   process.exit(1);
 });
-

@@ -14,8 +14,7 @@ export const footerText = {
   },
   en: {
     title: "Have a skincare question?",
-    description:
-      "Contact us with product questions or for help with ordering and shipping.",
+    description: "Contact us with product questions or for help with ordering and shipping.",
     cta: "Talk to our team",
     brand: "beauty and care selections with clear information for your daily routine.",
     explore: "Explore Claréa",

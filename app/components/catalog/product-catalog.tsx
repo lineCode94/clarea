@@ -23,7 +23,9 @@ export default function ProductCatalog({
     <section id="collection" className="page-width pb-16">
       <CatalogToolbar lang={lang} filters={filters} />
       <p className="mb-4 text-xs text-muted" aria-live="polite">
-        {lang === "ar" ? `عدد المنتجات: ${filtered.length}` : `${filtered.length} ${filtered.length === 1 ? "product" : "products"}`}
+        {lang === "ar"
+          ? `عدد المنتجات: ${filtered.length}`
+          : `${filtered.length} ${filtered.length === 1 ? "product" : "products"}`}
       </p>
       <motion.div
         layout
@@ -58,4 +60,3 @@ export default function ProductCatalog({
     </section>
   );
 }
-

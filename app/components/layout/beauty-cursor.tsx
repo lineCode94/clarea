@@ -54,4 +54,3 @@ export default function BeautyCursor() {
     </motion.div>
   );
 }
-

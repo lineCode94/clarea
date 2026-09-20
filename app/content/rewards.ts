@@ -26,7 +26,8 @@ export const rewardsText = {
   en: {
     tab: "Spin to win",
     title: "A little gift from Claréa 🎁",
-    intro: "Spin for a gift or discount on your order. Results are subject to confirmation by our team and the offer terms.",
+    intro:
+      "Spin for a gift or discount on your order. Results are subject to confirmation by our team and the offer terms.",
     spin: "Try your luck",
     spinning: "Spinning…",
     congrats: "Congratulations",
@@ -48,4 +49,3 @@ export const rewardsText = {
     phoneRequired: "Please enter a valid phone number",
   },
 };
-
