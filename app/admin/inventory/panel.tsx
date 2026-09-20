@@ -157,7 +157,7 @@ export default function InventoryPanel({
           ? {
               quantity: Number(quantity),
               min_stock_alert: Number(min),
-              status: coming ? "coming_soon" : Number(quantity) > 0 ? "available" : "out_of_stock",
+              status: Number(quantity) > 0 ? "available" : coming ? "coming_soon" : "out_of_stock",
               version: data.version,
             }
           : {
@@ -400,7 +400,10 @@ export default function InventoryPanel({
                               step="1"
                               className={field}
                               value={quantity}
-                              onChange={(e) => setQuantity(e.target.value)}
+                              onChange={(e) => {
+                                setQuantity(e.target.value);
+                                if (Number(e.target.value) > 0) setComing(false);
+                              }}
                             />
                           </label>
                           <label className="mt-4 block">
@@ -419,7 +422,8 @@ export default function InventoryPanel({
                           <label className="my-5 flex gap-2">
                             <input
                               type="checkbox"
-                              checked={coming}
+                              checked={coming && Number(quantity) === 0}
+                              disabled={Number(quantity) > 0}
                               onChange={(e) => setComing(e.target.checked)}
                             />
                             قريباً (عند كمية صفر)
