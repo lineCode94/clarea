@@ -29,9 +29,7 @@ export default function SiteHeader({
   return (
     <>
       <div className="bg-brand px-4 py-2 text-center text-xs leading-relaxed text-white sm:text-sm">
-        {lang === "ar"
-          ? "فوق ٤٬٠٠٠ جنيه: شحن وبوكس مجانًا"
-          : "Over EGP 4,000: free shipping & box"}
+        {lang === "ar" ? "فوق ٤٬٠٠٠ جنيه: شحن وبوكس مجانًا" : "Over EGP 4,000: free shipping & box"}
       </div>
       <header className="topbar sticky top-0 z-30 border-b border-line bg-white/95 backdrop-blur-xl">
         <div className="page-width grid grid-cols-[1fr_auto_1fr] items-center gap-2 py-4 md:py-6">
@@ -88,7 +86,13 @@ export default function SiteHeader({
               {t.skin}
             </button>
             {(["hair", "supplements", "oral", "drinks"] as const).map((category) => (
-              <button key={category} className="min-h-10 hover:text-brand" onClick={() => onCategoryChange(category)}>{t[category]}</button>
+              <button
+                key={category}
+                className="min-h-10 hover:text-brand"
+                onClick={() => onCategoryChange(category)}
+              >
+                {t[category]}
+              </button>
             ))}
             <a className="inline-flex min-h-10 items-center hover:text-brand" href="#about">
               {lang === "ar" ? "عن Claréa" : "About Claréa"}

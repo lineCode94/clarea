@@ -297,7 +297,8 @@ export default function OrdersPanel() {
                         <select
                           required
                           className={field}
-                          aria-label={`المنتج ${i + 1}`} value={line.product_id}
+                          aria-label={`المنتج ${i + 1}`}
+                          value={line.product_id}
                           onChange={(e) => changeLine(i, { product_id: e.target.value })}
                         >
                           <option value="">اختر المنتج</option>
@@ -527,4 +528,3 @@ export default function OrdersPanel() {
     </main>
   );
 }
-
