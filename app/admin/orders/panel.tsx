@@ -2,10 +2,12 @@
 import { useEffect, useState, type FormEvent } from "react";
 import AdminSidebar, { adminExtraPaths, type AdminView } from "../sidebar";
 import type { Order } from "../../lib/order-schema";
+import { matchesAdminProduct } from "../../lib/admin-search";
 import { round } from "../../lib/inventory-schema";
 type Product = {
   id: string;
   name: string;
+  brand?: string;
   stock: number | null;
   status: string;
   stock_initialized: boolean;
@@ -13,7 +15,7 @@ type Product = {
   effective_price?: number;
   cost_price?: number;
 };
-type Line = { product_id: string; quantity: string };
+type Line = { product_id: string; quantity: string; search?: string };
 const field = "mt-2 min-w-0 w-full rounded-xl border border-[#dfd2c8] bg-white p-3 text-[#412832]";
 const button = "rounded-xl bg-[#5c1a2b] px-5 py-3 text-white disabled:opacity-50";
 const card = "rounded-2xl border border-[#e8ddd5] bg-white p-5";
@@ -313,8 +315,42 @@ export default function OrdersPanel({ mode = "list" }: { mode?: "list" | "new" }
               <div className="space-y-3">
                 {lines.map((line, i) => {
                   const p = products.find((p) => p.id === line.product_id);
+                  const matches = products.filter((product) =>
+                    matchesAdminProduct(product, line.search || ""),
+                  );
+                  const options = products.filter(
+                    (product) => product.id === line.product_id || matches.includes(product),
+                  );
                   return (
                     <div key={i} className="rounded-xl border border-[#e8ddd5] p-4">
+                      <label className="mb-4 block">
+                        ابحث عن المنتج أو الماركة
+                        <input
+                          type="search"
+                          autoComplete="off"
+                          aria-label={"بحث المنتج " + (i + 1)}
+                          placeholder="مثلاً Arencia أو toner…"
+                          className={field}
+                          value={line.search || ""}
+                          onChange={(e) =>
+                            setLines((old) =>
+                              old.map((item, index) =>
+                                index === i ? { ...item, search: e.target.value } : item,
+                              ),
+                            )
+                          }
+                        />
+                        <span role="status" className="mt-2 block text-xs text-[#806b63]">
+                          {matches.length
+                            ? matches.length + " منتج مطابق — اختر من القائمة"
+                            : "لا توجد نتائج مطابقة. جرّب اسم المنتج أو الماركة."}
+                          {line.product_id &&
+                          line.search &&
+                          !matches.some((product) => product.id === line.product_id)
+                            ? " المنتج المختار محفوظ حتى تغيّره."
+                            : ""}
+                        </span>
+                      </label>
                       <div className="grid grid-cols-1 gap-3 md:grid-cols-[minmax(0,1fr)_120px_auto]">
                         <label>
                           المنتج {i + 1}
@@ -326,7 +362,7 @@ export default function OrdersPanel({ mode = "list" }: { mode?: "list" | "new" }
                             onChange={(e) => changeLine(i, { product_id: e.target.value })}
                           >
                             <option value="">اختر المنتج</option>
-                            {products.map((p) => (
+                            {options.map((p) => (
                               <option
                                 key={p.id}
                                 value={p.id}
