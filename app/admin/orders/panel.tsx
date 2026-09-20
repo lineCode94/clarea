@@ -1,6 +1,7 @@
 "use client";
-import { useEffect, useState, type FormEvent } from "react";
+import { useEffect, useState, useRef, type FormEvent } from "react";
 import AdminSidebar, { adminExtraPaths, type AdminView } from "../sidebar";
+import OrderToasts, { confirmOrder, toast } from "./toasts";
 import type { Order } from "../../lib/order-schema";
 import { matchesAdminProduct } from "../../lib/admin-search";
 import { round } from "../../lib/inventory-schema";
@@ -147,16 +148,22 @@ export default function OrdersPanel({ mode = "list" }: { mode?: "list" | "new" }
       setBusy(false);
     }
   }
+  const statusPending = useRef(false);
   async function status(order: Order, status: "delivered" | "cancelled") {
-    if (busy) return;
+    if (busy || statusPending.current) return;
+    statusPending.current = true;
+    setBusy(true);
     if (
-      !window.confirm(
+      !(await confirmOrder(
         status === "delivered"
           ? `تأكيد «تم تسليمه» للطلب ${order.reference}؟ سيتم خصم جميع منتجاته وتسجيل المبيعات مرة واحدة.`
           : `إلغاء الطلب ${order.reference}؟`,
-      )
-    )
+      ))
+    ) {
+      statusPending.current = false;
+      setBusy(false);
       return;
+    }
     setBusy(true);
     setError("");
     setNotice("");
@@ -168,13 +175,14 @@ export default function OrdersPanel({ mode = "list" }: { mode?: "list" | "new" }
       });
       setOrders((old) => old.map((o) => (o.id === order.id ? result.order : o)));
       setCreated((old) => (old?.id === order.id ? result.order : old));
-      setNotice(`${order.reference} — ${labels[status]}`);
+      toast.success(`${order.reference} — ${labels[status]}`);
       await Promise.all([loadOrders(), loadProducts()]).catch(() =>
         setError("تم تغيير الحالة. تعذر تحديث البيانات؛ حدّث القائمة."),
       );
     } catch (e) {
-      setError(e instanceof Error ? e.message : "تعذر تغيير الحالة");
+      toast.error(e instanceof Error ? e.message : "تعذر تغيير الحالة");
     } finally {
+      statusPending.current = false;
       setBusy(false);
     }
   }
@@ -203,6 +211,7 @@ export default function OrdersPanel({ mode = "list" }: { mode?: "list" | "new" }
       className="admin-panel min-h-dvh bg-[#f8f5f1] font-arabic text-[#412832] lg:pr-64"
     >
       <style>{`.admin-panel,.admin-panel *{cursor:auto}.admin-panel button,.admin-panel a{cursor:pointer}`}</style>
+      <OrderToasts />
       <AdminSidebar
         active={mode === "new" ? "new-order" : "orders"}
         onNavigate={navigate}
