@@ -12,6 +12,7 @@ import {
   TbRefresh,
   TbLock,
 } from "react-icons/tb";
+import { matchesAdminProduct } from "../lib/admin-search";
 import AdminSidebar, { type AdminView } from "./sidebar";
 import type { ManagedProduct } from "../lib/catalog-schema";
 
@@ -223,7 +224,7 @@ export default function AdminPanel({ authenticated }: { authenticated: boolean }
   const visible =
     catalog?.products.filter(
       (p) =>
-        `${p.name} ${p.brand} ${p.label.ar}`.toLowerCase().includes(query.toLowerCase()) &&
+        matchesAdminProduct(p, query) &&
         (filter === "all" || (filter === "published" ? p.published : !p.published)),
     ) || [];
 

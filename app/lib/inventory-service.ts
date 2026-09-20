@@ -1,4 +1,5 @@
 import "server-only";
+import { supplierReport } from "./supplier-report";
 import { NextResponse } from "next/server";
 import { z } from "zod";
 import { randomUUID } from "node:crypto";
@@ -27,6 +28,7 @@ export function inventoryRows(c: Catalog) {
     return {
       id: p.id,
       name: p.name,
+      brand: p.brand,
       category: p.category,
       published: p.published,
       image: p.images[0],
@@ -176,6 +178,7 @@ export async function report(request: Request, kind: string) {
     const c = await readCatalog(),
       q = new URL(request.url).searchParams,
       today = dayInCairo(new Date().toISOString());
+    if (kind === "supplier") return json(supplierReport(c.sales, q));
     const category = z
       .enum(["all", "skin", "hair", "supplements", "oral", "drinks"])
       .parse(q.get("category") || "all");

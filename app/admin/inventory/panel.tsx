@@ -1,10 +1,13 @@
 "use client";
 import { useEffect, useState, type FormEvent } from "react";
+import SupplierPanel from "./supplier-panel";
+import { matchesAdminProduct } from "../../lib/admin-search";
 import AdminSidebar, { type AdminView } from "../sidebar";
 import { figures, dayInCairo, type Sale } from "../../lib/inventory-schema";
 type Row = {
   id: string;
   name: string;
+  brand?: string;
   category: string;
   image: string;
   published: boolean;
@@ -196,7 +199,7 @@ export default function InventoryPanel() {
       (p) =>
         (category === "all" || p.category === category) &&
         (!lowOnly || p.low_stock) &&
-        p.name.toLowerCase().includes(query.toLowerCase()),
+        matchesAdminProduct(p, query),
     ) || [];
   function navigate(view: AdminView) {
     if (view === "orders") {
@@ -225,6 +228,7 @@ export default function InventoryPanel() {
           {[
             ["inventory", "المخزون"],
             ["reports", "التقارير"],
+            ["supplier", "حساب المورد"],
             ["sales", "سجل المبيعات"],
             ["history", "تاريخ الأسعار"],
           ].map(([id, title]) => (
@@ -283,7 +287,7 @@ export default function InventoryPanel() {
                 </div>
               ))}
             </div>
-            <label className="block max-w-xs text-sm">
+            <label className={tab === "supplier" ? "hidden" : "block max-w-xs text-sm"}>
               الفئة
               <select
                 className={field}
@@ -549,6 +553,7 @@ export default function InventoryPanel() {
                 )}
               </>
             )}
+            {tab === "supplier" && <SupplierPanel />}
             {tab === "sales" && (
               <>
                 <h2>آخر 200 عملية بيع</h2>
