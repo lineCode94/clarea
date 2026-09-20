@@ -354,6 +354,52 @@ export default function OrdersPanel({ mode = "list" }: { mode?: "list" | "new" }
                             : ""}
                         </span>
                       </label>
+                      {(!p || !!line.search?.trim()) && (
+                        <div
+                          aria-label={"نتائج المنتجات " + (i + 1)}
+                          className="mb-4 max-h-72 overflow-y-auto rounded-xl border"
+                        >
+                          {matches.map((product) => {
+                            const duplicate = lines.some(
+                              (l, j) => j !== i && l.product_id === product.id,
+                            );
+                            const unavailable =
+                              !product.pricing_initialized ||
+                              !product.stock_initialized ||
+                              product.status !== "available";
+                            return (
+                              <button
+                                type="button"
+                                key={product.id}
+                                disabled={duplicate || unavailable}
+                                onClick={() =>
+                                  changeLine(i, { product_id: product.id, search: "" })
+                                }
+                                className="flex w-full items-center gap-3 border-b p-3 text-right hover:bg-[#f8f5f1] disabled:opacity-50"
+                              >
+                                {product.image && (
+                                  <img
+                                    src={product.image}
+                                    alt=""
+                                    className="size-12 rounded-lg object-contain"
+                                  />
+                                )}
+                                <span>
+                                  <strong className="block">{product.name}</strong>
+                                  <span className="text-xs">
+                                    {product.brand} ·{" "}
+                                    {duplicate
+                                      ? "مضاف بالفعل"
+                                      : unavailable
+                                        ? "غير متاح — راجع المخزون والأسعار"
+                                        : fmt(product.effective_price || 0) + " ج"}
+                                  </span>
+                                </span>
+                              </button>
+                            );
+                          })}
+                        </div>
+                      )}
                       <div className="grid grid-cols-1 gap-3 md:grid-cols-[minmax(0,1fr)_120px_auto]">
                         <div className="min-w-0">
                           <p className="m-0 text-sm">المنتج المختار {i + 1}</p>
