@@ -456,9 +456,17 @@ export default function OrdersPanel({ mode = "list" }: { mode?: "list" | "new" }
                                     {product.brand} ·{" "}
                                     {duplicate
                                       ? "مضاف بالفعل"
-                                      : unavailable
-                                        ? "غير متاح — راجع المخزون والأسعار"
-                                        : fmt(priceFor(product)) + " ج"}
+                                      : !product.stock_initialized
+                                        ? "كمية المخزون غير مسجلة"
+                                        : product.stock === 0 || product.status !== "available"
+                                          ? "لا توجد كمية متاحة للطلب"
+                                          : !product.pricing_initialized
+                                            ? "متوفر: " +
+                                              product.stock +
+                                              " قطع — سجّل سعر الشراء والبيع أولاً"
+                                            : fmt(priceFor(product)) +
+                                              " ج · المتوفر: " +
+                                              product.stock}
                                   </span>
                                 </span>
                               </button>
