@@ -1,8 +1,9 @@
 "use client";
 
-import { useRef } from "react";
+import { useRef, useState, useEffect } from "react";
 import {
   TbMenu2,
+  TbChevronDown,
   TbX,
   TbPackage,
   TbCheck,
@@ -51,12 +52,43 @@ export default function AdminSidebar({ active, onNavigate, disabled }: Props) {
     { id: "supplier", label: "حساب المورد", Icon: TbReceipt },
     { id: "codes", label: "فحص أكواد الهدايا", Icon: TbGift },
   ] as const;
+  const groups = [
+    {
+      id: "orders",
+      label: "الطلبات",
+      Icon: TbClipboardList,
+      views: ["new-order", "orders", "codes"],
+    },
+    {
+      id: "products",
+      label: "المنتجات",
+      Icon: TbPackage,
+      views: ["all", "published", "draft", "new"],
+    },
+    {
+      id: "stock",
+      label: "المخزون والأسعار",
+      Icon: TbBuildingWarehouse,
+      views: ["inventory", "pricing"],
+    },
+    {
+      id: "accounts",
+      label: "التقارير والحسابات",
+      Icon: TbChartBar,
+      views: ["reports", "supplier"],
+    },
+  ];
+  const currentGroup = groups.find((g) => g.views.includes(active))!.id;
+  const [openGroups, setOpenGroups] = useState<string[]>([currentGroup]);
+  useEffect(() => {
+    setOpenGroups((old) => (old.includes(currentGroup) ? old : [...old, currentGroup]));
+  }, [currentGroup]);
   function close() {
     drawer.current?.close();
   }
   const content = (
     <>
-      <div className="mb-10 flex items-center gap-3 border-b border-[#e8ddd5] pb-6">
+      <div className="mb-5 flex items-center gap-3 border-b border-[#e8ddd5] pb-6">
         <img src="/pwa/icon-192-logo-v3.png" alt="Claréa" className="size-12 rounded-xl" />
         <div>
           <p className="m-0 font-serif text-xl">Claréa</p>
@@ -65,21 +97,66 @@ export default function AdminSidebar({ active, onNavigate, disabled }: Props) {
       </div>
       <p className="mb-3 px-3 text-xs text-[#917c73]">إدارة المتجر</p>
       <nav aria-label="التنقل في الإدارة" className="grid gap-2">
-        {items.map(({ id, label, Icon }) => (
-          <button
-            key={id}
-            type="button"
-            disabled={disabled}
-            aria-current={active === id ? "page" : undefined}
-            onClick={() => {
-              if (onNavigate(id)) close();
-            }}
-            className={`flex min-h-12 items-center gap-3 rounded-xl px-4 py-3 text-right text-sm transition-colors disabled:opacity-50 ${active === id ? "bg-[#5C1A2B] font-bold text-white" : "text-[#644950] hover:bg-[#f5ece7]"}`}
-          >
-            <Icon size={21} />
-            {label}
-          </button>
-        ))}
+        {groups.map((group) => {
+          const open = openGroups.includes(group.id);
+          return (
+            <section key={group.id} className="rounded-xl">
+              <button
+                type="button"
+                aria-expanded={open}
+                onClick={() =>
+                  setOpenGroups((old) =>
+                    open ? old.filter((id) => id !== group.id) : [...old, group.id],
+                  )
+                }
+                className={
+                  "flex min-h-12 w-full items-center gap-2 rounded-xl px-3 py-3 text-right text-sm font-bold transition-colors " +
+                  (currentGroup === group.id
+                    ? "bg-[#f5ece7] text-[#5c1a2b]"
+                    : "text-[#644950] hover:bg-[#f5ece7]")
+                }
+              >
+                <group.Icon size={21} />
+                <span className="flex-1">{group.label}</span>
+                <TbChevronDown
+                  size={17}
+                  className={"transition-transform " + (open ? "rotate-180" : "")}
+                />
+              </button>
+              {open && (
+                <div className="mr-5 mt-1 grid gap-1 border-r border-[#e8ddd5] pr-2 pb-2">
+                  {group.views.map((view) => {
+                    const item = items.find((item) => item.id === view)!;
+                    return (
+                      <button
+                        key={item.id}
+                        type="button"
+                        disabled={disabled}
+                        aria-current={active === item.id ? "page" : undefined}
+                        onClick={() => {
+                          if (active === item.id) {
+                            close();
+                            return;
+                          }
+                          if (onNavigate(item.id)) close();
+                        }}
+                        className={
+                          "flex min-h-11 items-center gap-2 rounded-lg px-3 py-2 text-right text-xs leading-5 transition-colors disabled:opacity-50 " +
+                          (active === item.id
+                            ? "bg-[#5c1a2b] font-bold text-white"
+                            : "text-[#80656e] hover:bg-[#f5ece7]")
+                        }
+                      >
+                        <item.Icon size={18} className="shrink-0" />
+                        {item.label}
+                      </button>
+                    );
+                  })}
+                </div>
+              )}
+            </section>
+          );
+        })}
       </nav>
       <a
         href="/"
