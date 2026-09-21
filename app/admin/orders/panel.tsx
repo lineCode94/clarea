@@ -1,5 +1,6 @@
 "use client";
 import { useEffect, useState, useRef, type FormEvent } from "react";
+import AdminToolbar from "../toolbar";
 import AdminSidebar, { adminExtraPaths, type AdminView } from "../sidebar";
 import OrderToasts, { confirmOrder, toast } from "./toasts";
 import type { Order } from "../../lib/order-schema";
@@ -247,26 +248,21 @@ export default function OrdersPanel({ mode = "list" }: { mode?: "list" | "new" }
             {notice}
           </p>
         )}
-        <button
-          type="button"
-          disabled={busy}
-          className="rounded-xl border bg-white px-5 py-3"
-          onClick={() => {
+        <AdminToolbar
+          active={mode}
+          busy={busy}
+          items={[
+            { id: "new", label: "طلب جديد", href: "/admin/orders/new" },
+            { id: "list", label: "سجل الطلبات", href: "/admin/orders" },
+          ]}
+          onRefresh={() => {
             setBusy(true);
             setError("");
             Promise.all([loadOrders(), loadProducts()])
               .catch((e) => setError(e.message))
               .finally(() => setBusy(false));
           }}
-        >
-          تحديث البيانات والأسعار
-        </button>
-        <a
-          className="inline-block rounded-xl border bg-white px-5 py-3"
-          href={mode === "new" ? "/admin/orders" : "/admin/orders/new"}
-        >
-          {mode === "new" ? "عرض سجل الطلبات" : "إدخال طلب جديد"}
-        </a>
+        />
         {created && (
           <section className={card}>
             <p className="mt-0 text-sm">آخر طلب أنشأته</p>

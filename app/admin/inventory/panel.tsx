@@ -2,6 +2,7 @@
 import { useEffect, useState, type FormEvent } from "react";
 import SupplierPanel from "./supplier-panel";
 import { matchesAdminProduct } from "../../lib/admin-search";
+import AdminToolbar from "../toolbar";
 import AdminSidebar, { adminExtraPaths, type AdminView } from "../sidebar";
 import { figures, dayInCairo, type Sale } from "../../lib/inventory-schema";
 type Row = {
@@ -238,8 +239,10 @@ export default function InventoryPanel({
         </p>
       </header>
       <div className="mx-auto max-w-7xl space-y-5 p-4 sm:p-8">
-        <div className="flex flex-wrap gap-2">
-          {(mode === "reports"
+        <AdminToolbar
+          active={tab}
+          busy={busy}
+          items={(mode === "reports"
             ? [
                 ["reports", "ملخص التقارير"],
                 ["sales", "سجل المبيعات"],
@@ -250,33 +253,19 @@ export default function InventoryPanel({
                   ["history", "تاريخ الأسعار"],
                 ]
               : []
-          ).map(([id, label]) => (
-            <button
-              key={id}
-              className={tab === id ? button : "rounded-xl border px-5 py-3"}
-              onClick={() => setTab(id)}
-            >
-              {label}
-            </button>
-          ))}
-          <button
-            disabled={busy}
-            className="rounded-xl border px-4 py-3"
-            onClick={() => {
-              setBusy(true);
-              load()
-                .then((next) =>
-                  setSelected((current) =>
-                    current ? next.products.find((p) => p.id === current.id) || current : null,
-                  ),
-                )
-                .catch((e) => setError(e.message))
-                .finally(() => setBusy(false));
-            }}
-          >
-            تحديث البيانات
-          </button>
-        </div>
+          ).map(([id, label]) => ({ id, label, onClick: () => setTab(id) }))}
+          onRefresh={() => {
+            setBusy(true);
+            load()
+              .then((next) =>
+                setSelected((current) =>
+                  current ? next.products.find((p) => p.id === current.id) || current : null,
+                ),
+              )
+              .catch((e) => setError(e.message))
+              .finally(() => setBusy(false));
+          }}
+        />
         {error && (
           <p role="alert" className="rounded-xl bg-red-50 p-4 text-red-800">
             {error}
