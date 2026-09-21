@@ -75,7 +75,8 @@ export async function createOrder(request: Request) {
         throw new AdminError(`أدخل أسعار ومخزون ${p.name} أولاً`);
       if (entry.stock.status !== "available" || entry.stock.quantity < line.quantity)
         throw new AdminError(`المخزون غير كافٍ: ${p.name}`, 409);
-      const f = figures(entry.pricing),
+      const appliedDiscount = input.discount_percent ?? entry.pricing.discount;
+      const f = figures({ ...entry.pricing, discount: appliedDiscount }),
         revenue = round(f.effective_price * line.quantity),
         cost = round(entry.pricing.cost_price * line.quantity);
       return {
@@ -84,7 +85,7 @@ export async function createOrder(request: Request) {
         category: p.category,
         selling_price: f.effective_price,
         cost_price: entry.pricing.cost_price,
-        discount: entry.pricing.discount,
+        discount: appliedDiscount,
         revenue,
         cost,
         profit: round(revenue - cost),
@@ -108,6 +109,7 @@ export async function createOrder(request: Request) {
       request_fingerprint: fingerprint,
       customer: input.customer,
       notes: input.notes,
+      ...(input.discount_percent !== undefined ? { discount_percent: input.discount_percent } : {}),
       items,
       status: "pending",
       revenue,

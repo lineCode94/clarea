@@ -10,6 +10,7 @@ export const orderInput = z
         address: z.string().trim().max(500).default(""),
       })
       .strict(),
+    discount_percent: z.number().finite().min(0).max(100).optional(),
     notes: z.string().trim().max(1000).default(""),
     items: z
       .array(
@@ -47,6 +48,7 @@ export const orderSchema = z.object({
   request_fingerprint: z.string(),
   customer: orderInput.shape.customer,
   notes: z.string(),
+  discount_percent: z.number().min(0).max(100).optional(),
   items: z.array(orderLineSchema),
   status: z.enum(["pending", "delivered", "cancelled"]),
   revenue: z.number(),

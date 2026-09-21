@@ -4,7 +4,7 @@ import AdminSidebar, { adminExtraPaths, type AdminView } from "../sidebar";
 import OrderToasts, { confirmOrder, toast } from "./toasts";
 import type { Order } from "../../lib/order-schema";
 import { matchesAdminProduct } from "../../lib/admin-search";
-import { round } from "../../lib/inventory-schema";
+import { figures, round } from "../../lib/inventory-schema";
 type Product = {
   id: string;
   name: string;
@@ -15,6 +15,7 @@ type Product = {
   stock_initialized: boolean;
   pricing_initialized: boolean;
   effective_price?: number;
+  selling_price?: number;
   cost_price?: number;
 };
 type Line = { product_id: string; quantity: string; search?: string };
@@ -38,6 +39,15 @@ export default function OrdersPanel({ mode = "list" }: { mode?: "list" | "new" }
     [filter, setFilter] = useState("all"),
     [search, setSearch] = useState(""),
     [query, setQuery] = useState("");
+  const [discountEnabled, setDiscountEnabled] = useState(false);
+  const [orderDiscount, setOrderDiscount] = useState("0");
+  const discountPercent = discountEnabled ? Number(orderDiscount) || 0 : 0;
+  const priceFor = (p: Product) =>
+    figures({
+      selling_price: p.selling_price ?? p.effective_price ?? 0,
+      cost_price: p.cost_price || 0,
+      discount: discountPercent,
+    }).effective_price;
   const [name, setName] = useState(""),
     [phone, setPhone] = useState(""),
     [address, setAddress] = useState(""),
@@ -102,7 +112,7 @@ export default function OrdersPanel({ mode = "list" }: { mode?: "list" | "new" }
   const amounts = lines.map((line) => {
     const p = products.find((p) => p.id === line.product_id),
       n = Number(line.quantity) || 0;
-    return { revenue: round((p?.effective_price || 0) * n), cost: round((p?.cost_price || 0) * n) };
+    return { revenue: round((p ? priceFor(p) : 0) * n), cost: round((p?.cost_price || 0) * n) };
   });
   const revenue = round(amounts.reduce((s, l) => s + l.revenue, 0)),
     cost = round(amounts.reduce((s, l) => s + l.cost, 0));
@@ -125,6 +135,7 @@ export default function OrdersPanel({ mode = "list" }: { mode?: "list" | "new" }
           version,
           customer: { name, phone, address },
           notes,
+          discount_percent: discountPercent,
           items: lines.map((line) => ({
             product_id: line.product_id,
             quantity: Number(line.quantity),
@@ -137,6 +148,8 @@ export default function OrdersPanel({ mode = "list" }: { mode?: "list" | "new" }
       setPhone("");
       setAddress("");
       setNotes("");
+      setDiscountEnabled(false);
+      setOrderDiscount("0");
       setLines([{ product_id: "", quantity: "1" }]);
       setRequestId(crypto.randomUUID());
       await Promise.all([loadOrders(), loadProducts()]).catch(() =>
@@ -325,6 +338,42 @@ export default function OrdersPanel({ mode = "list" }: { mode?: "list" | "new" }
                   />
                 </label>
               </div>
+              <section className="my-5 rounded-xl border border-[#e8ddd5] p-4">
+                <label className="flex items-center gap-2">
+                  <input
+                    type="checkbox"
+                    checked={discountEnabled}
+                    onChange={(e) => {
+                      setDiscountEnabled(e.target.checked);
+                      changed();
+                    }}
+                  />
+                  تطبيق خصم على هذا الطلب
+                </label>
+                {discountEnabled && (
+                  <label className="mt-3 block">
+                    نسبة خصم الطلب %
+                    <input
+                      required
+                      type="number"
+                      min="0"
+                      max="100"
+                      step="0.01"
+                      className={field}
+                      value={orderDiscount}
+                      onChange={(e) => {
+                        setOrderDiscount(e.target.value);
+                        changed();
+                      }}
+                    />
+                  </label>
+                )}
+                <p className="mb-0 text-sm leading-7">
+                  {discountEnabled
+                    ? "يُطبق الخصم على سعر البيع الأساسي لكل المنتجات في هذا الطلب فقط، ولا يُضاف إلى خصم المنتج."
+                    : "بدون خصم: يستخدم الطلب سعر البيع الأساسي حتى لو للمنتج خصم محفوظ."}
+                </p>
+              </section>
               <h2 className="mt-6 text-lg">منتجات الطلب</h2>
               <div className="space-y-3">
                 {lines.map((line, i) => {
@@ -401,7 +450,7 @@ export default function OrdersPanel({ mode = "list" }: { mode?: "list" | "new" }
                                       ? "مضاف بالفعل"
                                       : unavailable
                                         ? "غير متاح — راجع المخزون والأسعار"
-                                        : fmt(product.effective_price || 0) + " ج"}
+                                        : fmt(priceFor(product)) + " ج"}
                                   </span>
                                 </span>
                               </button>
@@ -444,7 +493,7 @@ export default function OrdersPanel({ mode = "list" }: { mode?: "list" | "new" }
                       </div>
                       {p && (
                         <p className="mb-0 text-sm leading-7">
-                          سعر الوحدة بعد الخصم {fmt(p.effective_price || 0)} ج · المتوفر{" "}
+                          سعر الوحدة بعد الخصم {fmt(priceFor(p))} ج · المتوفر{" "}
                           {p.stock ?? "غير مسجل"} · إجمالي السطر {fmt(amounts[i].revenue)} ج
                         </p>
                       )}
@@ -465,7 +514,7 @@ export default function OrdersPanel({ mode = "list" }: { mode?: "list" | "new" }
               </button>
               <div className="mb-5 grid gap-3 rounded-xl bg-[#f8f5f1] p-4 sm:grid-cols-3">
                 <p>
-                  إجمالي المنتجات
+                  إجمالي المنتجات بعد الخصم
                   <br />
                   <strong>{fmt(revenue)} ج</strong>
                 </p>
@@ -555,6 +604,9 @@ export default function OrdersPanel({ mode = "list" }: { mode?: "list" | "new" }
                   )}
                   {order.notes && <p className="break-words text-sm">{order.notes}</p>}
                   <p className="text-xs text-[#917c73]">
+                    {order.discount_percent !== undefined && (
+                      <span>خصم الطلب: {fmt(order.discount_percent)}% · </span>
+                    )}
                     إنشاء:{" "}
                     {new Date(order.created_at).toLocaleString("ar-EG", {
                       timeZone: "Africa/Cairo",

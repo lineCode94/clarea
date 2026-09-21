@@ -278,6 +278,50 @@ const orders = load("app/lib/order-service.ts");
   assert.equal((await orders.listOrders(get("/?status=cancelled"))).body.total, 1);
   assert.equal((await orders.listOrders(get("/?q=" + order.reference))).body.total, 1);
   assert.equal((await orders.listOrders(get("/?offset=999"))).body.orders.length, 0);
+  // Order discount overrides product discounts; zero explicitly disables them.
+  await service.updateInventory(
+    req({ cost_price: 100, selling_price: 250, discount: 10 }),
+    "sample",
+    "pricing",
+  );
+  const discountedInput = { ...another, request_id: crypto.randomUUID(), discount_percent: 20 };
+  const discounted = (await orders.createOrder(req(discountedInput))).body.order;
+  assert.equal(discounted.revenue, 280);
+  assert.equal(discounted.cost, 150);
+  assert.equal(discounted.profit, 130);
+  assert.equal(discounted.discount_percent, 20);
+  assert.equal(
+    (await orders.createOrder(req({ ...discountedInput, discount_percent: 0 }))).status,
+    409,
+  );
+  const fullPrice = (
+    await orders.createOrder(
+      req({ ...another, request_id: crypto.randomUUID(), discount_percent: 0 }),
+    )
+  ).body.order;
+  assert.equal(fullPrice.revenue, 350);
+  assert.equal(fullPrice.cost, 150);
+  for (const discount_percent of [-1, 101])
+    assert.equal(
+      (
+        await orders.createOrder(
+          req({ ...another, request_id: crypto.randomUUID(), discount_percent }),
+        )
+      ).status,
+      400,
+    );
+  await orders.changeOrder(req({ status: "delivered" }), discounted.id);
+  const discountedSales = (await store.readCatalog()).sales.filter(
+    (s) => s.order_id === discounted.id,
+  );
+  assert.equal(
+    discountedSales.reduce((n, s) => n + s.revenue, 0),
+    280,
+  );
+  assert.equal(
+    discountedSales.reduce((n, s) => n + s.cost, 0),
+    150,
+  );
   console.log(
     "PASS orders: private auth, automatic unique numbering, creation replay safety, multi-item discount totals, immutable snapshots, all-or-nothing delivery, concurrency, cancellation, one-order report counts and no public customer leakage",
   );
