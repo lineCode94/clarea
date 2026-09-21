@@ -172,8 +172,9 @@ export default function InventoryPanel({
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(body),
       });
-      // Update saved metadata only. Never reinitialize the independent input drafts.
-      setSelected(saved.product);
+      // Close the editor only after a successful save; keep drafts on errors.
+      setSelected(null);
+      window.scrollTo({ top: 0, behavior: "smooth" });
       setData((current) =>
         current
           ? {

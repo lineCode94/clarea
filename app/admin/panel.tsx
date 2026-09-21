@@ -159,6 +159,10 @@ export default function AdminPanel({ authenticated }: { authenticated: boolean }
         body: JSON.stringify({ product: draft, create: creating, version: catalog.version }),
       });
       setCatalog(next);
+      setDraft(null);
+      setFilter("all");
+      window.history.replaceState(null, "", "/admin");
+      window.scrollTo({ top: 0, behavior: "smooth" });
       setCreating(false);
       setDirty(false);
       setNotice(
