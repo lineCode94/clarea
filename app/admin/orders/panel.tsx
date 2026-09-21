@@ -371,6 +371,18 @@ export default function OrdersPanel({ mode = "list" }: { mode?: "list" | "new" }
                 </p>
               </section>
               <h2 className="mt-6 text-lg">منتجات الطلب</h2>
+              <p className="text-sm leading-7 text-[#80656e]">
+                لو المنتج متوفر وأسعاره ناقصة،{" "}
+                <a
+                  href="/admin/pricing"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="font-bold text-[#5c1a2b] underline"
+                >
+                  افتح الأسعار والخصومات
+                </a>{" "}
+                وسجّل سعر الشراء والبيع، ثم اضغط «تحديث البيانات» هنا بدون إعادة تحميل الصفحة.
+              </p>
               <div className="space-y-3">
                 {lines.map((line, i) => {
                   const p = products.find((p) => p.id === line.product_id);
