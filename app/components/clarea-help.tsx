@@ -287,15 +287,6 @@ export default function ClareaHelp({
             <img src="/pwa/icon-192-logo-v3.png" alt="" className="size-11 rounded-xl" />
             <div className="min-w-0 flex-1">
               <h2 className="m-0 text-base">{ar ? "مساعد Claréa" : "Claréa helper"}</h2>
-              <p className="m-0 mt-1 text-[11px] text-[#917c73]">
-                {aiAvailable && aiConsent
-                  ? ar
-                    ? "Gemini · قد يخطئ، أكدي التفاصيل معنا"
-                    : "Gemini · Confirm details with our team"
-                  : ar
-                    ? "إجابات جاهزة من معلومات المتجر"
-                    : "Saved answers from our store"}
-              </p>
             </div>
             <button
               type="button"
@@ -315,67 +306,47 @@ export default function ClareaHelp({
             </button>
           </header>
           <div ref={history} className="min-h-0 flex-1 overflow-y-auto overscroll-contain p-4">
-            <p className="mt-0 rounded-2xl bg-[#f5eee5] p-4 text-sm leading-7">
-              {ar
-                ? "أهلًا بيكي في Claréa 🤍 اختاري سؤال أو اكتبي كلمة زي «شحن» أو «السعر». للمنتجات، ابحثي باسم المنتج أو الماركة."
-                : "Welcome to Claréa 🤍 Choose a question or type a keyword like shipping or price. Search a product or brand name to see its details."}
-            </p>
-            <div className="mb-4 flex flex-wrap gap-2">
-              <button
-                type="button"
-                onClick={() => {
-                  dialog.current?.close();
-                  document.getElementById("new-arrivals")?.scrollIntoView({ behavior: "smooth" });
-                }}
-                className="min-h-10 rounded-full bg-[#5C1A2B] px-3 py-2 text-xs text-white"
-              >
-                New to Claréa
-              </button>
-              {[
-                {
-                  label: ar ? "المتاح دلوقتي" : "Available now",
-                  category: "all",
-                  query: "",
-                  available: true,
-                },
-                {
-                  label: ar ? "واقي الشمس" : "Sun protection",
-                  category: "skin",
-                  query: "sun",
-                  available: false,
-                },
-                {
-                  label: ar ? "العناية بالشعر" : "Haircare",
-                  category: "hair",
-                  query: "",
-                  available: false,
-                },
-              ].map((item) => (
-                <button
-                  key={item.category + item.query}
-                  type="button"
-                  onClick={() => {
-                    dialog.current?.close();
-                    onBrowse(item.category, item.query, item.available);
-                  }}
-                  className="min-h-10 rounded-full bg-[#5C1A2B] px-3 py-2 text-xs text-white"
-                >
-                  {item.label}
-                </button>
-              ))}
-            </div>
-            <div className="mb-5 grid gap-2">
-              {faqs.map(([q, a]) => (
-                <button
-                  type="button"
-                  key={q}
-                  onClick={() => answer(q, a)}
-                  className="rounded-xl border border-[#e8ddd5] px-3 py-3 text-start text-xs leading-5 hover:bg-[#f5eee5]"
-                >
-                  {q}
-                </button>
-              ))}
-            </div>
+            {messages.length === 0 && (
+              <>
+                <p className="mt-0 rounded-2xl bg-[#f5eee5] p-4 text-sm leading-7">
+                  {ar ? "أهلًا بيكي 🤍 بتدوري على إيه؟" : "Hi 🤍 What are you looking for?"}
+                </p>
+                <div className="mb-4 flex flex-wrap gap-2">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      dialog.current?.close();
+                      document
+                        .getElementById("new-arrivals")
+                        ?.scrollIntoView({ behavior: "smooth" });
+                    }}
+                    className="min-h-10 rounded-full bg-[#5C1A2B] px-3 py-2 text-xs text-white"
+                  >
+                    New to Claréa
+                  </button>
+                  {[
+                    {
+                      label: ar ? "المتاح دلوقتي" : "Available now",
+                      category: "all",
+                      query: "",
+                      available: true,
+                    },
+                  ].map((item) => (
+                    <button
+                      key={item.category + item.query}
+                      type="button"
+                      onClick={() => {
+                        dialog.current?.close();
+                        onBrowse(item.category, item.query, item.available);
+                      }}
+                      className="min-h-10 rounded-full bg-[#5C1A2B] px-3 py-2 text-xs text-white"
+                    >
+                      {item.label}
+                    </button>
+                  ))}
+                </div>
+              </>
+            )}
             <div role="log" aria-live="polite" aria-relevant="additions" className="grid gap-4">
               {messages.map((m, i) => (
                 <div key={i} className="grid gap-2">
