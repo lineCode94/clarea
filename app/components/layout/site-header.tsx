@@ -241,18 +241,19 @@ export default function SiteHeader({
               aria-label={ar ? "القائمة" : "Menu"}
             >
               {/* Panel header */}
-              <div className="flex items-center justify-between px-6 pt-6 pb-4">
+              <div className="grid grid-cols-[1fr_auto_1fr] items-center px-6 pb-4 pt-6">
+                <div /> {/* Spacer for centering */}
                 <Image
                   src="/clarea-logo-transparent.png"
                   alt="Claréa"
                   width={120}
                   height={40}
-                  className="h-auto w-[100px]"
+                  className="h-auto w-[100px] place-self-center"
                 />
                 <button
                   onClick={() => setMenuOpen(false)}
                   aria-label={ar ? "إغلاق" : "Close"}
-                  className="grid size-10 place-items-center rounded-full hover:bg-brand/5"
+                  className="grid size-10 place-items-center place-self-end rounded-full hover:bg-brand/5"
                 >
                   <TbX size={22} />
                 </button>
