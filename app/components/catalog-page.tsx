@@ -56,9 +56,9 @@ export default function CatalogPage() {
         />
         <InstallApp lang={lang} />
         <BrandIntro lang={lang} />
+        <ProductCatalog lang={lang} filters={filters} onSelect={setSelected} />
         <ShopCategories lang={lang} onExplore={exploreCategory} />
         <HomeSections lang={lang} onSelect={setSelected} onExplore={exploreCategory} />
-        <ProductCatalog lang={lang} filters={filters} onSelect={setSelected} />
         <EditorialSection lang={lang} onSelect={setSelected} />
         <AboutSection lang={lang} />
         <FaqSection lang={lang} />

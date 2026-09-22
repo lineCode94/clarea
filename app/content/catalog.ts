@@ -1,11 +1,11 @@
 export const text = {
   ar: {
-    nav: ["المجموعة", "عالم Claréa", "عن Claréa", "الأسئلة الشائعة"],
+    nav: ["المنتجات", "عالم Claréa", "عن Claréa", "الأسئلة الشائعة"],
     intro: "روتين العناية يبدأ هنا.",
     description:
       "اكتشفي منتجات العناية بالبشرة والشعر وتعرّفي على مكوناتها وطريقة استخدامها قبل الاختيار.",
     edit: "THE CARE EDIT / 01",
-    collection: "اكتشفي المجموعة",
+    collection: "تسوّقي كل المنتجات",
     all: "كل المنتجات",
     skin: "العناية بالبشرة",
     hair: "العناية بالشعر",
@@ -59,12 +59,12 @@ export const text = {
     footer: "معلومات العناية لا تغني عن استشارة مختص عند وجود حالة جلدية.",
   },
   en: {
-    nav: ["The collection", "The Claréa edit", "About Claréa", "FAQs"],
+    nav: ["Shop all", "The Claréa edit", "About Claréa", "FAQs"],
     intro: "Your daily care starts here.",
     description:
       "Discover beauty and care and explore product ingredients and how to use them before you choose.",
     edit: "THE CARE EDIT / 01",
-    collection: "Explore the collection",
+    collection: "Shop all products",
     all: "All products",
     skin: "Skincare",
     hair: "Haircare",

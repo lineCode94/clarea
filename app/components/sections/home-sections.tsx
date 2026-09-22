@@ -58,7 +58,12 @@ export default function HomeSections({ lang, onSelect, onExplore }: Props) {
   const selectProducts = (ids: string[]) =>
     ids.flatMap((id) => products.filter((p) => p.id === id));
   const ar = lang === "ar";
-  const duo = products.find((product) => product.id === "centella-duo");
+  const highlights = ["skin", "hair", "oral", "drinks"].flatMap((category) => {
+    const product =
+      products.find((p) => p.category === category && p.available) ||
+      products.find((p) => p.category === category);
+    return product ? [product] : [];
+  });
   return (
     <>
       <div id="new-arrivals" className="scroll-mt-24">
@@ -87,40 +92,57 @@ export default function HomeSections({ lang, onSelect, onExplore }: Props) {
         onSelect={onSelect}
         onViewAll={() => onExplore("all")}
       />
-      {duo && (
-        <section
-          className="relative isolate flex min-h-[620px] items-start overflow-hidden bg-[#e5f1ed] md:min-h-[480px] md:items-center"
-          aria-label={ar ? "روتين التنظيف" : "The cleansing ritual"}
-        >
-          <Image
-            src="/clarea-campaign-hero.png"
-            alt={duo.name}
-            fill
-            sizes="100vw"
-            className="object-cover object-[85%_center] max-md:!top-auto max-md:!h-[45%] md:object-center"
-          />
-          <div className="page-width relative z-10 py-10 md:py-0" dir="ltr">
-            <div className="max-w-[420px] md:w-[42%]" dir={ar ? "rtl" : "ltr"}>
-              <p className="text-sm font-bold text-deep-gold">SKIN1004 · CENTELLA</p>
-              <h2 className="text-3xl text-brand md:text-4xl">
-                {ar ? "ابدئي روتينك بالتنظيف." : "A fresh start for your routine."}
-              </h2>
-              <p className="text-base text-[#334d47]">
-                {ar
-                  ? "اكتشفي ثنائي التنظيف: زيت تنظيف وغسول فوم، في مجموعة واحدة."
-                  : "Discover the cleansing duo: an oil cleanser and a foam cleanser, together in one set."}
-              </p>
-              <button
-                onClick={() => onSelect(duo)}
-                className="mt-2 inline-flex min-h-12 items-center gap-5 rounded bg-brand px-6 py-3 text-sm font-bold text-white"
-              >
-                {ar ? "اكتشفي الثنائي" : "Explore the duo"}
-                <TbArrowUpRight size={22} className="rtl:-scale-x-100" />
-              </button>
-            </div>
+      <section
+        className="overflow-hidden border-y border-line bg-[#f5e9e2]"
+        aria-label={ar ? "عالم العناية في Claréa" : "Your world of care"}
+      >
+        <div className="page-width grid items-center gap-10 py-12 md:grid-cols-2 md:gap-16 md:py-20">
+          <div>
+            <p className="text-xs font-bold tracking-[0.2em] text-deep-gold">THE WORLD OF CLARÉA</p>
+            <h2 className="max-w-lg text-3xl leading-tight text-brand md:text-5xl">
+              {ar
+                ? "كل ما تحبينه للعناية بنفسك، في مكان واحد."
+                : "Your care. Your choices. All in one place."}
+            </h2>
+            <p className="max-w-lg text-base leading-8 text-muted">
+              {ar
+                ? "من العناية بالبشرة والشعر إلى تفاصيل روتينك اليومي، اكتشفي منتجات وماركات متنوعة واختاري ما يناسبك."
+                : "From skincare and haircare to your everyday essentials, explore a variety of products and brands and find your favourites."}
+            </p>
+            <button
+              onClick={() => onExplore("all")}
+              className="mt-3 inline-flex min-h-12 items-center gap-5 rounded-full bg-brand px-7 py-3 text-sm font-bold text-white"
+            >
+              {ar ? "تصفّحي كل المنتجات" : "Explore all products"}
+              <TbArrowUpRight size={22} className="rtl:-scale-x-100" />
+            </button>
           </div>
-        </section>
-      )}
+          <div className="grid grid-cols-2 gap-3 sm:gap-5">
+            {highlights.map((product, i) => (
+              <button
+                key={product.id}
+                onClick={() => onSelect(product)}
+                className={
+                  "group min-w-0 rounded-2xl bg-white/75 p-4 text-start shadow-sm " +
+                  (i % 2 ? "translate-y-3" : "")
+                }
+              >
+                <div className="relative aspect-square">
+                  <Image
+                    src={product.images[0]}
+                    alt={product.name}
+                    fill
+                    sizes="(max-width:767px) 40vw, 240px"
+                    className="object-contain p-2 transition-transform duration-500 motion-safe:group-hover:scale-105"
+                  />
+                </div>
+                <p className="mb-1 mt-3 text-xs font-bold text-brand">{product.brand}</p>
+                <p className="m-0 line-clamp-2 text-xs leading-5 text-muted">{product.name}</p>
+              </button>
+            ))}
+          </div>
+        </div>
+      </section>
       <ProductShelf
         lang={lang}
         title={ar ? "عالم SKIN1004" : "The world of SKIN1004"}
