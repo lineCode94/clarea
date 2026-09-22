@@ -18,7 +18,7 @@ export const stockInput = z
   .strict();
 export const pricingInput = z
   .object({
-    cost_price: money,
+    cost_price: money.nullable().default(null),
     selling_price: money,
     discount: z.number().finite().min(0).max(100).default(0),
   })
@@ -81,12 +81,18 @@ export type Sale = z.infer<typeof saleSchema>;
 export const round = (v: number) => Math.round((v + Number.EPSILON) * 100) / 100;
 export function figures(p: z.infer<typeof pricingInput>) {
   const effective_price = round(p.selling_price * (1 - p.discount / 100));
-  const profit_per_unit = round(effective_price - p.cost_price);
+  const profit_per_unit = p.cost_price == null ? null : round(effective_price - p.cost_price);
   return {
     effective_price,
     profit_per_unit,
-    profit_margin: p.cost_price > 0 ? round((profit_per_unit / p.cost_price) * 100) : null,
-    sales_margin: effective_price > 0 ? round((profit_per_unit / effective_price) * 100) : null,
+    profit_margin:
+      p.cost_price != null && p.cost_price > 0 && profit_per_unit != null
+        ? round((profit_per_unit / p.cost_price) * 100)
+        : null,
+    sales_margin:
+      effective_price > 0 && profit_per_unit != null
+        ? round((profit_per_unit / effective_price) * 100)
+        : null,
   };
 }
 export function stockState(input: z.infer<typeof stockInput>, now: string) {

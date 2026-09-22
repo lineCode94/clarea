@@ -76,7 +76,11 @@ export async function updateInventory(request: Request, id: string, kind: "stock
       const input = stockInput.parse(values);
       if (input.status === "coming_soon" && input.quantity > 0)
         throw new AdminError("قريباً يتطلب كمية صفر");
-      c.inventory[id] = { ...old, stock: stockState(input, now), updated_at: now };
+      c.inventory[id] = {
+        ...old,
+        stock: stockState(input, now),
+        updated_at: now,
+      };
     } else {
       const pricing = pricingInput.parse(values);
       if (JSON.stringify(old.pricing) !== JSON.stringify(pricing))
@@ -129,6 +133,8 @@ export async function recordSale(request: Request) {
     if (!product) throw new AdminError("المنتج غير موجود", 404);
     const entry = c.inventory[product.id];
     if (!entry?.stock || !entry.pricing) throw new AdminError("أدخل المخزون والأسعار أولاً");
+    if (entry.pricing.cost_price == null)
+      throw new AdminError("أدخل سعر الشراء قبل تسجيل البيع لحساب الربح بدقة");
     if (entry.stock.status !== "available" || entry.stock.quantity < input.quantity_sold)
       throw new AdminError("المخزون غير كافٍ", 409);
     const now = new Date().toISOString(),

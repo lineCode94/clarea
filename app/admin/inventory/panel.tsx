@@ -1,5 +1,5 @@
 "use client";
-import { useEffect, useState, type FormEvent } from "react";
+import { useEffect, useState, useRef, type FormEvent } from "react";
 import SupplierPanel from "./supplier-panel";
 import { matchesAdminProduct } from "../../lib/admin-search";
 import AdminToolbar from "../toolbar";
@@ -18,22 +18,35 @@ type Row = {
   stock_initialized: boolean;
   pricing_initialized: boolean;
   low_stock: boolean;
-  cost_price?: number;
+  cost_price?: number | null;
   selling_price?: number;
   discount?: number;
   effective_price?: number;
-  profit_per_unit?: number;
+  profit_per_unit?: number | null;
   profit_margin?: number | null;
   sales_margin?: number | null;
 };
 type History = {
   product_id: string;
-  old_pricing: { cost_price: number; selling_price: number; discount: number } | null;
-  new_pricing: { cost_price: number; selling_price: number; discount: number };
+  old_pricing: {
+    cost_price: number | null;
+    selling_price: number;
+    discount: number;
+  } | null;
+  new_pricing: {
+    cost_price: number | null;
+    selling_price: number;
+    discount: number;
+  };
   changed_at: string;
   changed_by: string;
 };
-type Data = { products: Row[]; version: string; sales: Sale[]; priceHistory: History[] };
+type Data = {
+  products: Row[];
+  version: string;
+  sales: Sale[];
+  priceHistory: History[];
+};
 type Report = {
   total_revenue: number;
   total_cost: number;
@@ -135,6 +148,14 @@ export default function InventoryPanel({
       active = false;
     };
   }, [tab, month, date, category, data]);
+  const editor = useRef<HTMLElement>(null);
+  const priceInput = useRef<HTMLInputElement>(null);
+  useEffect(() => {
+    if (selected) {
+      editor.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+      if (mode === "pricing") priceInput.current?.focus({ preventScroll: true });
+    }
+  }, [selected?.id, mode]);
   function pick(p: Row) {
     setSelected(p);
     setQuantity(p.stock == null ? "" : String(p.stock));
@@ -162,7 +183,7 @@ export default function InventoryPanel({
               version: data.version,
             }
           : {
-              cost_price: Number(cost),
+              cost_price: cost.trim() === "" ? null : Number(cost),
               selling_price: Number(price),
               discount: Number(discount),
               version: data.version,
@@ -195,9 +216,9 @@ export default function InventoryPanel({
     }
   }
   const preview =
-    cost !== "" && price !== ""
+    price !== ""
       ? figures({
-          cost_price: Number(cost),
+          cost_price: cost.trim() === "" ? null : Number(cost),
           selling_price: Number(price),
           discount: Number(discount),
         })
@@ -285,7 +306,7 @@ export default function InventoryPanel({
                 ["المنتجات", data.products.length],
                 ["تنبيهات المخزون", data.products.filter((p) => p.low_stock).length],
                 ["كميات غير مسجلة", data.products.filter((p) => !p.stock_initialized).length],
-                ["أسعار غير مسجلة", data.products.filter((p) => !p.pricing_initialized).length],
+                ["أسعار بيع غير مسجلة", data.products.filter((p) => !p.pricing_initialized).length],
               ].map(([title, n]) => (
                 <div key={title} className={card}>
                   <p className="m-0 text-sm text-[#917c73]">{title}</p>
@@ -312,7 +333,7 @@ export default function InventoryPanel({
               <>
                 <p className="text-sm leading-7 text-[#806b63]">
                   {mode === "pricing" ? (
-                    "اختر المنتج لتعديل سعر الشراء والبيع والخصم. الأسعار الجديدة لا تغير حسابات الطلبات السابقة."
+                    "غيّر سعر البيع بالجنيه عند تغيّر سعر المورد أو الدولار. سعر الشراء اختياري ويمكن إضافته لاحقاً لحساب الربح وتسجيل الطلبات. التعديل لا يغيّر أسعار الطلبات السابقة."
                   ) : (
                     <>
                       أدخل الكمية المؤكدة عندك أو لدى المورد. المنتج غير المهيأ يحتفظ بحالة توفره
@@ -366,15 +387,22 @@ export default function InventoryPanel({
                       {mode === "pricing" && (
                         <p className="mb-0 text-sm">
                           البيع بعد الخصم: {money(p.effective_price)} ج · ربح الوحدة:{" "}
-                          {money(p.profit_per_unit)} ج
+                          {p.cost_price == null
+                            ? "غير محدد لعدم تسجيل سعر الشراء"
+                            : money(p.profit_per_unit) + " ج"}
                         </p>
+                      )}
+                      {mode === "pricing" && (
+                        <span className="mt-3 inline-block rounded-lg bg-[#f5ece7] px-3 py-2 text-sm font-bold text-[#5c1a2b]">
+                          تعديل السعر
+                        </span>
                       )}
                     </button>
                   ))}
                 </div>
                 {!visible.length && <p>لا توجد منتجات مطابقة.</p>}
                 {selected && (
-                  <section className="space-y-4" aria-label="إدارة المنتج">
+                  <section ref={editor} className="scroll-mt-5 space-y-4" aria-label="إدارة المنتج">
                     <h2 className="break-words text-xl">{selected.name}</h2>
                     <div className="max-w-2xl space-y-4">
                       {mode === "inventory" && (
@@ -427,14 +455,16 @@ export default function InventoryPanel({
                         <form onSubmit={(e) => save(e, "pricing")} className={card}>
                           <h3 className="mt-0">الأسعار بالجنيه المصري</h3>
                           {[
-                            ["سعر الشراء", cost, setCost],
+                            ["سعر الشراء (اختياري)", cost, setCost],
                             ["سعر البيع قبل الخصم", price, setPrice],
                             ["الخصم %", discount, setDiscount],
                           ].map(([label, value, set], i) => (
                             <label key={String(label)} className="mb-3 block">
                               {String(label)}
                               <input
-                                required
+                                ref={i === 1 ? priceInput : undefined}
+                                required={i !== 0}
+                                placeholder={i === 0 ? "غير محدد" : undefined}
                                 type="number"
                                 min="0"
                                 max={i === 2 ? 100 : 10000000}
@@ -445,19 +475,33 @@ export default function InventoryPanel({
                               />
                             </label>
                           ))}
+                          <p className="text-sm leading-7 text-[#806b63]">
+                            اترك سعر الشراء فارغاً لو غير معروف؛ الربح يظل غير محدد حتى تضيفه. الخصم
+                            يُطبّق على سعر البيع.
+                          </p>
                           {preview && (
                             <div className="mb-4 rounded-xl bg-[#f8f5f1] p-3 text-sm leading-7">
-                              البيع الفعلي: {money(preview.effective_price)} ج<br />
-                              ربح الوحدة: {money(preview.profit_per_unit)} ج<br />
+                              البيع الفعلي: {money(preview.effective_price)} ج
+                              <br />
+                              ربح الوحدة: {money(preview.profit_per_unit)} ج
+                              <br />
                               نسبة الربح على التكلفة: {money(preview.profit_margin)}%<br />
                               هامش المبيعات: {money(preview.sales_margin)}%
-                              {preview.profit_per_unit < 0 && (
+                              {preview.profit_per_unit != null && preview.profit_per_unit < 0 && (
                                 <p className="text-red-700">السعر بعد الخصم أقل من تكلفة الشراء.</p>
                               )}
                             </div>
                           )}
                           <button disabled={busy} className={button}>
-                            حفظ الأسعار
+                            {busy ? "جارٍ الحفظ…" : "حفظ الأسعار"}
+                          </button>
+                          <button
+                            type="button"
+                            disabled={busy}
+                            className="mr-3 rounded-xl border border-[#dfd2c8] px-5 py-3"
+                            onClick={() => setSelected(null)}
+                          >
+                            إلغاء
                           </button>
                         </form>
                       )}
@@ -572,7 +616,9 @@ export default function InventoryPanel({
                         <strong>{s.name}</strong>
                         <p className="text-sm">
                           طلب {s.order_reference} ·{" "}
-                          {new Date(s.date).toLocaleString("ar-EG", { timeZone: "Africa/Cairo" })}
+                          {new Date(s.date).toLocaleString("ar-EG", {
+                            timeZone: "Africa/Cairo",
+                          })}
                         </p>
                         <p className="mb-0 text-sm">
                           {s.quantity_sold} قطعة · مبيعات {money(s.revenue)} ج · تكلفة{" "}

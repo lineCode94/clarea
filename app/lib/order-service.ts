@@ -8,7 +8,9 @@ import { failure } from "./admin-response";
 import { figures, round, dayInCairo, stockState } from "./inventory-schema";
 import { orderInput, type Order } from "./order-schema";
 const json = (value: unknown) =>
-  NextResponse.json(value, { headers: { "Cache-Control": "private, no-store" } });
+  NextResponse.json(value, {
+    headers: { "Cache-Control": "private, no-store" },
+  });
 export async function listOrders(request: Request) {
   try {
     await requireAdmin();
@@ -73,6 +75,8 @@ export async function createOrder(request: Request) {
       if (!p) throw new AdminError("منتج غير موجود", 404);
       if (!entry?.pricing || !entry.stock)
         throw new AdminError(`أدخل أسعار ومخزون ${p.name} أولاً`);
+      if (entry.pricing.cost_price == null)
+        throw new AdminError(`أدخل سعر شراء ${p.name} قبل تسجيل الطلب لحساب الربح بدقة`);
       if (entry.stock.status !== "available" || entry.stock.quantity < line.quantity)
         throw new AdminError(`المخزون غير كافٍ: ${p.name}`, 409);
       const appliedDiscount = input.discount_percent ?? entry.pricing.discount;

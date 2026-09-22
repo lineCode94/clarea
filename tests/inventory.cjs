@@ -13,12 +13,20 @@ let stored = null,
 class Precondition extends Error {}
 const modules = {};
 const nextResponse = {
-  json: (body, options = {}) => ({ body, status: options.status || 200, headers: options.headers }),
+  json: (body, options = {}) => ({
+    body,
+    status: options.status || 200,
+    headers: options.headers,
+  }),
 };
 const blob = {
   get: async () =>
     stored
-      ? { statusCode: 200, stream: JSON.stringify(stored), blob: { etag: `W/"${etag}"` } }
+      ? {
+          statusCode: 200,
+          stream: JSON.stringify(stored),
+          blob: { etag: `W/"${etag}"` },
+        }
       : null,
   put: async (key, text, options) => {
     if (forceConflict) {
@@ -68,7 +76,10 @@ function load(file) {
   const m = { exports: {} };
   modules[full] = m;
   const source = ts.transpileModule(fs.readFileSync(full, "utf8"), {
-    compilerOptions: { module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2022 },
+    compilerOptions: {
+      module: ts.ModuleKind.CommonJS,
+      target: ts.ScriptTarget.ES2022,
+    },
   }).outputText;
   vm.runInNewContext(source, {
     exports: m.exports,
@@ -77,11 +88,16 @@ function load(file) {
       if (name === "zod") return z;
       if (name === "@vercel/blob") return blob;
       if (name === "next/cache")
-        return { unstable_cache: (fn) => fn, revalidateTag: () => invalidations++ };
+        return {
+          unstable_cache: (fn) => fn,
+          revalidateTag: () => invalidations++,
+        };
       if (name === "next/server") return { NextResponse: nextResponse };
       if (name.endsWith("/admin-auth") || name === "./admin-auth") return auth;
       if (name === "../data/products")
-        return { products: [product, { ...product, id: "draft", published: false }] };
+        return {
+          products: [product, { ...product, id: "draft", published: false }],
+        };
       if (name === "../config/home-collections") return { homeCollections: { newArrivals: [] } };
       if (name.startsWith("."))
         return load(path.relative(root, path.resolve(path.dirname(full), name + ".ts")));
@@ -188,7 +204,11 @@ const get = (path) => new Request("https://test.local" + path);
     ).status,
     200,
   );
-  const f = schema.figures({ cost_price: 100, selling_price: 250, discount: 10 });
+  const f = schema.figures({
+    cost_price: 100,
+    selling_price: 250,
+    discount: 10,
+  });
   assert.equal(f.profit_per_unit, 125);
   assert.equal(f.profit_margin, 125);
   assert.equal(f.sales_margin, 55.56);
@@ -225,7 +245,11 @@ const get = (path) => new Request("https://test.local" + path);
   assert.equal(
     (
       await service.recordSale(
-        req({ ...input, request_id: crypto.randomUUID(), order_reference: "ORDER-2" }),
+        req({
+          ...input,
+          request_id: crypto.randomUUID(),
+          order_reference: "ORDER-2",
+        }),
       )
     ).status,
     409,
@@ -271,7 +295,11 @@ const get = (path) => new Request("https://test.local" + path);
   const results = await Promise.all([
     service.recordSale(req(second)),
     service.recordSale(
-      req({ ...second, request_id: crypto.randomUUID(), order_reference: "ORDER-3" }),
+      req({
+        ...second,
+        request_id: crypto.randomUUID(),
+        order_reference: "ORDER-3",
+      }),
     ),
   ]);
   assert.equal(results.filter((r) => r.status === 200).length, 1);
@@ -297,6 +325,81 @@ const get = (path) => new Request("https://test.local" + path);
   assert.equal((await service.report(get("/"), "profit-margins")).body.highest_margin.margin, 50);
   assert.equal(schema.dayInCairo("2026-09-01T22:30:00Z"), "2026-09-02");
   assert(invalidations > 0);
+  // A sale price can be saved before the supplier's purchase cost is known.
+  const snapshots = JSON.stringify((await store.readCatalog()).sales);
+  await service.updateInventory(req({ quantity: 3, min_stock_alert: 1 }), "sample", "stock");
+  const unknown = await service.updateInventory(
+    req({ cost_price: null, selling_price: 1450, discount: 10 }),
+    "sample",
+    "pricing",
+  );
+  assert.equal(unknown.status, 200);
+  assert.equal(unknown.body.product.effective_price, 1305);
+  for (const key of ["cost_price", "profit_per_unit", "profit_margin", "sales_margin"])
+    assert.equal(unknown.body.product[key], null, key);
+  assert.equal((await service.report(get("/"), "profit-margins")).body.highest_margin, null);
+  const beforeBlockedSale = JSON.stringify(await store.readCatalog());
+  assert.equal(
+    (
+      await service.recordSale(
+        req({
+          ...second,
+          request_id: crypto.randomUUID(),
+          order_reference: "UNKNOWN-COST",
+        }),
+      )
+    ).status,
+    400,
+  );
+  assert.equal(JSON.stringify(await store.readCatalog()), beforeBlockedSale);
+  const currentVersion = (await store.readCatalog()).version;
+  const updated = await service.updateInventory(
+    req({
+      version: currentVersion,
+      cost_price: null,
+      selling_price: 1550,
+      discount: 0,
+    }),
+    "sample",
+    "pricing",
+  );
+  assert.equal(updated.status, 200);
+  assert.equal(updated.body.product.selling_price, 1550);
+  assert.equal(
+    (
+      await service.updateInventory(
+        req({ version: currentVersion, cost_price: null, selling_price: 1 }),
+        "sample",
+        "pricing",
+      )
+    ).status,
+    409,
+  );
+  c = await store.readCatalog();
+  assert.equal(c.priceHistory.at(-1).old_pricing.selling_price, 1450);
+  assert.equal(c.priceHistory.at(-1).new_pricing.cost_price, null);
+  assert.equal(JSON.stringify(c.sales), snapshots);
+  const known = await service.updateInventory(
+    req({ cost_price: 900, selling_price: 1550, discount: 0 }),
+    "sample",
+    "pricing",
+  );
+  assert.equal(known.body.product.profit_per_unit, 650);
+  assert.equal(
+    schema.figures({ cost_price: 0, selling_price: 1550, discount: 0 }).profit_per_unit,
+    1550,
+  );
+  assert.equal(schema.pricingInput.parse({ selling_price: 1550 }).cost_price, null);
+  assert.equal(
+    (
+      await service.updateInventory(
+        req({ cost_price: -1, selling_price: 1550 }),
+        "sample",
+        "pricing",
+      )
+    ).status,
+    400,
+  );
   console.log(
     "PASS inventory: validation, auth/origin, public privacy, discounts/margins, atomic sales, concurrent oversell prevention, idempotency, price snapshots, legacy preservation, Cairo reports and alerts",
   );

@@ -13,12 +13,20 @@ let stored = null,
 class Precondition extends Error {}
 const modules = {};
 const nextResponse = {
-  json: (body, options = {}) => ({ body, status: options.status || 200, headers: options.headers }),
+  json: (body, options = {}) => ({
+    body,
+    status: options.status || 200,
+    headers: options.headers,
+  }),
 };
 const blob = {
   get: async () =>
     stored
-      ? { statusCode: 200, stream: JSON.stringify(stored), blob: { etag: `W/"${etag}"` } }
+      ? {
+          statusCode: 200,
+          stream: JSON.stringify(stored),
+          blob: { etag: `W/"${etag}"` },
+        }
       : null,
   put: async (key, text, options) => {
     if (forceConflict) {
@@ -68,7 +76,10 @@ function load(file) {
   const m = { exports: {} };
   modules[full] = m;
   const source = ts.transpileModule(fs.readFileSync(full, "utf8"), {
-    compilerOptions: { module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2022 },
+    compilerOptions: {
+      module: ts.ModuleKind.CommonJS,
+      target: ts.ScriptTarget.ES2022,
+    },
   }).outputText;
   vm.runInNewContext(source, {
     exports: m.exports,
@@ -77,11 +88,16 @@ function load(file) {
       if (name === "zod") return z;
       if (name === "@vercel/blob") return blob;
       if (name === "next/cache")
-        return { unstable_cache: (fn) => fn, revalidateTag: () => invalidations++ };
+        return {
+          unstable_cache: (fn) => fn,
+          revalidateTag: () => invalidations++,
+        };
       if (name === "next/server") return { NextResponse: nextResponse };
       if (name.endsWith("/admin-auth") || name === "./admin-auth") return auth;
       if (name === "../data/products")
-        return { products: [product, { ...product, id: "draft", published: false }] };
+        return {
+          products: [product, { ...product, id: "draft", published: false }],
+        };
       if (name === "../config/home-collections") return { homeCollections: { newArrivals: [] } };
       if (name.startsWith("."))
         return load(path.relative(root, path.resolve(path.dirname(full), name + ".ts")));
@@ -117,7 +133,11 @@ const orders = load("app/lib/order-service.ts");
   await store.saveCatalog(c.products, c.version, c);
   const orderInput = {
     request_id: crypto.randomUUID(),
-    customer: { name: "Private customer", phone: "01000000000", address: "Private address" },
+    customer: {
+      name: "Private customer",
+      phone: "01000000000",
+      address: "Private address",
+    },
     notes: "Private note",
     items: [
       { product_id: "sample", quantity: 2 },
@@ -143,7 +163,10 @@ const orders = load("app/lib/order-service.ts");
   assert.equal(
     (
       await orders.createOrder(
-        req({ ...orderInput, items: [{ product_id: "sample", quantity: 1.5 }] }),
+        req({
+          ...orderInput,
+          items: [{ product_id: "sample", quantity: 1.5 }],
+        }),
       )
     ).status,
     400,
@@ -289,7 +312,11 @@ const orders = load("app/lib/order-service.ts");
     "sample",
     "pricing",
   );
-  const discountedInput = { ...another, request_id: crypto.randomUUID(), discount_percent: 20 };
+  const discountedInput = {
+    ...another,
+    request_id: crypto.randomUUID(),
+    discount_percent: 20,
+  };
   const discounted = (await orders.createOrder(req(discountedInput))).body.order;
   assert.equal(discounted.revenue, 280);
   assert.equal(discounted.cost, 150);
@@ -310,7 +337,11 @@ const orders = load("app/lib/order-service.ts");
     assert.equal(
       (
         await orders.createOrder(
-          req({ ...another, request_id: crypto.randomUUID(), discount_percent }),
+          req({
+            ...another,
+            request_id: crypto.randomUUID(),
+            discount_percent,
+          }),
         )
       ).status,
       400,
@@ -327,6 +358,21 @@ const orders = load("app/lib/order-service.ts");
     discountedSales.reduce((n, s) => n + s.cost, 0),
     150,
   );
+  console.log(
+    "Checking orders reject unknown purchase costs without changing stored orders or stock",
+  );
+  await service.updateInventory(
+    req({ cost_price: null, selling_price: 1700, discount: 0 }),
+    "sample",
+    "pricing",
+  );
+  const beforeUnknownCost = JSON.stringify(await store.readCatalog());
+  const noCostOrder = await orders.createOrder(
+    req({ ...another, request_id: crypto.randomUUID() }),
+  );
+  assert.equal(noCostOrder.status, 400);
+  assert.match(noCostOrder.body.error, /سعر شراء/);
+  assert.equal(JSON.stringify(await store.readCatalog()), beforeUnknownCost);
   console.log(
     "PASS orders: private auth, automatic unique numbering, creation replay safety, multi-item discount totals, immutable snapshots, all-or-nothing delivery, concurrency, cancellation, one-order report counts and no public customer leakage",
   );

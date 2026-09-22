@@ -17,14 +17,18 @@ type Product = {
   pricing_initialized: boolean;
   effective_price?: number;
   selling_price?: number;
-  cost_price?: number;
+  cost_price?: number | null;
 };
 type Line = { product_id: string; quantity: string; search?: string };
 const field = "mt-2 min-w-0 w-full rounded-xl border border-[#dfd2c8] bg-white p-3 text-[#412832]";
 const button = "rounded-xl bg-[#5c1a2b] px-5 py-3 text-white disabled:opacity-50";
 const card = "rounded-2xl border border-[#e8ddd5] bg-white p-5";
 const fmt = (v: number) => new Intl.NumberFormat("ar-EG", { maximumFractionDigits: 2 }).format(v);
-const labels = { pending: "قيد التجهيز", delivered: "تم تسليمه", cancelled: "ملغي" };
+const labels = {
+  pending: "قيد التجهيز",
+  delivered: "تم تسليمه",
+  cancelled: "ملغي",
+};
 async function api(url: string, init?: RequestInit) {
   const r = await fetch(url, { cache: "no-store", ...init });
   const data = await r.json();
@@ -113,7 +117,10 @@ export default function OrdersPanel({ mode = "list" }: { mode?: "list" | "new" }
   const amounts = lines.map((line) => {
     const p = products.find((p) => p.id === line.product_id),
       n = Number(line.quantity) || 0;
-    return { revenue: round((p ? priceFor(p) : 0) * n), cost: round((p?.cost_price || 0) * n) };
+    return {
+      revenue: round((p ? priceFor(p) : 0) * n),
+      cost: round((p?.cost_price || 0) * n),
+    };
   });
   const revenue = round(amounts.reduce((s, l) => s + l.revenue, 0)),
     cost = round(amounts.reduce((s, l) => s + l.cost, 0));
@@ -431,6 +438,7 @@ export default function OrdersPanel({ mode = "list" }: { mode?: "list" | "new" }
                             );
                             const unavailable =
                               !product.pricing_initialized ||
+                              product.cost_price == null ||
                               !product.stock_initialized ||
                               product.status !== "available";
                             return (
@@ -439,7 +447,10 @@ export default function OrdersPanel({ mode = "list" }: { mode?: "list" | "new" }
                                 key={product.id}
                                 disabled={duplicate || unavailable}
                                 onClick={() =>
-                                  changeLine(i, { product_id: product.id, search: "" })
+                                  changeLine(i, {
+                                    product_id: product.id,
+                                    search: "",
+                                  })
                                 }
                                 className="flex w-full items-center gap-3 border-b p-3 text-right hover:bg-[#f8f5f1] disabled:opacity-50"
                               >
@@ -460,7 +471,8 @@ export default function OrdersPanel({ mode = "list" }: { mode?: "list" | "new" }
                                         ? "كمية المخزون غير مسجلة"
                                         : product.stock === 0 || product.status !== "available"
                                           ? "لا توجد كمية متاحة للطلب"
-                                          : !product.pricing_initialized
+                                          : !product.pricing_initialized ||
+                                              product.cost_price == null
                                             ? "متوفر: " +
                                               product.stock +
                                               " قطع — سجّل سعر الشراء والبيع أولاً"
