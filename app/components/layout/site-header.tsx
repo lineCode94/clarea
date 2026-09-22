@@ -274,24 +274,22 @@ export default function SiteHeader({
                 className="flex-1 overflow-y-auto px-6 py-6"
                 aria-label={ar ? "القائمة" : "Navigation"}
               >
-                <ul className="flex flex-col gap-1">
+                <ul className="flex flex-col">
                   {navItems.map((item) => (
                     <motion.li key={item.key} variants={reduced ? undefined : itemVariants}>
                       {item.href ? (
                         <a
                           href={item.href}
                           onClick={() => setMenuOpen(false)}
-                          className="mobile-nav-link group flex items-center gap-3 rounded-xl px-3 py-3.5 text-[17px] font-medium text-foreground transition-colors hover:bg-brand/5 hover:text-brand"
+                          className="mobile-nav-link block w-full border-b border-line/50 py-4.5 text-center text-[17px] font-medium text-foreground transition-colors hover:text-brand"
                         >
-                          <span className="h-[3px] w-0 rounded-full bg-brand transition-all duration-300 group-hover:w-4" />
                           {item.label}
                         </a>
                       ) : (
                         <button
                           onClick={() => handleNav(item.category!)}
-                          className="mobile-nav-link group flex w-full items-center gap-3 rounded-xl px-3 py-3.5 text-start text-[17px] font-medium text-foreground transition-colors hover:bg-brand/5 hover:text-brand"
+                          className="mobile-nav-link block w-full border-b border-line/50 py-4.5 text-center text-[17px] font-medium text-foreground transition-colors hover:text-brand"
                         >
-                          <span className="h-[3px] w-0 rounded-full bg-brand transition-all duration-300 group-hover:w-4" />
                           {item.label}
                         </button>
                       )}
