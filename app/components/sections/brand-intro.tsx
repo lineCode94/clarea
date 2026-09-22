@@ -154,7 +154,7 @@ export default function BrandIntro({ lang }: { lang: Language }) {
           alt="Claréa"
           width={280}
           height={93}
-          className="hero-logo rounded-xl bg-white/90 p-2"
+          className="hero-logo !absolute !top-4 !left-4 !w-[110px] rounded-xl bg-[#5c1a2b]/85 p-2"
           priority
         />
 
