@@ -70,6 +70,15 @@ export async function saveCatalog(products: ManagedProduct[], version: string, l
 export const publicCatalog = unstable_cache(
   async () => {
     const catalog = await readCatalog();
+    const sold = new Map<string, number>();
+    for (const sale of catalog.sales)
+      sold.set(sale.product_id, (sold.get(sale.product_id) || 0) + sale.quantity_sold);
+    const ranks = new Map(
+      catalog.products
+        .filter((p) => p.published && (sold.get(p.id) || 0) > 0)
+        .sort((a, b) => (sold.get(b.id) || 0) - (sold.get(a.id) || 0) || a.id.localeCompare(b.id))
+        .map((p, index) => [p.id, index + 1]),
+    );
     return catalog.products
       .filter((p) => p.published)
       .map((p) => {
@@ -78,11 +87,12 @@ export const publicCatalog = unstable_cache(
         const clean = catalogSchema.shape.products.element.parse(p);
         return {
           ...clean,
+          ...(ranks.has(p.id) ? { best_seller_rank: ranks.get(p.id) } : {}),
           available: stock ? stock.status === "available" : clean.available,
           stock_status: stock?.status || (clean.available ? "available" : "out_of_stock"),
         };
       });
   },
-  ["clarea-public-catalog-v2", namespace],
+  ["clarea-public-catalog-v3", namespace],
   { revalidate: 30, tags: ["clarea-catalog"] },
 );

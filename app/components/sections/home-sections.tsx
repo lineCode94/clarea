@@ -58,6 +58,10 @@ export default function HomeSections({ lang, onSelect, onExplore }: Props) {
   const selectProducts = (ids: string[]) =>
     ids.flatMap((id) => products.filter((p) => p.id === id));
   const ar = lang === "ar";
+  const bestSellers = products
+    .filter((p) => p.best_seller_rank !== undefined)
+    .sort((a, b) => a.best_seller_rank! - b.best_seller_rank!)
+    .slice(0, 8);
   const highlights = ["skin", "hair", "oral", "drinks"].flatMap((category) => {
     const product =
       products.find((p) => p.category === category && p.available) ||
@@ -80,18 +84,20 @@ export default function HomeSections({ lang, onSelect, onExplore }: Props) {
           onViewAll={() => onExplore("all")}
         />
       </div>
-      <ProductShelf
-        lang={lang}
-        title={ar ? "اختيارات Claréa" : "Claréa picks"}
-        subtitle={
-          ar
-            ? "اختيارات للتنظيف والترطيب والعناية اليومية"
-            : "Explore cleansing, hydration and everyday care"
-        }
-        products={selectProducts(homeCollections.care)}
-        onSelect={onSelect}
-        onViewAll={() => onExplore("all")}
-      />
+      {bestSellers.length > 0 && (
+        <ProductShelf
+          lang={lang}
+          title={ar ? "الأكثر مبيعًا في Claréa" : "Bestsellers at Claréa"}
+          subtitle={
+            ar
+              ? "حسب الكميات المباعة في الطلبات التي تم تسليمها"
+              : "Based on units sold in delivered orders"
+          }
+          products={bestSellers}
+          onSelect={onSelect}
+          onViewAll={() => onExplore("all")}
+        />
+      )}
       <section
         className="overflow-hidden border-y border-line bg-[#f5e9e2]"
         aria-label={ar ? "عالم العناية في Claréa" : "Your world of care"}
