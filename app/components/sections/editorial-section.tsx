@@ -26,10 +26,10 @@ export default function EditorialSection({
           <button onClick={() => onSelect(duo)} className="group text-start">
             <div className="aspect-[1.5] overflow-hidden rounded-lg">
               <Image
-                src="/centella-studio.webp"
+                src="/centella-editorial-gold.webp"
                 alt="SKIN1004 Centella Cleansing Duo"
-                width={1000}
-                height={1000}
+                width={1536}
+                height={1024}
                 className="size-full object-cover transition-transform duration-700 motion-safe:group-hover:scale-105"
               />
             </div>
