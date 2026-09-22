@@ -21,8 +21,8 @@ const slides: Slide[] = [
   {
     id: "skin1004",
     brand: "SKIN1004",
-    image: "/hero/skin1004-editorial.webp",
-    alt: "SKIN1004 Madagascar Centella ampoules in warm sunlight",
+    image: "/hero/skin1004-hero.jpg",
+    alt: "SKIN1004 Madagascar Centella collection on linen with botanical leaves",
     position: "!object-cover !object-[center_45%]",
     title: { ar: "لمسة سنتيلا. لحظة هدوء.", en: "A little Centella. A moment of calm." },
     subtitle: {
@@ -32,30 +32,30 @@ const slides: Slide[] = [
     label: { ar: "تسوّقي مختاراتنا", en: "Shop the collection" },
   },
   {
-    id: "medicube",
-    brand: "medicube",
-    image: "/products/import-20260920/medicube-hyaluronic-ceramide-jelly-cream.webp",
-    alt: "Medicube Hyaluronic Ceramide Jelly Cream",
-    position: "!object-contain !pb-[230px] !pt-12 md:!pb-[200px] md:!pt-8",
-    title: { ar: "ترطيب يكمل روتينك.", en: "Hydration for your daily ritual." },
-    subtitle: {
-      ar: "اختيارات Medicube للعناية الكورية التي تحبّينها، في مكان واحد.",
-      en: "Explore our Medicube edit and find your next Korean skincare favourite.",
-    },
-    label: { ar: "اكتشفي المنتجات", en: "Explore the collection" },
-  },
-  {
     id: "anua",
     brand: "Anua",
-    image: "/products/import-20260920/anua-niacinamide-txa-brightening-booster-toner.webp",
-    alt: "Anua Niacinamide TXA Brightening Booster Toner",
-    position: "!object-contain !pb-[230px] !pt-12 md:!pb-[200px] md:!pt-8",
+    image: "/hero/anua-editorial.webp",
+    alt: "Anua Retinol skincare collection with serum, cream and eye patch",
+    position: "!object-cover !object-[center_40%]",
     title: { ar: "تفاصيل بسيطة. عناية تحبّينها.", en: "Simple details. Skincare to love." },
     subtitle: {
       ar: "تعرّفي على اختيارات Anua واختاري خطوتك القادمة في العناية.",
       en: "Meet our Anua edit and discover the next step in your skincare ritual.",
     },
     label: { ar: "تسوّقي مختاراتنا", en: "Discover our edit" },
+  },
+  {
+    id: "medicube",
+    brand: "medicube",
+    image: "/hero/medicube-hero.jpg",
+    alt: "Medicube skincare collection on marble with rose petals",
+    position: "!object-cover !object-[center_45%]",
+    title: { ar: "ترطيب يكمل روتينك.", en: "Hydration for your daily ritual." },
+    subtitle: {
+      ar: "اختيارات Medicube للعناية الكورية التي تحبّينها، في مكان واحد.",
+      en: "Explore our Medicube edit and find your next Korean skincare favourite.",
+    },
+    label: { ar: "اكتشفي المنتجات", en: "Explore the collection" },
   },
 ];
 
@@ -154,7 +154,7 @@ export default function BrandIntro({ lang }: { lang: Language }) {
           alt="Claréa"
           width={280}
           height={93}
-          className="hero-logo !absolute !top-4 !left-4 !w-[110px] rounded-xl bg-[#5c1a2b]/85 p-2"
+          className="hero-logo !absolute !top-4 !left-4 !w-[110px]"
           priority
         />
 
