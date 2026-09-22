@@ -9,14 +9,6 @@ export const homeCategories = [
     tone: "#f5e9ec",
   },
   {
-    id: "body",
-    query: "",
-    image: "/products/import-20260920/panoxyl-acne-foaming-wash-10-benzoyl-peroxide.webp",
-    ar: "العناية بالجسم",
-    en: "Body Care",
-    tone: "#edf1f7",
-  },
-  {
     id: "hair",
     query: "",
     image: "/products/import-20260920/redken-extreme-shampoo-75ml.webp",
