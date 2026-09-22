@@ -38,7 +38,7 @@ export default function CatalogToolbar({
             ["hair", t.hair],
             ["supplements", t.supplements],
             ["oral", t.oral],
-            ["drinks", t.drinks],
+            ["body", t.body],
           ].map(([id, label]) => (
             <button
               key={id}

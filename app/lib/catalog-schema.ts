@@ -14,7 +14,9 @@ export const managedProductSchema = z.object({
     .regex(/^[a-z0-9-]+$/),
   name: z.string().trim().min(1, "اسم المنتج مطلوب").max(180),
   brand: z.string().trim().max(100),
-  category: z.enum(["skin", "hair", "supplements", "oral", "drinks"]),
+  category: z
+    .enum(["skin", "hair", "supplements", "oral", "body", "drinks"])
+    .transform((category) => (category === "drinks" ? ("supplements" as const) : category)),
   available: z.boolean(),
   published: z.boolean(),
   newArrival: z.boolean(),

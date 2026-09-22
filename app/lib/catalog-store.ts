@@ -93,6 +93,6 @@ export const publicCatalog = unstable_cache(
         };
       });
   },
-  ["clarea-public-catalog-v3", namespace],
+  ["clarea-public-catalog-v4", namespace],
   { revalidate: 30, tags: ["clarea-catalog"] },
 );

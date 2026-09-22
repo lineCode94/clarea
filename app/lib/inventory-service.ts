@@ -180,7 +180,7 @@ export async function report(request: Request, kind: string) {
       today = dayInCairo(new Date().toISOString());
     if (kind === "supplier") return json(supplierReport(c.sales, q));
     const category = z
-      .enum(["all", "skin", "hair", "supplements", "oral", "drinks"])
+      .enum(["all", "skin", "hair", "supplements", "oral", "body"])
       .parse(q.get("category") || "all");
     const month = z
       .string()

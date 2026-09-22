@@ -23,7 +23,7 @@ export function ShopCategories({ lang, onExplore }: Pick<Props, "lang" | "onExpl
       <h2 className="mb-7 text-2xl text-brand md:text-3xl">
         {lang === "ar" ? "تسوقي حسب الفئة" : "Shop by category"}
       </h2>
-      <div className="grid grid-cols-2 gap-4 md:grid-cols-4 md:gap-6">
+      <div className="grid grid-cols-2 gap-4 md:grid-cols-3 lg:grid-cols-6 md:gap-6">
         {homeCategories.map((category) => (
           <button
             key={category.en}
@@ -68,7 +68,7 @@ export default function HomeSections({ lang, onSelect, onExplore }: Props) {
       [...storeBestsellers, ...selectProducts(popularProductIds)].map((p) => [p.id, p]),
     ).values(),
   );
-  const highlights = ["skin", "hair", "oral", "drinks"].flatMap((category) => {
+  const highlights = ["skin", "hair", "body", "supplements"].flatMap((category) => {
     const product =
       products.find((p) => p.category === category && p.available) ||
       products.find((p) => p.category === category);

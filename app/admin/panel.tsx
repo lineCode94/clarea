@@ -26,7 +26,7 @@ const categories = {
   hair: "العناية بالشعر",
   supplements: "مكملات غذائية",
   oral: "العناية بالفم",
-  drinks: "المشروبات والماتشا",
+  body: "العناية بالجسم",
 };
 
 export default function AdminPanel({ authenticated }: { authenticated: boolean }) {

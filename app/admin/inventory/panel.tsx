@@ -305,7 +305,7 @@ export default function InventoryPanel({
                 <option value="hair">العناية بالشعر</option>
                 <option value="supplements">المكملات</option>
                 <option value="oral">العناية بالفم</option>
-                <option value="drinks">المشروبات والماتشا</option>
+                <option value="body">العناية بالجسم</option>
               </select>
             </label>
             {(tab === "inventory" || tab === "pricing") && (
