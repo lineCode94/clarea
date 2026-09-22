@@ -1,0 +1,82 @@
+.viewport {
+  overflow: hidden;
+  direction: ltr;
+}
+.track {
+  display: flex;
+  width: max-content;
+  animation: brand-scroll 65s linear infinite;
+}
+.group {
+  display: flex;
+  flex-shrink: 0;
+  align-items: center;
+  gap: 2.5rem;
+  padding-right: 2.5rem;
+}
+.brand {
+  white-space: nowrap;
+  transition:
+    color 0.25s,
+    transform 0.35s;
+}
+.brand:hover {
+  transform: translateY(-3px);
+}
+.viewport:hover .track,
+.viewport:focus-within .track,
+.paused .track {
+  animation-play-state: paused;
+}
+@keyframes brand-scroll {
+  to {
+    transform: translateX(-50%);
+  }
+}
+@media (min-width: 768px) {
+  .viewport {
+    overflow: visible;
+  }
+  .track {
+    display: block;
+    width: auto;
+    animation: none;
+  }
+  .group {
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 2.5rem 6rem;
+    padding: 0;
+  }
+  .duplicate {
+    display: none;
+  }
+  .brand {
+    animation: brand-arrive 0.8s ease both;
+  }
+  @keyframes brand-arrive {
+    from {
+      opacity: 0;
+      transform: translateY(10px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .viewport {
+    overflow-x: auto;
+  }
+  .track,
+  .brand {
+    animation: none;
+  }
+  .duplicate {
+    display: none;
+  }
+  .brand {
+    transition: none;
+  }
+}

@@ -5,6 +5,7 @@ import { TbArrowUpRight, TbBrandWhatsapp, TbGift, TbPackage, TbListDetails } fro
 import { useProducts } from "../catalog-provider";
 import { homeCategories, homeCollections } from "../../config/home-collections";
 import type { Language, Product } from "../../types/catalog";
+import BrandStrip from "./brand-strip";
 import ProductShelf from "./product-shelf";
 
 type Props = {
@@ -139,19 +140,11 @@ export default function HomeSections({ lang, onSelect, onExplore }: Props) {
         <h2 className="mb-8 text-2xl text-brand">
           {ar ? "تسوّقي حسب العلامة التجارية" : "Shop by brand"}
         </h2>
-        <div className="flex flex-wrap items-center justify-center gap-10 md:gap-24">
-          {Array.from(new Set(products.map((product) => product.brand).filter(Boolean))).map(
-            (brand) => (
-              <button
-                key={brand}
-                onClick={() => onExplore("all", brand)}
-                className="py-3 font-serif text-3xl text-[#334d47] transition-colors hover:text-brand md:text-4xl"
-              >
-                {brand}
-              </button>
-            ),
-          )}
-        </div>
+        <BrandStrip
+          ar={ar}
+          onExplore={onExplore}
+          brands={Array.from(new Set(products.map((p) => p.brand).filter(Boolean)))}
+        />
       </section>
       <section
         className="border-y border-line bg-[#faf8f9] py-8"
