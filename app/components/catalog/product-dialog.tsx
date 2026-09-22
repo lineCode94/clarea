@@ -1,5 +1,6 @@
 "use client";
 import Image from "next/image";
+import ProductPrice from "./product-price";
 import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
 import { useEffect, useRef, useState } from "react";
 import { TbArrowLeft, TbArrowRight, TbX, TbBrandWhatsapp } from "react-icons/tb";
@@ -141,6 +142,7 @@ export default function ProductDialog({
                   ? "انتهى المخزون"
                   : "Out of stock"}
           </span>
+          <ProductPrice product={product} lang={lang} />
           <p className="mt-5 leading-loose text-muted">{product.description[lang]}</p>
           {product.details && (
             <p dir="ltr" className="text-sm text-muted">

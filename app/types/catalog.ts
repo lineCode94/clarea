@@ -13,6 +13,7 @@ export type Product = {
   name: string;
   category: "skin" | "hair" | "supplements" | "oral" | "body";
   available: boolean;
+  public_price?: number;
   stock_status?: "available" | "coming_soon" | "out_of_stock";
   images: string[];
   tone: string;

@@ -1,5 +1,6 @@
 "use client";
 import Image from "next/image";
+import ProductPrice from "./product-price";
 import { motion, useReducedMotion } from "framer-motion";
 import { TbPlus } from "react-icons/tb";
 import { text } from "../../content/catalog";
@@ -92,6 +93,7 @@ export default function ProductCard({
           <h3 className="mb-1 text-base leading-relaxed font-bold">{product.name}</h3>
         </button>
         <p className="mb-0 text-sm text-muted">{product.label[lang]}</p>
+        <ProductPrice product={product} lang={lang} />
       </div>
     </>
   );

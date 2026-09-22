@@ -130,6 +130,7 @@ const get = (path) => new Request("https://test.local" + path);
   c.products = c.products.map((p) => ({ ...p, published: p.id !== "draft" }));
   await store.saveCatalog(c.products, c.version, c);
   assert.equal((await store.publicCatalog()).length, 1);
+  assert.equal((await store.publicCatalog())[0].public_price, undefined);
   assert.equal((await service.inventoryGet()).body.products[0].stock, null);
   authorized = false;
   assert.equal((await service.inventoryGet()).status, 401);
@@ -216,6 +217,7 @@ const get = (path) => new Request("https://test.local" + path);
     schema.figures({ cost_price: 0, selling_price: 0, discount: 0 }).profit_margin,
     null,
   );
+  assert.equal((await store.publicCatalog())[0].public_price, 225);
   let pub = JSON.stringify(await store.publicCatalog());
   for (const secret of [
     "cost_price",
@@ -335,6 +337,7 @@ const get = (path) => new Request("https://test.local" + path);
   );
   assert.equal(unknown.status, 200);
   assert.equal(unknown.body.product.effective_price, 1305);
+  assert.equal((await store.publicCatalog())[0].public_price, 1305);
   for (const key of ["cost_price", "profit_per_unit", "profit_margin", "sales_margin"])
     assert.equal(unknown.body.product[key], null, key);
   assert.equal((await service.report(get("/"), "profit-margins")).body.highest_margin, null);

@@ -1,7 +1,7 @@
 "use client";
 import { createContext, useContext, type ReactNode } from "react";
 import type { ManagedProduct } from "../lib/catalog-schema";
-type StoreProduct = ManagedProduct & { best_seller_rank?: number };
+type StoreProduct = ManagedProduct & { best_seller_rank?: number; public_price?: number };
 const CatalogContext = createContext<StoreProduct[]>([]);
 export function CatalogProvider({
   products,

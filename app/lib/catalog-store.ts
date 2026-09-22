@@ -83,16 +83,25 @@ export const publicCatalog = unstable_cache(
       .filter((p) => p.published)
       .map((p) => {
         const stock = catalog.inventory[p.id]?.stock;
-        // Explicit public projection: private inventory/prices/history never leave the server.
+        const pricing = catalog.inventory[p.id]?.pricing;
+        // Publish only the final customer price; costs, margins and history stay private.
         const clean = catalogSchema.shape.products.element.parse(p);
         return {
           ...clean,
+          ...(pricing
+            ? {
+                public_price:
+                  Math.round(
+                    (pricing.selling_price * (1 - pricing.discount / 100) + Number.EPSILON) * 100,
+                  ) / 100,
+              }
+            : {}),
           ...(ranks.has(p.id) ? { best_seller_rank: ranks.get(p.id) } : {}),
           available: stock ? stock.status === "available" : clean.available,
           stock_status: stock?.status || (clean.available ? "available" : "out_of_stock"),
         };
       });
   },
-  ["clarea-public-catalog-v4", namespace],
+  ["clarea-public-catalog-v5", namespace],
   { revalidate: 30, tags: ["clarea-catalog"] },
 );
