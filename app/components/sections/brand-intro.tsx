@@ -1,54 +1,61 @@
 "use client";
 
 import Image from "next/image";
-import { useProducts } from "../catalog-provider";
 import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { TbArrowUpRight } from "react-icons/tb";
 import type { Language } from "../../types/catalog";
 
 type Slide = {
   id: string;
   image: string;
-  tint: string;
+  alt: string;
+  brand: string;
+  position: string;
   title: Record<Language, string>;
   subtitle: Record<Language, string>;
   label: Record<Language, string>;
 };
 
-const allSlides: Slide[] = [
+const slides: Slide[] = [
   {
-    id: "hero-1",
-    image: "/clarea-campaign-hero.png",
-    tint: "rgba(84,28,43,0.38)",
-    title: { ar: "روتين العناية يبدأ هنا", en: "Your skincare ritual starts here" },
+    id: "skin1004",
+    brand: "SKIN1004",
+    image: "/hero/skin1004-editorial.webp",
+    alt: "SKIN1004 Madagascar Centella ampoules in warm sunlight",
+    position: "!object-cover !object-[center_45%]",
+    title: { ar: "لمسة سنتيلا. لحظة هدوء.", en: "A little Centella. A moment of calm." },
     subtitle: {
-      ar: "اكتشفي منتجات العناية بالبشرة والشعر من Claréa",
-      en: "Discover beauty and care at Claréa",
+      ar: "اكتشفي اختيارات SKIN1004 وأضيفي لمسة عناية لروتينك اليومي.",
+      en: "Discover SKIN1004 and a thoughtful addition to your daily ritual.",
     },
-    label: { ar: "تسوّقي الآن", en: "Shop now" },
+    label: { ar: "تسوّقي مختاراتنا", en: "Shop the collection" },
   },
   {
-    id: "hero-2",
-    image: "/hero/centella-ampoule.jpg",
-    tint: "rgba(84,28,43,0.35)",
-    title: { ar: "ترطيب خفيف. راحة لبشرتك.", en: "A little hydration. A softer feel." },
+    id: "medicube",
+    brand: "medicube",
+    image: "/products/import-20260920/medicube-hyaluronic-ceramide-jelly-cream.webp",
+    alt: "Medicube Hyaluronic Ceramide Jelly Cream",
+    position: "!object-contain !pb-[230px] !pt-12 md:!pb-[200px] md:!pt-8",
+    title: { ar: "ترطيب يكمل روتينك.", en: "Hydration for your daily ritual." },
     subtitle: {
-      ar: "أمبول سنتيلا من SKIN1004: ترطيب بقوام خفيف ولمسة تهدئة لروتينك اليومي.",
-      en: "Meet the SKIN1004 Centella Ampoule: lightweight hydration and soothing care for your daily routine.",
+      ar: "اختيارات Medicube للعناية الكورية التي تحبّينها، في مكان واحد.",
+      en: "Explore our Medicube edit and find your next Korean skincare favourite.",
     },
-    label: { ar: "اكتشفي أمبول سنتيلا", en: "Discover Centella" },
+    label: { ar: "اكتشفي المنتجات", en: "Explore the collection" },
   },
   {
-    id: "hero-3",
-    image: "/hero/travel-kit-2.jpg",
-    tint: "rgba(84,28,43,0.32)",
-    title: { ar: "خطوتك لملمس أنعم", en: "Make room for smoother skin." },
+    id: "anua",
+    brand: "Anua",
+    image: "/products/import-20260920/anua-niacinamide-txa-brightening-booster-toner.webp",
+    alt: "Anua Niacinamide TXA Brightening Booster Toner",
+    position: "!object-contain !pb-[230px] !pt-12 md:!pb-[200px] md:!pt-8",
+    title: { ar: "تفاصيل بسيطة. عناية تحبّينها.", en: "Simple details. Skincare to love." },
     subtitle: {
-      ar: "تونر Poremizing المقشّر يساعد على إزالة الخلايا الميتة والشوائب السطحية لملمس أكثر نعومة.",
-      en: "Refresh your routine with Poremizing Clear Toner, an exfoliating step for smoother-feeling skin.",
+      ar: "تعرّفي على اختيارات Anua واختاري خطوتك القادمة في العناية.",
+      en: "Meet our Anua edit and discover the next step in your skincare ritual.",
     },
-    label: { ar: "مجموعة السفر سنتيلا", en: " Travel Kit" },
+    label: { ar: "تسوّقي مختاراتنا", en: "Discover our edit" },
   },
 ];
 
@@ -59,16 +66,6 @@ export default function BrandIntro({ lang }: { lang: Language }) {
   const reduced = useReducedMotion();
   const [active, setActive] = useState(0);
   const touchStart = useRef<number | null>(null);
-  const products = useProducts();
-  const slides = useMemo(
-    () =>
-      allSlides.filter(
-        (s) =>
-          s.id === "hero-1" ||
-          products.some((p) => p.id === (s.id === "hero-2" ? "centella-ampoule" : "travel-kit")),
-      ),
-    [products],
-  );
   const slide = slides[active % slides.length];
 
   /* Auto-advance */
@@ -129,19 +126,15 @@ export default function BrandIntro({ lang }: { lang: Language }) {
             initial={reduced ? false : { scale: 1.025 }}
             animate={{ scale: 1 }}
             transition={{ duration: 6, ease: "easeOut" }}
-            className="hero-image-wrap bg-[#f5e9e2]"
+            className="hero-image-wrap bg-white"
           >
             <Image
               src={slide.image}
-              alt=""
+              alt={slide.alt}
               fill
               priority={active === 0}
               sizes="100vw"
-              className={
-                slide.id === "hero-1"
-                  ? "hero-image !object-cover !object-[75%_center] md:!object-center"
-                  : "hero-image !object-cover !object-[center_45%]"
-              }
+              className={"hero-image " + slide.position}
             />
           </motion.div>
 
@@ -151,7 +144,7 @@ export default function BrandIntro({ lang }: { lang: Language }) {
 
       <div
         aria-hidden="true"
-        className="pointer-events-none absolute inset-0 z-[1] bg-[linear-gradient(to_bottom,rgba(24,8,15,0.32)_0%,rgba(24,8,15,0.38)_30%,rgba(24,8,15,0.72)_55%,rgba(24,8,15,0.90)_100%)]"
+        className="pointer-events-none absolute inset-0 z-[1] bg-[linear-gradient(to_bottom,rgba(24,8,15,0.10)_0%,rgba(24,8,15,0.14)_30%,rgba(24,8,15,0.48)_62%,rgba(24,8,15,0.84)_100%)]"
       />
       {/* Content overlay – always on top */}
       <div className="hero-content max-sm:!px-6 max-sm:!py-6" dir={ar ? "rtl" : "ltr"}>
@@ -161,7 +154,7 @@ export default function BrandIntro({ lang }: { lang: Language }) {
           alt="Claréa"
           width={280}
           height={93}
-          className="hero-logo"
+          className="hero-logo rounded-xl bg-white/90 p-2"
           priority
         />
 
@@ -176,6 +169,9 @@ export default function BrandIntro({ lang }: { lang: Language }) {
               transition={{ duration: reduced ? 0 : 0.4, ease: "easeOut" }}
               className="hero-text"
             >
+              <p className="mb-3 text-sm font-semibold tracking-[0.22em] text-white/90" dir="ltr">
+                {slide.brand}
+              </p>
               <h1 className="hero-title !text-white max-sm:!text-[26px] max-sm:!leading-[1.3]">
                 {slide.title[lang]}
               </h1>

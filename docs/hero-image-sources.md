@@ -1,6 +1,7 @@
-# Hero photograph sources
+# Homepage slider images
 
-- `public/hero/centella-ampoule.jpg`: https://www.skin1004.com/cdn/shop/products/skin1004-ampoule-serum-centella-ampoule-38409088401654_1440x.jpg?v=1677148618
-- `public/hero/poremizing-toner.png`: https://www.skin1004.com/cdn/shop/products/skin1004-toner-210ml-coming-soon-poremizing-clear-toner-37221341724918_1440x.png?v=1677149666
+- SKIN1004: public/hero/skin1004-editorial.webp (2048 × 2048). Original Centella Ampoule photograph: https://cdn.shopify.com/s/files/1/0590/4538/0253/products/skin1004-ampoule-serum-centella-ampoule-38409088401654.jpg?v=1677148618
+- Medicube: public/products/import-20260920/medicube-hyaluronic-ceramide-jelly-cream.webp (1200 × 1200). https://medicube.us/products/hyaluronic-ceramide-moisturizing-jelly-cream
+- Anua: public/products/import-20260920/anua-niacinamide-txa-brightening-booster-toner.webp (1200 × 1200). https://anua.com/products/niacinamide-tranexamic-acid-brightening-booster-toner
 
-Copy checked against the manufacturer's Centella Ampoule and Poremizing Clear Toner pages on 2026-09-10. Campaign photos illustrate the product lines; available sizes are listed in the catalog.
+All three products are in the current catalog. Product packshots use contain sizing to keep packaging visible on mobile and desktop. No generated packaging or people.
