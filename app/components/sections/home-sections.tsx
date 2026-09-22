@@ -3,7 +3,7 @@
 import Image from "next/image";
 import { TbArrowUpRight, TbBrandWhatsapp, TbGift, TbPackage, TbListDetails } from "react-icons/tb";
 import { useProducts } from "../catalog-provider";
-import { homeCategories, homeCollections } from "../../config/home-collections";
+import { homeCategories, homeCollections, popularProductIds } from "../../config/home-collections";
 import type { Language, Product } from "../../types/catalog";
 import BrandStrip from "./brand-strip";
 import ProductShelf from "./product-shelf";
@@ -58,10 +58,16 @@ export default function HomeSections({ lang, onSelect, onExplore }: Props) {
   const selectProducts = (ids: string[]) =>
     ids.flatMap((id) => products.filter((p) => p.id === id));
   const ar = lang === "ar";
-  const bestSellers = products
+  const storeBestsellers = products
     .filter((p) => p.best_seller_rank !== undefined)
     .sort((a, b) => a.best_seller_rank! - b.best_seller_rank!)
-    .slice(0, 8);
+    .slice(0, 4);
+  // Reserve space for both store sales and curated popular products, without duplicates.
+  const bestSellers = Array.from(
+    new Map(
+      [...storeBestsellers, ...selectProducts(popularProductIds)].map((p) => [p.id, p]),
+    ).values(),
+  );
   const highlights = ["skin", "hair", "oral", "drinks"].flatMap((category) => {
     const product =
       products.find((p) => p.category === category && p.available) ||
@@ -87,11 +93,11 @@ export default function HomeSections({ lang, onSelect, onExplore }: Props) {
       {bestSellers.length > 0 && (
         <ProductShelf
           lang={lang}
-          title={ar ? "الأكثر مبيعًا في Claréa" : "Bestsellers at Claréa"}
+          title={ar ? "الأكثر مبيعًا" : "Bestsellers"}
           subtitle={
             ar
-              ? "حسب الكميات المباعة في الطلبات التي تم تسليمها"
-              : "Based on units sold in delivered orders"
+              ? "منتجات رائجة ومفضّلة لدى عملاء Claréa"
+              : "Popular favourites and customer picks at Claréa"
           }
           products={bestSellers}
           onSelect={onSelect}

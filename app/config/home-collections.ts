@@ -45,3 +45,15 @@ export const homeCollections = {
   care: ["travel-kit", "poremizing-toner", "tea-trica-b5", "centella-ampoule"],
   skin1004: ["probio-ampoule", "sun-stick", "air-fit-light", "centella-ampoule"],
 };
+
+// Popular picks checked on 2026-09-22; selection is editorial, not a global sales ranking.
+// https://www.skin1004.com/collections/best-sellers
+// https://beautyofjoseon.com/collections/best-sellers
+// https://www.yesstyle.com/en/axis-y-dark-spot-correcting/info.html/pid.1078919512
+export const popularProductIds = [
+  "axis-y-dark-spot-correcting-glow-serum",
+  "beauty-of-joseon-relief-sun-aqua-fresh-rice-b5-spf50-pa",
+  "centella-ampoule",
+  "skin1004-madagascar-centella-light-cleansing-oil-200ml",
+  "beauty-of-joseon-revive-serum-ginseng-snail-mucin",
+];
