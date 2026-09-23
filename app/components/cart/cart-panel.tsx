@@ -201,75 +201,11 @@ function CheckoutForm({
       }}
       className="space-y-6"
     >
-      {/* Contact Section */}
-      <div className="space-y-3">
-        <div className="flex items-center justify-between">
-          <h3 className="text-[#412832] text-lg font-bold">
-            {ar ? "التواصل" : "Contact"}
-          </h3>
-          <span className="text-xs font-medium text-[#5C1A2B] hover:underline cursor-pointer">
-            {ar ? "تسجيل الدخول" : "Sign in"}
-          </span>
-        </div>
-        <div className="relative">
-          <input
-            type="text"
-            placeholder={ar ? "البريد الإلكتروني أو رقم الموبايل" : "Email or mobile phone number"}
-            value={customer.emailOrPhone}
-            onChange={(e) => setCustomer({ ...customer, emailOrPhone: e.target.value })}
-            className={field + " pe-10"}
-          />
-          <button
-            type="button"
-            onClick={() => setShowContactHelp(!showContactHelp)}
-            className="absolute end-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
-            aria-label="Info"
-          >
-            <TbHelpCircle size={18} />
-          </button>
-        </div>
-        {showContactHelp && (
-          <p className="m-0 rounded-lg border border-[#e9ddd5] bg-[#F5E9E2]/50 p-2.5 text-xs leading-5 text-muted">
-            {ar
-              ? "سنستخدم بريدك أو رقمك لإطلاعك على حالة الطلب وتأكيد التوصيل."
-              : "We’ll use this to update you on your order status and shipping."}
-          </p>
-        )}
-        <label className="flex items-center gap-2.5 text-sm text-[#412832] cursor-pointer">
-          <input
-            type="checkbox"
-            checked={customer.emailNews}
-            onChange={(e) => setCustomer({ ...customer, emailNews: e.target.checked })}
-            className="size-4 rounded border-gray-300 accent-[#5C1A2B]"
-          />
-          <span>
-            {ar
-              ? "أرسل لي الأخبار والعروض بالبريد الإلكتروني"
-              : "Email me with news and offers"}
-          </span>
-        </label>
-      </div>
-
       {/* Delivery Section */}
       <div className="space-y-3.5">
         <h3 className="text-[#412832] text-lg font-bold">
-          {ar ? "بيانات التوصيل" : "Delivery"}
+          {ar ? "بيانات التوصيل" : "Delivery Details"}
         </h3>
-
-        {/* Country/Region */}
-        <div className="relative">
-          <label className="block text-xs font-semibold text-gray-500 mb-0.5">
-            {ar ? "البلد / المنطقة" : "Country/Region"}
-          </label>
-          <select
-            value={customer.country}
-            onChange={(e) => setCustomer({ ...customer, country: e.target.value })}
-            className={field + " cursor-pointer pe-10 mt-0"}
-          >
-            <option value="Egypt">{ar ? "مصر" : "Egypt"}</option>
-          </select>
-          <TbChevronDown className="pointer-events-none absolute end-3 bottom-3 text-gray-500" size={18} />
-        </div>
 
         {/* First name & Last name */}
         <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
@@ -341,13 +277,13 @@ function CheckoutForm({
             />
           </div>
           <div className="relative">
-            <label className="block text-[11px] font-semibold text-gray-500 mb-0.5">
-              {ar ? "المحافظة" : "Governorate"}
-            </label>
             <select
               value={customer.governorate}
-              onChange={(e) => setCustomer({ ...customer, governorate: e.target.value })}
-              className={field + " cursor-pointer pe-7 mt-0"}
+              onChange={(e) => {
+                setCustomer({ ...customer, governorate: e.target.value });
+                e.target.blur();
+              }}
+              className={field + " cursor-pointer pe-8 appearance-none [-webkit-appearance:none] [-moz-appearance:none] bg-white"}
             >
               {EGYPT_GOVERNORATES.map((g) => (
                 <option key={g.en} value={g.en}>
@@ -355,7 +291,7 @@ function CheckoutForm({
                 </option>
               ))}
             </select>
-            <TbChevronDown className="pointer-events-none absolute end-2.5 bottom-3 text-gray-500" size={16} />
+            <TbChevronDown className="pointer-events-none absolute end-3 top-1/2 -translate-y-1/2 text-gray-500" size={16} />
           </div>
           <div>
             <input

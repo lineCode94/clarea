@@ -13,6 +13,8 @@ import {
   TbChevronDown,
   TbTag,
 } from "react-icons/tb";
+import { toast, ToastContainer } from "react-toastify";
+import "react-toastify/dist/ReactToastify.css";
 import { CartProvider, useCart } from "../components/cart/cart-provider";
 import type { Language, Product } from "../types/catalog";
 import type { Customer } from "../components/cart/cart-panel";
@@ -58,7 +60,6 @@ function CheckoutContent() {
   const [receipt, setReceipt] = useState<Receipt | null>(null);
 
   // Form states
-  const [showContactHelp, setShowContactHelp] = useState(false);
   const [showPhoneHelp, setShowPhoneHelp] = useState(false);
   const [discountCode, setDiscountCode] = useState("");
   const [appliedDiscount, setAppliedDiscount] = useState<{ code: string; percent: number } | null>(null);
@@ -159,14 +160,14 @@ function CheckoutContent() {
 
     const formattedCustomer = {
       name: `${customer.firstName} ${customer.lastName}`.trim() || customer.firstName || customer.lastName || "عميل",
-      phone: customer.phone.trim() || (customer.emailOrPhone.match(/^(?:\+?20|0)1[0125]\d{8}$/) ? customer.emailOrPhone.trim() : ""),
+      phone: customer.phone.trim(),
       email: customer.emailOrPhone.includes("@") ? customer.emailOrPhone.trim() : undefined,
       address: [
         customer.address.trim(),
         customer.apartment.trim() ? `شقة/ملحق: ${customer.apartment.trim()}` : "",
         customer.city.trim(),
         customer.governorate,
-        customer.country || "Egypt",
+        "Egypt",
         customer.postalCode.trim() ? `الرمز البريدي: ${customer.postalCode.trim()}` : "",
       ]
         .filter(Boolean)
@@ -177,7 +178,7 @@ function CheckoutContent() {
       city: customer.city,
       governorate: customer.governorate,
       postalCode: customer.postalCode,
-      country: customer.country,
+      country: "Egypt",
     };
 
     const payload = {
@@ -203,8 +204,25 @@ function CheckoutContent() {
       });
       const data = await response.json();
       if (!response.ok) throw new Error(data.error || (ar ? "فشل إرسال الطلب" : "Failed to place order"));
+
       setReceipt(data.order);
       cart.clear();
+
+      toast.success(
+        ar
+          ? "تم استلام طلبك بنجاح! سنتواصل معك هاتفياً لتأكيد الطلب والتوصيل."
+          : "Order received successfully! We will call you to confirm your order and delivery.",
+        {
+          position: "top-center",
+          autoClose: 6000,
+          hideProgressBar: false,
+          closeOnClick: true,
+          pauseOnHover: true,
+          draggable: true,
+          theme: "colored",
+          style: { backgroundColor: "#5C1A2B", color: "#ffffff" },
+        }
+      );
     } catch (err) {
       setError(
         err instanceof Error
@@ -224,8 +242,10 @@ function CheckoutContent() {
       dir={ar ? "rtl" : "ltr"}
       className={`min-h-screen bg-[#fffdfa] text-[#412832] ${ar ? "font-arabic" : "font-sans"}`}
     >
+      <ToastContainer />
+
       {/* Top Bar / Header */}
-      <header className="sticky top-0 z-30 border-b border-[#e9ddd5] bg-[#fffdfa]/95 backdrop-blur-md px-4 py-4 sm:px-8">
+      <header className="sticky top-0 z-30 border-b border-[#e9ddd5] bg-[#fffdfa]/95 backdrop-blur-md px-4 py-3 sm:px-8">
         <div className="mx-auto flex max-w-6xl items-center justify-between">
           <Link
             href="/"
@@ -235,8 +255,15 @@ function CheckoutContent() {
             <span>{ar ? "العودة للمتجر" : "Back to shop"}</span>
           </Link>
 
-          <Link href="/" className="text-2xl font-bold tracking-widest text-[#5C1A2B]">
-            Claréa
+          <Link href="/" aria-label="Claréa" className="inline-block hover:opacity-90">
+            <Image
+              src="/clarea-logo-transparent.png"
+              alt="Claréa"
+              width={160}
+              height={50}
+              className="h-auto w-[120px] sm:w-[150px]"
+              priority
+            />
           </Link>
 
           <button
@@ -305,78 +332,11 @@ function CheckoutContent() {
               )}
 
               <form onSubmit={handleSubmitOrder} className="space-y-8">
-                {/* Contact Section */}
-                <div className="space-y-4">
-                  <div className="flex items-center justify-between border-b border-[#e9ddd5] pb-3">
-                    <h2 className="text-xl font-bold text-[#412832]">
-                      {ar ? "التواصل" : "Contact"}
-                    </h2>
-                    <span className="text-xs font-semibold text-[#5C1A2B] hover:underline cursor-pointer">
-                      {ar ? "تسجيل الدخول" : "Sign in"}
-                    </span>
-                  </div>
-
-                  <div className="relative">
-                    <input
-                      type="text"
-                      placeholder={ar ? "البريد الإلكتروني أو رقم الموبايل" : "Email or mobile phone number"}
-                      value={customer.emailOrPhone}
-                      onChange={(e) => setCustomer({ ...customer, emailOrPhone: e.target.value })}
-                      className={inputField + " pe-10"}
-                    />
-                    <button
-                      type="button"
-                      onClick={() => setShowContactHelp(!showContactHelp)}
-                      className="absolute end-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
-                      aria-label="Info"
-                    >
-                      <TbHelpCircle size={18} />
-                    </button>
-                  </div>
-
-                  {showContactHelp && (
-                    <p className="m-0 rounded-lg border border-[#e9ddd5] bg-[#F5E9E2]/50 p-3 text-xs leading-5 text-muted">
-                      {ar
-                        ? "سنستخدم بيانات التواصل لإخطارك بتفاصيل الطلب وتحديثات الشحن."
-                        : "We’ll use contact info to update you on order status and shipping."}
-                    </p>
-                  )}
-
-                  <label className="flex items-center gap-2.5 text-sm text-[#412832] cursor-pointer">
-                    <input
-                      type="checkbox"
-                      checked={customer.emailNews}
-                      onChange={(e) => setCustomer({ ...customer, emailNews: e.target.checked })}
-                      className="size-4 rounded border-gray-300 accent-[#5C1A2B]"
-                    />
-                    <span>
-                      {ar
-                        ? "أرسل لي الأخبار والعروض بالبريد الإلكتروني"
-                        : "Email me with news and offers"}
-                    </span>
-                  </label>
-                </div>
-
                 {/* Delivery Section */}
                 <div className="space-y-4">
                   <h2 className="text-xl font-bold text-[#412832] border-b border-[#e9ddd5] pb-3">
-                    {ar ? "بيانات التوصيل" : "Delivery"}
+                    {ar ? "بيانات التوصيل" : "Delivery Details"}
                   </h2>
-
-                  {/* Country */}
-                  <div className="relative">
-                    <label className="block text-xs font-semibold text-gray-500 mb-1">
-                      {ar ? "البلد / المنطقة" : "Country/Region"}
-                    </label>
-                    <select
-                      value={customer.country}
-                      onChange={(e) => setCustomer({ ...customer, country: e.target.value })}
-                      className={inputField + " cursor-pointer pe-10"}
-                    >
-                      <option value="Egypt">{ar ? "مصر" : "Egypt"}</option>
-                    </select>
-                    <TbChevronDown className="pointer-events-none absolute end-3 bottom-3 text-gray-500" size={18} />
-                  </div>
 
                   {/* First & Last name */}
                   <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
@@ -450,8 +410,11 @@ function CheckoutContent() {
                     <div className="relative">
                       <select
                         value={customer.governorate}
-                        onChange={(e) => setCustomer({ ...customer, governorate: e.target.value })}
-                        className={inputField + " cursor-pointer pe-7"}
+                        onChange={(e) => {
+                          setCustomer({ ...customer, governorate: e.target.value });
+                          e.target.blur();
+                        }}
+                        className={inputField + " cursor-pointer pe-8 appearance-none [-webkit-appearance:none] [-moz-appearance:none] bg-white"}
                       >
                         {EGYPT_GOVERNORATES.map((g) => (
                           <option key={g.en} value={g.en}>
@@ -459,7 +422,7 @@ function CheckoutContent() {
                           </option>
                         ))}
                       </select>
-                      <TbChevronDown className="pointer-events-none absolute end-2.5 bottom-3.5 text-gray-500" size={16} />
+                      <TbChevronDown className="pointer-events-none absolute end-3 top-1/2 -translate-y-1/2 text-gray-500" size={16} />
                     </div>
                     <div>
                       <input
