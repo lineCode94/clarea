@@ -26,8 +26,8 @@ const button = "rounded-xl bg-[#5c1a2b] px-5 py-3 text-white disabled:opacity-50
 const card = "rounded-2xl border border-[#e8ddd5] bg-white p-5";
 const fmt = (v: number) => new Intl.NumberFormat("ar-EG", { maximumFractionDigits: 2 }).format(v);
 const labels = {
-  pending: "قيد التجهيز",
-  confirmed: "تم تأكيده",
+  pending: "بانتظار التأكيد",
+  confirmed: "مؤكد · قيد التجهيز",
   shipped: "تم شحنه",
   delivered: "تم تسليمه",
   cancelled: "ملغي",
@@ -47,6 +47,9 @@ export default function OrdersPanel({ mode = "list" }: { mode?: "list" | "new" }
     [filter, setFilter] = useState("all"),
     [search, setSearch] = useState(""),
     [query, setQuery] = useState("");
+  const [counts, setCounts] = useState<Record<string, number>>({});
+  const [sort, setSort] = useState("newest");
+  const [expanded, setExpanded] = useState<string | null>(null);
   const [discountEnabled, setDiscountEnabled] = useState(false);
   const [orderDiscount, setOrderDiscount] = useState("0");
   const discountPercent = discountEnabled ? Number(orderDiscount) || 0 : 0;
@@ -75,10 +78,11 @@ export default function OrdersPanel({ mode = "list" }: { mode?: "list" | "new" }
   async function loadOrders() {
     if (mode === "new") return;
     const data = await api(
-      `/api/admin/orders?offset=${offset}&status=${filter}&q=${encodeURIComponent(query)}`,
+      `/api/admin/orders?offset=${offset}&status=${filter}&limit=20&sort=${sort}&q=${encodeURIComponent(query)}`,
     );
     setOrders(data.orders);
     setTotal(data.total);
+    setCounts(data.counts || {});
   }
   useEffect(() => {
     setRequestId(crypto.randomUUID());
@@ -98,11 +102,14 @@ export default function OrdersPanel({ mode = "list" }: { mode?: "list" | "new" }
     }
     let active = true;
     setLoading(true);
-    api(`/api/admin/orders?offset=${offset}&status=${filter}&q=${encodeURIComponent(query)}`)
+    api(
+      `/api/admin/orders?offset=${offset}&status=${filter}&limit=20&sort=${sort}&q=${encodeURIComponent(query)}`,
+    )
       .then((d) => {
         if (active) {
           setOrders(d.orders);
           setTotal(d.total);
+          setCounts(d.counts || {});
         }
       })
       .catch((e) => {
@@ -114,7 +121,7 @@ export default function OrdersPanel({ mode = "list" }: { mode?: "list" | "new" }
     return () => {
       active = false;
     };
-  }, [offset, filter, query, mode]);
+  }, [offset, filter, query, mode, sort]);
   function changed() {
     setRequestId(crypto.randomUUID());
   }
@@ -579,7 +586,38 @@ export default function OrdersPanel({ mode = "list" }: { mode?: "list" | "new" }
         )}
         {mode === "list" && (
           <section className="space-y-4">
-            <h2 className="text-xl">الطلبات المسجلة</h2>
+            <div className="flex flex-wrap items-center justify-between gap-3">
+              <div>
+                <h2 className="text-xl font-bold">سجل الطلبات</h2>
+                <p className="text-sm text-[#917c73]">
+                  اختار الحالة، وافتح تفاصيل الطلب للتواصل مع العميل أو تحديث حالته.
+                </p>
+              </div>
+              <a href="/admin/orders/new" className={button}>
+                + طلب جديد
+              </a>
+            </div>
+            <div
+              aria-label="تصفية الطلبات حسب الحالة"
+              className="grid grid-cols-2 gap-2 sm:grid-cols-3 xl:grid-cols-6"
+            >
+              {Object.entries({ all: "كل الطلبات", ...labels }).map(([value, label]) => (
+                <button
+                  key={value}
+                  type="button"
+                  aria-pressed={filter === value}
+                  onClick={() => {
+                    setFilter(value);
+                    setOffset(0);
+                    setExpanded(null);
+                  }}
+                  className={`rounded-xl border p-3 text-right transition-colors ${filter === value ? "border-[#5C1A2B] bg-[#5C1A2B] text-white shadow-sm" : "border-[#e8ddd5] bg-white text-[#5C1A2B] hover:bg-[#F5E9E2]"}`}
+                >
+                  <span className="block text-xs">{label}</span>
+                  <strong className="mt-1 block text-xl">{counts[value] ?? "—"}</strong>
+                </button>
+              ))}
+            </div>
             <form
               className="flex flex-wrap items-end gap-3"
               onSubmit={(e) => {
@@ -588,8 +626,8 @@ export default function OrdersPanel({ mode = "list" }: { mode?: "list" | "new" }
                 setOffset(0);
               }}
             >
-              <label className="min-w-0 flex-1">
-                ابحث برقم الطلب أو اسم العميل
+              <label className="w-full min-w-0 sm:w-auto sm:flex-1">
+                رقم الطلب، اسم العميل، التليفون أو الإيميل
                 <input
                   className={field}
                   maxLength={120}
@@ -599,21 +637,17 @@ export default function OrdersPanel({ mode = "list" }: { mode?: "list" | "new" }
               </label>
               <button className={button}>بحث</button>
               <label>
-                الحالة
+                ترتيب الطلبات
                 <select
                   className={field}
-                  value={filter}
+                  value={sort}
                   onChange={(e) => {
-                    setFilter(e.target.value);
+                    setSort(e.target.value);
                     setOffset(0);
                   }}
                 >
-                  <option value="all">الكل</option>
-                  {Object.entries(labels).map(([value, label]) => (
-                    <option key={value} value={value}>
-                      {label}
-                    </option>
-                  ))}
+                  <option value="newest">الأحدث أولاً</option>
+                  <option value="oldest">الأقدم أولاً</option>
                 </select>
               </label>
             </form>
@@ -632,105 +666,164 @@ export default function OrdersPanel({ mode = "list" }: { mode?: "list" | "new" }
                       className={`rounded-full px-3 py-2 text-sm ${order.status === "delivered" ? "bg-green-50 text-green-800" : order.status === "cancelled" ? "bg-gray-100" : "bg-amber-50 text-amber-900"}`}
                     >
                       {order.source === "storefront" && order.status === "pending"
-                        ? "بانتظار تأكيد العميل"
+                        ? "بانتظار التأكيد"
                         : labels[order.status]}
                     </span>
                   </div>
-                  <p className="break-words">
-                    {order.customer.name} {order.customer.phone && `· ${order.customer.phone}`}
-                  </p>
-                  {order.source === "storefront" && (
-                    <p className="rounded-xl bg-[#f5e9e2] p-3 text-sm">
-                      طلب الموقع · الدفع عند الاستلام ·{" "}
-                      {order.shipping_fee === 0
-                        ? "شحن مجاني"
-                        : "الشحن وموعد التسليم يحتاجان تأكيداً مع العميل"}
-                    </p>
-                  )}
-                  {order.customer.email && (
-                    <p className="break-words text-sm">{order.customer.email}</p>
-                  )}
-                  {order.customer.address && (
-                    <p className="break-words text-sm">{order.customer.address}</p>
-                  )}
-                  {order.notes && <p className="break-words text-sm">{order.notes}</p>}
-                  <p className="text-xs text-[#917c73]">
-                    {order.discount_percent !== undefined && (
-                      <span>خصم الطلب: {fmt(order.discount_percent)}% · </span>
-                    )}
-                    إنشاء:{" "}
-                    {new Date(order.created_at).toLocaleString("ar-EG", {
-                      timeZone: "Africa/Cairo",
-                    })}
-                    {order.delivered_at &&
-                      ` · تسليم: ${new Date(order.delivered_at).toLocaleString("ar-EG", { timeZone: "Africa/Cairo" })}`}
-                  </p>
-                  <ul className="space-y-3 p-0">
-                    {order.items.map((item) => (
-                      <li
-                        key={item.product_id}
-                        className="list-none rounded-xl bg-[#f8f5f1] p-3 text-sm"
-                      >
-                        <strong className="break-words">{item.name}</strong>
-                        <p className="mb-0">
-                          {item.quantity} × {fmt(item.selling_price)} ج = {fmt(item.revenue)} ج ·
-                          {item.cost_pending
-                            ? "سعر الشراء مطلوب لحساب الربح"
-                            : `ربح ${fmt(item.profit)} ج`}
+                  <div className="my-4 grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+                    <div>
+                      <span className="block text-xs text-[#917c73]">العميل</span>
+                      <strong>{order.customer.name}</strong>
+                    </div>
+                    <div>
+                      <span className="block text-xs text-[#917c73]">رقم التليفون</span>
+                      {order.customer.phone ? (
+                        <a
+                          dir="ltr"
+                          className="inline-block font-semibold underline underline-offset-4"
+                          href={"tel:" + order.customer.phone}
+                        >
+                          {order.customer.phone}
+                        </a>
+                      ) : (
+                        "غير مسجل"
+                      )}
+                    </div>
+                    <div>
+                      <span className="block text-xs text-[#917c73]">
+                        إجمالي المنتجات · {order.items.reduce((n, i) => n + i.quantity, 0)} قطعة
+                      </span>
+                      <strong>{fmt(order.revenue)} ج</strong>
+                    </div>
+                    <div>
+                      <span className="block text-xs text-[#917c73]">تاريخ الطلب</span>
+                      <span>
+                        {new Date(order.created_at).toLocaleString("ar-EG", {
+                          timeZone: "Africa/Cairo",
+                        })}
+                      </span>
+                    </div>
+                  </div>
+                  <button
+                    type="button"
+                    aria-expanded={expanded === order.id}
+                    className="rounded-lg bg-[#F5E9E2] px-4 py-2 text-sm font-bold text-[#5C1A2B]"
+                    onClick={() => setExpanded(expanded === order.id ? null : order.id)}
+                  >
+                    {expanded === order.id ? "إغلاق التفاصيل −" : "عرض التفاصيل والإجراءات +"}
+                  </button>
+                  {expanded === order.id && (
+                    <div className="mt-4 border-t border-[#e8ddd5] pt-4">
+                      {order.source === "storefront" && (
+                        <p className="rounded-xl bg-[#f5e9e2] p-3 text-sm">
+                          طلب الموقع · الدفع عند الاستلام ·{" "}
+                          {order.shipping_fee === 0
+                            ? "شحن مجاني"
+                            : "الشحن وموعد التسليم يحتاجان تأكيداً مع العميل"}
                         </p>
-                      </li>
-                    ))}
-                  </ul>
-                  <p className="text-sm">
-                    إجمالي المنتجات: <strong>{fmt(order.revenue)} ج</strong> · مجمل الربح{" "}
-                    {order.status !== "delivered" ? "المتوقع" : ""}:{" "}
-                    <strong>
-                      {order.items.some((i) => i.cost_pending)
-                        ? "بانتظار تسجيل تكلفة الشراء"
-                        : `${fmt(order.profit)} ج`}
-                    </strong>
-                  </p>
-                  {!["delivered", "cancelled"].includes(order.status) && (
-                    <div className="flex flex-wrap gap-3">
-                      {order.status === "pending" && (
-                        <button
-                          disabled={busy}
-                          type="button"
-                          className={button}
-                          onClick={() => status(order, "confirmed")}
-                        >
-                          تأكيد الطلب بعد التواصل
-                        </button>
                       )}
-                      {order.status === "confirmed" && (
-                        <button
-                          disabled={busy}
-                          type="button"
-                          className={button}
-                          onClick={() => status(order, "shipped")}
-                        >
-                          تم شحنه
-                        </button>
+                      {order.customer.email && (
+                        <div className="my-3 rounded-xl bg-[#f8f5f1] p-3">
+                          <strong className="block text-xs text-[#917c73]">
+                            البريد الإلكتروني
+                          </strong>
+                          <bdi className="break-all text-sm">{order.customer.email}</bdi>
+                        </div>
                       )}
-                      <button
-                        type="button"
-                        disabled={busy}
-                        className={button}
-                        onClick={() => status(order, "delivered")}
-                      >
-                        تم تسليمه
-                      </button>
-                      <button
-                        type="button"
-                        disabled={busy}
-                        className="rounded-xl border px-5 py-3"
-                        onClick={() => status(order, "cancelled")}
-                      >
-                        إلغاء الطلب
-                      </button>
+                      {order.customer.address && (
+                        <div className="my-3 rounded-xl bg-[#f8f5f1] p-3">
+                          <strong className="block text-xs text-[#917c73]">عنوان التوصيل</strong>
+                          <p className="mb-0 whitespace-pre-wrap break-words text-sm">
+                            {order.customer.address}
+                          </p>
+                        </div>
+                      )}
+                      {order.notes && (
+                        <p className="break-words text-sm">
+                          <strong>ملاحظات الطلب: </strong>
+                          {order.notes}
+                        </p>
+                      )}
+                      <p className="text-xs text-[#917c73]">
+                        {order.discount_percent !== undefined && (
+                          <span>خصم الطلب: {fmt(order.discount_percent)}% · </span>
+                        )}
+                        إنشاء:{" "}
+                        {new Date(order.created_at).toLocaleString("ar-EG", {
+                          timeZone: "Africa/Cairo",
+                        })}
+                        {order.delivered_at &&
+                          ` · تسليم: ${new Date(order.delivered_at).toLocaleString("ar-EG", { timeZone: "Africa/Cairo" })}`}
+                      </p>
+                      <ul className="space-y-3 p-0">
+                        {order.items.map((item) => (
+                          <li
+                            key={item.product_id}
+                            className="list-none rounded-xl bg-[#f8f5f1] p-3 text-sm"
+                          >
+                            <strong className="break-words">{item.name}</strong>
+                            <p className="mb-0">
+                              {item.quantity} × {fmt(item.selling_price)} ج = {fmt(item.revenue)} ج
+                              ·
+                              {item.cost_pending
+                                ? "سعر الشراء مطلوب لحساب الربح"
+                                : `ربح ${fmt(item.profit)} ج`}
+                            </p>
+                          </li>
+                        ))}
+                      </ul>
+                      <p className="text-sm">
+                        إجمالي المنتجات: <strong>{fmt(order.revenue)} ج</strong> · مجمل الربح{" "}
+                        {order.status !== "delivered" ? "المتوقع" : ""}:{" "}
+                        <strong>
+                          {order.items.some((i) => i.cost_pending)
+                            ? "بانتظار تسجيل تكلفة الشراء"
+                            : `${fmt(order.profit)} ج`}
+                        </strong>
+                      </p>
+                      {!["delivered", "cancelled"].includes(order.status) && (
+                        <div className="flex flex-wrap gap-3">
+                          {order.status === "pending" && (
+                            <button
+                              disabled={busy}
+                              type="button"
+                              className={button}
+                              onClick={() => status(order, "confirmed")}
+                            >
+                              تأكيد الطلب بعد التواصل
+                            </button>
+                          )}
+                          {order.status === "confirmed" && (
+                            <button
+                              disabled={busy}
+                              type="button"
+                              className={button}
+                              onClick={() => status(order, "shipped")}
+                            >
+                              تم شحنه
+                            </button>
+                          )}
+                          <button
+                            type="button"
+                            disabled={busy}
+                            className={button}
+                            onClick={() => status(order, "delivered")}
+                          >
+                            تم تسليمه
+                          </button>
+                          <button
+                            type="button"
+                            disabled={busy}
+                            className="rounded-xl border px-5 py-3"
+                            onClick={() => status(order, "cancelled")}
+                          >
+                            إلغاء الطلب
+                          </button>
+                        </div>
+                      )}
+                      <TrackingActions order={order} />
                     </div>
                   )}
-                  <TrackingActions order={order} />
                 </article>
               ))
             )}
@@ -738,15 +831,17 @@ export default function OrdersPanel({ mode = "list" }: { mode?: "list" | "new" }
               <button
                 disabled={loading || offset === 0}
                 className="rounded-xl border p-3 disabled:opacity-40"
-                onClick={() => setOffset(Math.max(0, offset - 50))}
+                onClick={() => setOffset(Math.max(0, offset - 20))}
               >
                 السابق
               </button>
-              <span className="text-sm">{total} طلب</span>
+              <span className="text-sm">
+                {total ? `${offset + 1}–${Math.min(offset + 20, total)} من ${total} طلب` : "0 طلب"}
+              </span>
               <button
-                disabled={loading || offset + 50 >= total}
+                disabled={loading || offset + 20 >= total}
                 className="rounded-xl border p-3 disabled:opacity-40"
-                onClick={() => setOffset(offset + 50)}
+                onClick={() => setOffset(offset + 20)}
               >
                 التالي
               </button>

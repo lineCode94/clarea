@@ -547,6 +547,23 @@ const orders = load("app/lib/order-service.ts");
   authorized = true;
   const listing = await orders.listOrders(get("/?q=" + order.reference));
   assert.equal(listing.body.orders[0].tracking_path, pathForOrder);
+  const allListing = (await orders.listOrders(get("/?limit=1&sort=oldest"))).body;
+  assert.equal(allListing.orders.length, 1);
+  assert.equal(allListing.counts.all, allListing.total);
+  const pageTwo = (await orders.listOrders(get("/?limit=1&sort=oldest&offset=1"))).body;
+  assert.notEqual(allListing.orders[0].id, pageTwo.orders[0].id);
+  const deliveredListing = (await orders.listOrders(get("/?status=delivered"))).body;
+  assert(deliveredListing.orders.every((o) => o.status === "delivered"));
+  assert.equal(deliveredListing.total, deliveredListing.counts.delivered);
+  assert.equal((await orders.listOrders(get("/?limit=100"))).status, 400);
+  const phone = allListing.orders[0].customer.phone;
+  if (phone)
+    assert(
+      (await orders.listOrders(get("/?q=" + encodeURIComponent(phone)))).body.orders.some(
+        (o) => o.customer.phone === phone,
+      ),
+    );
+
   assert.equal(
     (await checkout(req(webInput))).body.order.tracking_path,
     tracking.trackingPath(webOrder),

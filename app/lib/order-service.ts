@@ -26,19 +26,38 @@ export async function listOrders(request: Request) {
     const status = z
       .enum(["all", "pending", "confirmed", "shipped", "delivered", "cancelled"])
       .parse(q.get("status") || "all");
-    const all = c.orders.filter(
+    const limit = z.coerce
+      .number()
+      .int()
+      .min(1)
+      .max(50)
+      .parse(q.get("limit") || 50);
+    const sort = z.enum(["newest", "oldest"]).parse(q.get("sort") || "newest");
+    const matching = c.orders.filter(
       (o) =>
-        (status === "all" || o.status === status) &&
-        (!search ||
-          o.reference.toLowerCase().includes(search) ||
-          o.customer.name.toLowerCase().includes(search)),
+        !search ||
+        [o.reference, o.customer.name, o.customer.phone || "", o.customer.email || ""].some((v) =>
+          v.toLowerCase().includes(search),
+        ),
     );
+    const counts = Object.fromEntries(
+      ["all", "pending", "confirmed", "shipped", "delivered", "cancelled"].map((state) => [
+        state,
+        matching.filter((o) => state === "all" || o.status === state).length,
+      ]),
+    );
+    const all = matching.filter((o) => status === "all" || o.status === status);
     return json({
       orders: all
         .slice()
-        .reverse()
-        .slice(offset, offset + 50)
+        .sort(
+          (a, b) =>
+            (sort === "oldest" ? 1 : -1) * (Date.parse(a.created_at) - Date.parse(b.created_at)) ||
+            a.reference.localeCompare(b.reference),
+        )
+        .slice(offset, offset + limit)
         .map(withTracking),
+      counts,
       total: all.length,
       offset,
     });
