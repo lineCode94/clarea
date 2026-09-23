@@ -28,7 +28,7 @@ type Receipt = {
   shipping_fee: number | null;
   items: { name: string; quantity: number; price: number; subtotal: number }[];
 };
-type Customer = { name: string; phone: string; email: string; address: string };
+type Customer = { name: string; phone: string; address: string };
 export function CartButton({ lang }: { lang: Language }) {
   const cart = useCart(),
     count = cart.items.reduce((n, i) => n + i.quantity, 0);
@@ -176,7 +176,6 @@ function CheckoutForm({
         [
           ["name", ar ? "الاسم بالكامل" : "Full name", "text", "name"],
           ["phone", ar ? "رقم الموبايل" : "Mobile number", "tel", "tel"],
-          ["email", ar ? "البريد الإلكتروني" : "Email", "email", "email"],
         ] as const
       ).map(([key, label, type, autoComplete]) => (
         <label key={key} className="block text-sm">
@@ -187,7 +186,7 @@ function CheckoutForm({
             name={key}
             autoComplete={autoComplete}
             minLength={key === "name" ? 2 : undefined}
-            maxLength={key === "email" ? 254 : 120}
+            maxLength={120}
             pattern={key === "phone" ? "(?:\\+?20|0)1[0125][0-9]{8}" : undefined}
             placeholder={key === "phone" ? "01xxxxxxxxx" : undefined}
             dir={key === "name" ? undefined : "ltr"}
@@ -292,7 +291,6 @@ function CartDialog({ lang }: { lang: Language }) {
   const [customer, setCustomer] = useState<Customer>({
     name: "",
     phone: "",
-    email: "",
     address: "",
   });
   const attempt = useRef<{ signature: string; id: string } | null>(null),
@@ -521,8 +519,6 @@ function CartDialog({ lang }: { lang: Language }) {
                       <strong>{customer.name}</strong>
                       <div dir="ltr">
                         {customer.phone}
-                        <br />
-                        {customer.email}
                       </div>
                       <p className="m-0 whitespace-pre-line break-words">{customer.address}</p>
                     </div>

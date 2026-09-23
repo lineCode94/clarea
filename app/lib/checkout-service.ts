@@ -27,7 +27,7 @@ const inputSchema = z
                 "أدخل رقم موبايل مصري صحيح / Enter a valid Egyptian mobile number",
               ),
           ),
-        email: z.string().trim().email().max(254),
+        email: z.string().trim().email().max(254).optional(),
         address: z.string().trim().min(10).max(500),
       })
       .strict(),
