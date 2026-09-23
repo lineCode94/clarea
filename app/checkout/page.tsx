@@ -1,7 +1,7 @@
 "use client";
 
 import Image from "next/image";
-import { rememberOrder } from "../lib/recent-orders";
+import { rememberOrder, setOrderAttention } from "../lib/recent-orders";
 import Link from "next/link";
 import CustomerNav from "../components/layout/customer-nav";
 import { useEffect, useState, useRef, type FormEvent } from "react";
@@ -217,6 +217,7 @@ function CheckoutContent() {
         throw new Error(data.error || (ar ? "فشل إرسال الطلب" : "Failed to place order"));
 
       rememberOrder(data.order);
+      setOrderAttention(true);
       setReceipt(data.order);
       cart.clear();
 

@@ -1,5 +1,6 @@
 "use client";
 import Image from "next/image";
+import AccountLink from "./account-link";
 import type { Language } from "../../types/catalog";
 import { TbWorld } from "react-icons/tb";
 
@@ -26,9 +27,7 @@ export default function CustomerNav({ lang = "ar", onLangChange }: Props) {
         <a href="/#collection" className="py-3 font-semibold hover:opacity-80">
           {ar ? "المنتجات" : "Products"}
         </a>
-        <a href="/account" className="rounded-xl bg-[#F5E9E2] px-4 py-2 font-bold hover:bg-[#ebd5c8]">
-          {ar ? "طلباتي" : "My orders"}
-        </a>
+        <AccountLink lang={lang} />
         {onLangChange && (
           <button
             onClick={() => onLangChange(ar ? "en" : "ar")}

@@ -1,6 +1,6 @@
 "use client";
 import Image from "next/image";
-import { rememberOrder } from "../../lib/recent-orders";
+import { rememberOrder, setOrderAttention } from "../../lib/recent-orders";
 import { useEffect, useRef, useState, type FormEvent } from "react";
 import {
   TbShoppingBag,
@@ -580,6 +580,7 @@ function CartDialog({ lang }: { lang: Language }) {
       const data = await response.json();
       if (!response.ok) throw new Error(data.error || "Please try again");
       rememberOrder(data.order);
+      setOrderAttention(true);
       setReceipt(data.order);
       cart.clear();
     } catch (e) {

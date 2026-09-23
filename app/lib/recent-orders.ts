@@ -32,3 +32,13 @@ export function rememberOrder(order: { reference: string; tracking_path?: string
   /* Notify same-tab listeners (storage event only fires cross-tab) */
   window.dispatchEvent(new CustomEvent("clarea-order-saved"));
 }
+
+// Only checkout creates an unread hint; visiting a tracking link does not.
+const attentionKey = "clarea-order-attention-v1";
+export function orderNeedsAttention() {
+  try { return localStorage.getItem(attentionKey) === "new"; } catch { return false; }
+}
+export function setOrderAttention(value: boolean) {
+  try { if (value) localStorage.setItem(attentionKey, "new"); else localStorage.removeItem(attentionKey); } catch {}
+  window.dispatchEvent(new Event("clarea-order-attention"));
+}

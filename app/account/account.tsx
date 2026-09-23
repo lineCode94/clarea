@@ -3,7 +3,7 @@ import React, { useEffect, useState, type FormEvent } from "react";
 import { FcGoogle } from "react-icons/fc";
 import { TbShoppingBag, TbUser, TbBox, TbCheck, TbTruck, TbX, TbMapPin, TbPhone, TbClock } from "react-icons/tb";
 import CustomerNav from "../components/layout/customer-nav";
-import { recentOrders, type RecentOrder } from "../lib/recent-orders";
+import { setOrderAttention, recentOrders, type RecentOrder } from "../lib/recent-orders";
 import { useLanguage } from "../hooks/use-language";
 
 type AccountData = {
@@ -84,6 +84,7 @@ export default function Account() {
     if (login === "unavailable") initialError = ar ? "تسجيل الدخول بجوجل غير متاح حالياً." : "Google login is currently unavailable.";
     
     setRecent(recentOrders());
+    setOrderAttention(false);
     refresh()
       .then((accData) => {
         // Clear auth error if user is actually authenticated
