@@ -170,32 +170,8 @@ function PaymentMethodSelector({ ar }: { ar: boolean }) {
 }
 const EGYPT_GOVERNORATES = [
   { ar: "القاهرة", en: "Cairo" },
-  { ar: "الإسكندرية", en: "Alexandria" },
   { ar: "الجيزة", en: "Giza" },
-  { ar: "القليوبية", en: "Qalyubia" },
-  { ar: "الشرقية", en: "Sharqia" },
-  { ar: "الدقهلية", en: "Dakahlia" },
-  { ar: "البحيرة", en: "Beheira" },
-  { ar: "الفيوم", en: "Fayoum" },
-  { ar: "الغربية", en: "Gharbia" },
-  { ar: "المنوفية", en: "Monufia" },
-  { ar: "كفر الشيخ", en: "Kafr El Sheikh" },
-  { ar: "دمياط", en: "Damietta" },
-  { ar: "بورسعيد", en: "Port Said" },
-  { ar: "الإسماعيلية", en: "Ismailia" },
-  { ar: "السويس", en: "Suez" },
-  { ar: "بني سويف", en: "Beni Suef" },
-  { ar: "المنيا", en: "Minya" },
-  { ar: "أسيوط", en: "Asyut" },
-  { ar: "سوهاج", en: "Sohag" },
-  { ar: "قنا", en: "Qena" },
-  { ar: "الأقصر", en: "Luxor" },
-  { ar: "أسوان", en: "Aswan" },
-  { ar: "البحر الأحمر", en: "Red Sea" },
-  { ar: "مطروح", en: "Matrouh" },
-  { ar: "شمال سيناء", en: "North Sinai" },
-  { ar: "جنوب سيناء", en: "South Sinai" },
-  { ar: "الوادي الجديد", en: "New Valley" },
+  { ar: "الشيخ زايد", en: "Sheikh Zayed" },
 ];
 
 function CheckoutForm({
@@ -392,6 +368,12 @@ function CheckoutForm({
             />
           </div>
         </div>
+
+        <p className="m-0 rounded-lg border border-[#e9ddd5] bg-[#F5E9E2]/60 p-2.5 text-xs text-[#5C1A2B] font-medium">
+          {ar
+            ? "📌 نصل حالياً لـ: القاهرة، الجيزة، والشيخ زايد فقط."
+            : "📌 Delivery available to: Cairo, Giza, and Sheikh Zayed only."}
+        </p>
 
         {/* Phone */}
         <div className="relative">
