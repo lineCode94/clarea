@@ -6,15 +6,53 @@ export default function OrderNotifications() {
   const [data, setData] = useState<Notice>({ count: 0, orders: [] }),
     [open, setOpen] = useState(false),
     [notice, setNotice] = useState(false),
-    [sound, setSound] = useState(false),
+    [sound, setSound] = useState(true),
+    [ready, setReady] = useState(false),
     [error, setError] = useState(false);
   const audio = useRef<AudioContext | null>(null),
-    enabled = useRef(false);
+    enabled = useRef(true),
+    pending = useRef(false);
+  async function playSound() {
+    if (!enabled.current || !audio.current) return;
+    try {
+      await audio.current.resume();
+      if (audio.current.state !== "running") return;
+      setReady(true);
+      if (!pending.current) return;
+      pending.current = false;
+      [660, 880, 1046].forEach((frequency, index) => {
+        const ctx = audio.current!;
+        const oscillator = ctx.createOscillator(), gain = ctx.createGain();
+        const start = ctx.currentTime + index * 0.18;
+        oscillator.connect(gain); gain.connect(ctx.destination);
+        oscillator.frequency.value = frequency;
+        gain.gain.setValueAtTime(0, start);
+        gain.gain.linearRampToValueAtTime(0.12, start + 0.02);
+        gain.gain.exponentialRampToValueAtTime(0.001, start + 0.45);
+        oscillator.start(start); oscillator.stop(start + 0.46);
+        oscillator.onended = () => { oscillator.disconnect(); gain.disconnect(); };
+      });
+    } catch { setReady(false); }
+  }
+  function unlock() {
+    if (!enabled.current) return;
+    try { audio.current ||= new AudioContext(); void playSound(); } catch { setReady(false); }
+  }
+  useEffect(() => {
+    try { enabled.current = localStorage.getItem("clarea-admin-sound") !== "off"; } catch {}
+    setSound(enabled.current);
+    document.addEventListener("pointerdown", unlock);
+    document.addEventListener("keydown", unlock);
+    return () => {
+      document.removeEventListener("pointerdown", unlock);
+      document.removeEventListener("keydown", unlock);
+    };
+  }, []);
   useEffect(() => {
     let stopped = false,
       busy = false;
     async function load() {
-      if (busy || document.visibilityState !== "visible") return;
+      if (busy) return;
       busy = true;
       try {
         const r = await fetch("/api/admin/order-notifications", { cache: "no-store" });
@@ -31,17 +69,8 @@ export default function OrderNotifications() {
         const fresh = d.orders.filter((o) => !seen.includes(o.reference));
         if (fresh.length) {
           setNotice(true);
-          if (enabled.current && audio.current) {
-            const oscillator = audio.current.createOscillator(),
-              gain = audio.current.createGain();
-            oscillator.connect(gain);
-            gain.connect(audio.current.destination);
-            oscillator.frequency.value = 740;
-            gain.gain.setValueAtTime(0.06, audio.current.currentTime);
-            gain.gain.exponentialRampToValueAtTime(0.001, audio.current.currentTime + 0.3);
-            oscillator.start();
-            oscillator.stop(audio.current.currentTime + 0.3);
-          }
+          pending.current = true;
+          void playSound();
         }
         try {
           localStorage.setItem(
@@ -68,7 +97,8 @@ export default function OrderNotifications() {
   }, []);
   useEffect(
     () => () => {
-      void audio.current?.close();
+      void audio.current?.close().catch(() => {});
+      audio.current = null;
     },
     [],
   );
@@ -114,20 +144,21 @@ export default function OrderNotifications() {
           <button
             className="flex min-h-11 items-center gap-2 text-sm"
             onClick={() => {
-              if (!sound) {
-                audio.current ||= new AudioContext();
-                void audio.current.resume();
-              }
-              enabled.current = !sound;
-              setSound(!sound);
+              const next = !sound || !ready;
+              enabled.current = next;
+              setSound(next);
+              try { localStorage.setItem("clarea-admin-sound", next ? "on" : "off"); } catch {}
+              if (next) { pending.current = true; unlock(); }
+              else { pending.current = false; }
             }}
           >
             {sound ? <TbVolume /> : <TbVolumeOff />}
-            {sound ? "إيقاف الصوت" : "تفعيل صوت التنبيه"}
+            {sound && ready ? "الصوت شغال · إيقاف الصوت" : "تفعيل وتجربة صوت التنبيه"}
           </button>
-          <p className="mb-0 text-xs text-[#917c73]">التحديث كل 30 ثانية أثناء فتح لوحة الإدارة.</p>
+          <p className="mb-0 text-xs text-[#917c73]">التحديث كل 30 ثانية. التنبيه يعمل طالما لوحة الإدارة مفتوحة؛ قد يؤخر المتصفح التحديث في الخلفية.</p>
         </section>
       )}
+      {sound && !ready && <button onClick={() => { pending.current = true; unlock(); }} className="mb-2 block rounded-xl border border-[#C9A05C] bg-white px-4 py-2 text-sm shadow">اضغط لتفعيل صوت الطلبات 🔔</button>}
       <button
         onClick={() => {
           setOpen(!open);
