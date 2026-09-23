@@ -104,7 +104,12 @@ function load(file) {
         return load(path.relative(root, path.resolve(path.dirname(full), name + ".ts")));
       return require(name);
     },
-    process: { env: { CATALOG_NAMESPACE: "unit-test" } },
+    process: {
+      env: {
+        CATALOG_NAMESPACE: "unit-test",
+        ADMIN_SESSION_SECRET: "tracking-test-secret-that-is-at-least-32-characters",
+      },
+    },
     Response,
     Request,
     URL,
@@ -506,6 +511,48 @@ const orders = load("app/lib/order-service.ts");
   assert.equal(
     (await checkout(req({ ...freeShipping, request_id: crypto.randomUUID() }))).status,
     409,
+  );
+  const tracking = load("app/lib/order-tracking.ts");
+  const pathForOrder = tracking.trackingPath(order);
+  assert.match(pathForOrder, /^\/track#[a-f0-9-]{36}\.[a-f0-9]{64}$/);
+  const token = pathForOrder.split("#")[1];
+  authorized = false;
+  for (const candidate of [
+    "",
+    order.reference,
+    order.id,
+    token.slice(0, -1) + (token.endsWith("0") ? "1" : "0"),
+  ])
+    assert.equal((await tracking.trackOrder(req({ token: candidate }))).status, 404);
+  assert.equal(
+    (await tracking.trackOrder(req({ token }, "/api/orders/track", "https://evil.test"))).status,
+    403,
+  );
+  const tracked = await tracking.trackOrder(req({ token }));
+  assert.equal(tracked.status, 200);
+  assert.equal(tracked.body.order.status, "delivered");
+  assert.equal(tracked.body.order.reference, order.reference);
+  assert.equal(tracked.headers["Cache-Control"], "private, no-store");
+  assert.deepEqual(Object.keys(tracked.body.order).sort(), ["reference", "status", "updated_at"]);
+  assert.equal(
+    (
+      await tracking.trackOrder(
+        req({ token: tracking.trackingPath({ id: crypto.randomUUID() }).split("#")[1] }),
+      )
+    ).status,
+    404,
+  );
+  assert.equal((await orders.listOrders(get("/"))).status, 401);
+  authorized = true;
+  const listing = await orders.listOrders(get("/?q=" + order.reference));
+  assert.equal(listing.body.orders[0].tracking_path, pathForOrder);
+  assert.equal(
+    (await checkout(req(webInput))).body.order.tracking_path,
+    tracking.trackingPath(webOrder),
+  );
+  assert(!JSON.stringify(await store.publicCatalog()).includes("tracking_path"));
+  console.log(
+    "PASS tracking: legacy order links, tamper rejection, unknown IDs, status freshness, authenticated admin links and no customer/accounting leakage",
   );
   console.log(
     "PASS checkout: COD only, server prices, unavailable/hidden products, supplier stock, safe receipts, idempotency, CAS retry, free shipping and cost resolution before delivery",

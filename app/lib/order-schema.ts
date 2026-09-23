@@ -64,5 +64,5 @@ export const orderSchema = z.object({
   payment_method: z.literal("COD").optional(),
   shipping_fee: z.number().nonnegative().nullable().optional(),
 });
-export type Order = z.infer<typeof orderSchema>;
+export type Order = z.infer<typeof orderSchema> & { tracking_path?: string };
 export type OrderInput = z.infer<typeof orderInput>;

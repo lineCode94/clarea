@@ -21,6 +21,7 @@ const field =
 const money = (n: number, ar: boolean) =>
   new Intl.NumberFormat(ar ? "ar-EG" : "en-EG", { style: "currency", currency: "EGP" }).format(n);
 type Receipt = {
+  tracking_path?: string;
   reference: string;
   status: string;
   subtotal: number;
@@ -251,6 +252,21 @@ function OrderConfirmation({
           </li>
         ))}
       </ul>
+      {receipt.tracking_path && (
+        <div className="space-y-2">
+          <a
+            href={receipt.tracking_path}
+            className={primary + " flex w-full items-center justify-center"}
+          >
+            {ar ? "تابعي حالة طلبك" : "Track your order"}
+          </a>
+          <p className="text-xs leading-6 text-muted">
+            {ar
+              ? "احتفظي برابط المتابعة علشان ترجعي له في أي وقت."
+              : "Save your tracking link to check back anytime."}
+          </p>
+        </div>
+      )}
       <CartSummary total={receipt.subtotal} ar={ar} />
       <button onClick={close} className={primary + " w-full"}>
         {ar ? "كمّلي التسوق" : "Continue shopping"}

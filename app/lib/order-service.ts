@@ -1,4 +1,5 @@
 import "server-only";
+import { withTracking } from "./order-tracking";
 import { NextResponse } from "next/server";
 import { createHash, randomUUID } from "node:crypto";
 import { z } from "zod";
@@ -36,7 +37,8 @@ export async function listOrders(request: Request) {
       orders: all
         .slice()
         .reverse()
-        .slice(offset, offset + 50),
+        .slice(offset, offset + 50)
+        .map(withTracking),
       total: all.length,
       offset,
     });
@@ -63,7 +65,7 @@ export async function createOrder(request: Request) {
     if (previous) {
       if (previous.request_fingerprint !== fingerprint)
         throw new AdminError("معرف العملية مستخدم لطلب مختلف", 409);
-      return json({ success: true, duplicate: true, order: previous });
+      return json({ success: true, duplicate: true, order: withTracking(previous) });
     }
     if (version && version !== c.version)
       throw new ConflictError(
@@ -125,7 +127,7 @@ export async function createOrder(request: Request) {
     };
     c.orders.push(order);
     await saveCatalog(c.products, c.version, c);
-    return json({ success: true, order });
+    return json({ success: true, order: withTracking(order) });
   } catch (e) {
     return failure(e);
   }
@@ -141,7 +143,8 @@ export async function changeOrder(request: Request, id: string) {
     const c = await readCatalog(),
       order = c.orders.find((o) => o.id === id);
     if (!order) throw new AdminError("الطلب غير موجود", 404);
-    if (order.status === status) return json({ success: true, duplicate: true, order });
+    if (order.status === status)
+      return json({ success: true, duplicate: true, order: withTracking(order) });
     if (order.status === "delivered" || order.status === "cancelled")
       throw new AdminError("الطلب منتهي ولا يمكن تغيير حالته مرة أخرى", 409);
     if (

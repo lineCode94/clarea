@@ -3,6 +3,7 @@ import { useEffect, useState, useRef, type FormEvent } from "react";
 import AdminToolbar from "../toolbar";
 import AdminSidebar, { adminExtraPaths, type AdminView } from "../sidebar";
 import OrderToasts, { confirmOrder, toast } from "./toasts";
+import TrackingActions from "./tracking-actions";
 import type { Order } from "../../lib/order-schema";
 import { matchesAdminProduct } from "../../lib/admin-search";
 import { figures, round } from "../../lib/inventory-schema";
@@ -724,6 +725,7 @@ export default function OrdersPanel({ mode = "list" }: { mode?: "list" | "new" }
                       </button>
                     </div>
                   )}
+                  <TrackingActions order={order} />
                 </article>
               ))
             )}

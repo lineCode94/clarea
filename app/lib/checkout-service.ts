@@ -1,4 +1,5 @@
 import "server-only";
+import { trackingPath } from "./order-tracking";
 import { createHash, randomUUID } from "node:crypto";
 import { NextResponse } from "next/server";
 import { z } from "zod";
@@ -54,6 +55,7 @@ function receipt(order: Order) {
     {
       order: {
         reference: order.reference,
+        tracking_path: trackingPath(order),
         status: order.status,
         payment_method: "COD",
         subtotal: order.revenue,
