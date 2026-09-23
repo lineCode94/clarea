@@ -32,6 +32,17 @@ const orders = [
   {
     id: "one",
     reference: "ONE",
+    revenue: 1200,
+    items: [
+      {
+        name: "Product",
+        quantity: 1,
+        selling_price: 1200,
+        revenue: 1200,
+        cost_price: 800,
+        profit: 400,
+      },
+    ],
     customer: { email: "owner@example.com" },
     status: "pending",
     created_at: "now",
@@ -39,6 +50,8 @@ const orders = [
   {
     id: "two",
     reference: "TWO",
+    revenue: 200,
+    items: [],
     customer: { email: "other@example.com" },
     status: "confirmed",
     created_at: "now",
@@ -81,6 +94,7 @@ vm.runInNewContext(source, {
   exports: mod.exports,
   require(name) {
     if (name === "server-only") return {};
+    if (name === "./google-login-config") return { googleLoginConfigured: () => false };
     if (name === "zod") return z;
     if (name === "next/headers") return { cookies: async () => ({ get: (n) => jar.get(n) }) };
     if (name === "next/server") return { NextResponse: response };
@@ -154,6 +168,36 @@ const req = (body, origin = "https://test.local") =>
   assert.equal(account.body.orders.length, 1);
   assert.equal(account.body.orders[0].reference, "ONE");
   assert.equal(account.headers["Cache-Control"], "private, no-store");
+  assert(!JSON.stringify(account.body).includes("cost_price"));
+  assert.equal(
+    (
+      await auth.updateProfile(
+        req({ profile: { name: "Buyer", phone: "01012345678", address: "Cairo" }, version: "new" }),
+      )
+    ).status,
+    200,
+  );
+  const profiled = await auth.accountOrders();
+  assert.equal(profiled.body.profile.name, "Buyer");
+  assert.equal(
+    (
+      await auth.updateProfile(
+        req({ profile: { name: "Other", phone: "", address: "" }, version: "new" }),
+      )
+    ).status,
+    409,
+  );
+  assert.equal(
+    (
+      await auth.updateProfile(
+        req({
+          profile: { name: "Other", phone: "", address: "", email: "other@example.com" },
+          version: profiled.body.profile_version,
+        }),
+      )
+    ).status,
+    400,
+  );
   const saved = jar.get("clarea_customer");
   jar.set("clarea_customer", { value: saved.value + "x" });
   assert.equal(await auth.customerEmail(), null);
@@ -161,6 +205,14 @@ const req = (body, origin = "https://test.local") =>
   now += 8 * 24 * 60 * 60 * 1000;
   assert.equal(await auth.customerEmail(), null);
   await auth.logout(req({}));
+  assert.equal(
+    (
+      await auth.updateProfile(
+        req({ profile: { name: "Intruder", phone: "", address: "" }, version: "new" }),
+      )
+    ).status,
+    401,
+  );
   assert.equal(await auth.customerEmail(), null);
   const expired = await auth.sendCode(req({ email: "expires@example.com" }));
   const expiredCode = emailMessage.text.match(/\d{6}/)[0];

@@ -20,6 +20,7 @@ import "react-toastify/dist/ReactToastify.css";
 import { CartProvider, useCart } from "../components/cart/cart-provider";
 import type { Language, Product } from "../types/catalog";
 import type { Customer } from "../components/cart/cart-panel";
+import { useLanguage } from "../hooks/use-language";
 
 const primaryBtn =
   "min-h-12 w-full rounded-xl bg-[#5C1A2B] px-5 py-3.5 font-bold text-white shadow-md transition-all hover:bg-[#481422] disabled:opacity-40";
@@ -52,7 +53,7 @@ export default function CheckoutPage() {
 }
 
 function CheckoutContent() {
-  const [lang, setLang] = useState<Language>("ar");
+  const [lang, setLang] = useLanguage("ar");
   const ar = lang === "ar";
   const cart = useCart();
   const [catalog, setCatalog] = useState<Product[]>([]);
@@ -287,7 +288,7 @@ function CheckoutContent() {
       </header>
 
       <main className="mx-auto max-w-6xl px-4 py-6 sm:py-10">
-        <CustomerNav ar={ar} />
+        <CustomerNav lang={lang} onLangChange={setLang} />
         {receipt ? (
           /* Receipt / Confirmation Screen */
           <div className="mx-auto max-w-xl space-y-6 rounded-3xl border border-[#e9ddd5] bg-white p-6 sm:p-10 shadow-xl text-center">

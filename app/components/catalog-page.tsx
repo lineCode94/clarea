@@ -23,6 +23,8 @@ import StorefrontActions from "./rewards/storefront-actions";
 import { CartProvider } from "./cart/cart-provider";
 import CartPanel from "./cart/cart-panel";
 
+import { useLanguage } from "../hooks/use-language";
+
 export default function CatalogPage() {
   return (
     <CartProvider>
@@ -30,8 +32,9 @@ export default function CatalogPage() {
     </CartProvider>
   );
 }
+
 function CatalogContent() {
-  const [lang, setLang] = useState<Language>("en");
+  const [lang, setLang] = useLanguage("en");
   const [selected, setSelected] = useState<Product | null>(null);
   const [giftsOpen, setGiftsOpen] = useState(false);
   const filters = useCatalogFilters(lang);

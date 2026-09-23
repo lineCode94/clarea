@@ -1,4 +1,5 @@
 import "server-only";
+import { googleLoginConfigured } from "./google-login-config";
 import { createHmac, randomInt, randomUUID, timingSafeEqual } from "node:crypto";
 import { cookies } from "next/headers";
 import { NextResponse } from "next/server";
@@ -37,6 +38,22 @@ export function emailLoginConfigured() {
     process.env.CUSTOMER_EMAIL_FROM &&
     (process.env.CUSTOMER_AUTH_SECRET || process.env.ADMIN_SESSION_SECRET || "").length >= 32
   );
+}
+export function issueCustomerSession(response: NextResponse, email: string) {
+  const body = Buffer.from(
+    JSON.stringify({
+      email: emailSchema.parse(email),
+      exp: Date.now() + duration * 1000,
+      nonce: randomUUID(),
+    }),
+  ).toString("base64url");
+  response.cookies.set(cookieName, body + "." + sign(body), {
+    httpOnly: true,
+    secure: process.env.NODE_ENV === "production",
+    sameSite: "lax",
+    path: "/",
+    maxAge: duration,
+  });
 }
 export async function customerEmail() {
   try {
@@ -168,19 +185,61 @@ export async function verifyCode(request: Request) {
         throw new AdminError("حاولي مرة أخرى", 409);
       }
       if (!valid) throw new AdminError("الكود غير صحيح. راجعي الرسالة.", 400);
-      const body = Buffer.from(
-        JSON.stringify({ email, exp: Date.now() + duration * 1000, nonce: randomUUID() }),
-      ).toString("base64url");
       const response = NextResponse.json({ verified: true }, { headers });
-      response.cookies.set(cookieName, body + "." + sign(body), {
-        httpOnly: true,
-        secure: process.env.NODE_ENV === "production",
-        sameSite: "lax",
-        path: "/",
-        maxAge: duration,
-      });
+      issueCustomerSession(response, email);
       return response;
     }
+  } catch (e) {
+    return fail(e);
+  }
+}
+const profileSchema = z
+  .object({
+    name: z.string().trim().max(120),
+    phone: z
+      .string()
+      .trim()
+      .max(40)
+      .refine((v) => !v || /^(?:\+?20|0)1[0125]\d{8}$/.test(v), "أدخلي رقم موبايل مصري صحيح"),
+    address: z.string().trim().max(500),
+  })
+  .strict();
+async function readProfile(email: string) {
+  const key = namespace + "/customer-profiles/" + sign(email) + ".json";
+  const result = await get(key, { access: "private", useCache: false });
+  if (!result) return { key, profile: { name: "", phone: "", address: "" }, version: "new" };
+  if (result.statusCode !== 200) throw new Error("Profile unavailable");
+  return {
+    key,
+    profile: profileSchema.parse(await new Response(result.stream).json()),
+    version: storageETag(result.blob.etag),
+  };
+}
+export async function updateProfile(request: Request) {
+  try {
+    sameOrigin(request);
+    const email = await customerEmail();
+    if (!email) throw new AdminError("سجّلي الدخول أولاً", 401);
+    const input = z
+      .object({ profile: profileSchema, version: z.string().min(1).max(200) })
+      .strict()
+      .parse(await limitedJson(request, 4000));
+    const current = await readProfile(email);
+    if (current.version !== input.version)
+      throw new AdminError("البيانات اتعدلت من صفحة أخرى. حدّثي الصفحة وحاولي مجدداً.", 409);
+    try {
+      await put(current.key, JSON.stringify(input.profile), {
+        access: "private",
+        addRandomSuffix: false,
+        contentType: "application/json",
+        ...(current.version === "new"
+          ? { allowOverwrite: false }
+          : { allowOverwrite: true, ifMatch: current.version }),
+      });
+    } catch {
+      throw new AdminError("تعذر الحفظ. حدّثي الصفحة وحاولي مجدداً.", 409);
+    }
+    return NextResponse.json({ saved: true }, { headers });
   } catch (e) {
     return fail(e);
   }
@@ -190,14 +249,20 @@ export async function accountOrders() {
     const email = await customerEmail();
     if (!email)
       return NextResponse.json(
-        { authenticated: false, configured: emailLoginConfigured() },
+        {
+          authenticated: false,
+          configured: emailLoginConfigured(),
+          google_configured: googleLoginConfigured(),
+        },
         { headers },
       );
-    const c = await readCatalog();
+    const [c, profile] = await Promise.all([readCatalog(), readProfile(email)]);
     return NextResponse.json(
       {
         authenticated: true,
         email,
+        profile: profile.profile,
+        profile_version: profile.version,
         orders: c.orders
           .filter((o) => o.customer.email?.trim().toLowerCase() === email)
           .slice()
@@ -207,6 +272,14 @@ export async function accountOrders() {
             status: o.status,
             created_at: o.created_at,
             tracking_path: trackingPath(o),
+            subtotal: o.revenue,
+            shipping_fee: o.shipping_fee ?? null,
+            items: o.items.map((i) => ({
+              name: i.name,
+              quantity: i.quantity,
+              price: i.selling_price,
+              subtotal: i.revenue,
+            })),
           })),
       },
       { headers },

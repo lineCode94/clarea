@@ -1,6 +1,7 @@
 "use client";
 import { rememberOrder } from "../lib/recent-orders";
 import CustomerNav from "../components/layout/customer-nav";
+import type { Language } from "../types/catalog";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { TbCheck, TbRefresh, TbPackage, TbTruck, TbX } from "react-icons/tb";
 type Status = "pending" | "confirmed" | "shipped" | "delivered" | "cancelled";
@@ -120,7 +121,7 @@ export default function Tracking() {
       className="min-h-dvh bg-[#F5E9E2]/50 px-4 py-8 text-[#5C1A2B] sm:py-14"
     >
       <div className="mx-auto max-w-lg">
-        <CustomerNav ar={ar} />
+        <CustomerNav lang={lang as Language} onLangChange={setLang} />
         <button
           className="mb-4 min-h-11 px-4 text-sm underline"
           onClick={() => setLang(ar ? "en" : "ar")}

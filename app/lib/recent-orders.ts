@@ -29,4 +29,6 @@ export function rememberOrder(order: { reference: string; tracking_path?: string
       ),
     );
   } catch {}
+  /* Notify same-tab listeners (storage event only fires cross-tab) */
+  window.dispatchEvent(new CustomEvent("clarea-order-saved"));
 }

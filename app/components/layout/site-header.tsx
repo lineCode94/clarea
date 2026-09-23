@@ -2,12 +2,13 @@
 
 import Image from "next/image";
 import { CartButton } from "../cart/cart-panel";
-import { TbWorld, TbSearch, TbGift, TbX } from "react-icons/tb";
+import { TbWorld, TbSearch, TbGift, TbX, TbUser } from "react-icons/tb";
 import { AnimatePresence, motion, useReducedMotion, type Variants } from "framer-motion";
 import { useCallback, useEffect, useState } from "react";
 import { text } from "../../content/catalog";
 import { rewardsText } from "../../content/rewards";
 import type { Language } from "../../types/catalog";
+import { recentOrders } from "../../lib/recent-orders";
 
 type Props = {
   lang: Language;
@@ -70,6 +71,19 @@ export default function SiteHeader({
   const ar = lang === "ar";
   const reduced = useReducedMotion();
   const [menuOpen, setMenuOpen] = useState(false);
+  const [orderCount, setOrderCount] = useState(0);
+
+  /* Check for recent orders to show badge */
+  useEffect(() => {
+    setOrderCount(recentOrders().length);
+    const refresh = () => setOrderCount(recentOrders().length);
+    window.addEventListener("storage", refresh);
+    window.addEventListener("clarea-order-saved", refresh);
+    return () => {
+      window.removeEventListener("storage", refresh);
+      window.removeEventListener("clarea-order-saved", refresh);
+    };
+  }, []);
 
   /* Lock body scroll when menu is open */
   useEffect(() => {
@@ -123,14 +137,8 @@ export default function SiteHeader({
       </div>
       <header className="topbar sticky top-0 z-30 border-b border-line bg-white/95 backdrop-blur-xl">
         <div className="page-width grid grid-cols-[1fr_auto_1fr] items-center gap-2 py-4 md:py-6">
-          {/* Left: language + hamburger on mobile */}
+          {/* Left: language */}
           <div className="flex items-center gap-1">
-            <a
-              href="/account"
-              className="flex min-h-11 items-center rounded-xl px-2 text-xs font-semibold text-brand"
-            >
-              {ar ? "طلباتي" : "My orders"}
-            </a>
             <button
               onClick={() => onLanguageChange(ar ? "en" : "ar")}
               title={ar ? "English" : "العربية"}
@@ -173,6 +181,20 @@ export default function SiteHeader({
               <TbGift size={24} />
             </button>
             <CartButton lang={lang} />
+            {/* Profile / Orders icon */}
+            <a
+              href="/account"
+              title={ar ? "طلباتي" : "My orders"}
+              aria-label={ar ? "طلباتي" : "My orders"}
+              className="relative grid size-10 place-items-center rounded-full hover:bg-brand/5 sm:size-11"
+            >
+              <TbUser size={23} />
+              {orderCount > 0 && (
+                <span className="absolute -right-0.5 -top-0.5 flex size-[18px] items-center justify-center rounded-full bg-brand text-[10px] font-bold leading-none text-white shadow-sm">
+                  {orderCount > 9 ? "9+" : orderCount}
+                </span>
+              )}
+            </a>
             {/* Hamburger — mobile only */}
             <button
               onClick={() => setMenuOpen(true)}
