@@ -10,6 +10,8 @@ import {
   TbCheck,
   TbTruck,
   TbArrowLeft,
+  TbHelpCircle,
+  TbChevronDown,
 } from "react-icons/tb";
 import { useCart, type CartLine } from "./cart-provider";
 import type { Language, Product } from "../../types/catalog";
@@ -17,7 +19,7 @@ const primary =
   "min-h-12 rounded-xl bg-[#5C1A2B] px-5 py-3 font-semibold text-white disabled:opacity-40";
 const secondary = "min-h-11 rounded-xl border border-[#dbcac0] px-4 py-2 disabled:opacity-40";
 const field =
-  "mt-2 w-full rounded-xl border border-[#dbcac0] bg-white p-3 text-base outline-offset-4 focus:outline-[#C9A05C]";
+  "mt-1.5 w-full rounded-xl border border-[#dbcac0] bg-white p-3 text-sm outline-offset-4 focus:outline-[#C9A05C] placeholder:text-gray-400";
 const money = (n: number, ar: boolean) =>
   new Intl.NumberFormat(ar ? "ar-EG" : "en-EG", { style: "currency", currency: "EGP" }).format(n);
 type Receipt = {
@@ -28,7 +30,21 @@ type Receipt = {
   shipping_fee: number | null;
   items: { name: string; quantity: number; price: number; subtotal: number }[];
 };
-type Customer = { name: string; phone: string; address: string };
+export type Customer = {
+  emailOrPhone: string;
+  emailNews: boolean;
+  country: string;
+  firstName: string;
+  lastName: string;
+  address: string;
+  apartment: string;
+  city: string;
+  governorate: string;
+  postalCode: string;
+  phone: string;
+  saveInfo: boolean;
+  smsNews: boolean;
+};
 export function CartButton({ lang }: { lang: Language }) {
   const cart = useCart(),
     count = cart.items.reduce((n, i) => n + i.quantity, 0);
@@ -152,6 +168,36 @@ function PaymentMethodSelector({ ar }: { ar: boolean }) {
     </fieldset>
   );
 }
+const EGYPT_GOVERNORATES = [
+  { ar: "القاهرة", en: "Cairo" },
+  { ar: "الإسكندرية", en: "Alexandria" },
+  { ar: "الجيزة", en: "Giza" },
+  { ar: "القليوبية", en: "Qalyubia" },
+  { ar: "الشرقية", en: "Sharqia" },
+  { ar: "الدقهلية", en: "Dakahlia" },
+  { ar: "البحيرة", en: "Beheira" },
+  { ar: "الفيوم", en: "Fayoum" },
+  { ar: "الغربية", en: "Gharbia" },
+  { ar: "المنوفية", en: "Monufia" },
+  { ar: "كفر الشيخ", en: "Kafr El Sheikh" },
+  { ar: "دمياط", en: "Damietta" },
+  { ar: "بورسعيد", en: "Port Said" },
+  { ar: "الإسماعيلية", en: "Ismailia" },
+  { ar: "السويس", en: "Suez" },
+  { ar: "بني سويف", en: "Beni Suef" },
+  { ar: "المنيا", en: "Minya" },
+  { ar: "أسيوط", en: "Asyut" },
+  { ar: "سوهاج", en: "Sohag" },
+  { ar: "قنا", en: "Qena" },
+  { ar: "الأقصر", en: "Luxor" },
+  { ar: "أسوان", en: "Aswan" },
+  { ar: "البحر الأحمر", en: "Red Sea" },
+  { ar: "مطروح", en: "Matrouh" },
+  { ar: "شمال سيناء", en: "North Sinai" },
+  { ar: "جنوب سيناء", en: "South Sinai" },
+  { ar: "الوادي الجديد", en: "New Valley" },
+];
+
 function CheckoutForm({
   ar,
   customer,
@@ -163,57 +209,255 @@ function CheckoutForm({
   setCustomer: (c: Customer) => void;
   onReview: () => void;
 }) {
+  const [showContactHelp, setShowContactHelp] = useState(false);
+  const [showPhoneHelp, setShowPhoneHelp] = useState(false);
+
   return (
     <form
       onSubmit={(e: FormEvent) => {
         e.preventDefault();
+        if (customer.saveInfo && typeof window !== "undefined") {
+          try {
+            localStorage.setItem("clarea_checkout_customer", JSON.stringify(customer));
+          } catch {}
+        }
         onReview();
       }}
-      className="space-y-4"
+      className="space-y-6"
     >
-      <h3 className="text-lg">{ar ? "بيانات التوصيل" : "Delivery details"}</h3>
-      {(
-        [
-          ["name", ar ? "الاسم بالكامل" : "Full name", "text", "name"],
-          ["phone", ar ? "رقم الموبايل" : "Mobile number", "tel", "tel"],
-        ] as const
-      ).map(([key, label, type, autoComplete]) => (
-        <label key={key} className="block text-sm">
-          {label}
+      {/* Contact Section */}
+      <div className="space-y-3">
+        <div className="flex items-center justify-between">
+          <h3 className="text-[#412832] text-lg font-bold">
+            {ar ? "التواصل" : "Contact"}
+          </h3>
+          <span className="text-xs font-medium text-[#5C1A2B] hover:underline cursor-pointer">
+            {ar ? "تسجيل الدخول" : "Sign in"}
+          </span>
+        </div>
+        <div className="relative">
+          <input
+            type="text"
+            placeholder={ar ? "البريد الإلكتروني أو رقم الموبايل" : "Email or mobile phone number"}
+            value={customer.emailOrPhone}
+            onChange={(e) => setCustomer({ ...customer, emailOrPhone: e.target.value })}
+            className={field + " pe-10"}
+          />
+          <button
+            type="button"
+            onClick={() => setShowContactHelp(!showContactHelp)}
+            className="absolute end-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
+            aria-label="Info"
+          >
+            <TbHelpCircle size={18} />
+          </button>
+        </div>
+        {showContactHelp && (
+          <p className="m-0 rounded-lg border border-[#e9ddd5] bg-[#F5E9E2]/50 p-2.5 text-xs leading-5 text-muted">
+            {ar
+              ? "سنستخدم بريدك أو رقمك لإطلاعك على حالة الطلب وتأكيد التوصيل."
+              : "We’ll use this to update you on your order status and shipping."}
+          </p>
+        )}
+        <label className="flex items-center gap-2.5 text-sm text-[#412832] cursor-pointer">
+          <input
+            type="checkbox"
+            checked={customer.emailNews}
+            onChange={(e) => setCustomer({ ...customer, emailNews: e.target.checked })}
+            className="size-4 rounded border-gray-300 accent-[#5C1A2B]"
+          />
+          <span>
+            {ar
+              ? "أرسل لي الأخبار والعروض بالبريد الإلكتروني"
+              : "Email me with news and offers"}
+          </span>
+        </label>
+      </div>
+
+      {/* Delivery Section */}
+      <div className="space-y-3.5">
+        <h3 className="text-[#412832] text-lg font-bold">
+          {ar ? "بيانات التوصيل" : "Delivery"}
+        </h3>
+
+        {/* Country/Region */}
+        <div className="relative">
+          <label className="block text-xs font-semibold text-gray-500 mb-0.5">
+            {ar ? "البلد / المنطقة" : "Country/Region"}
+          </label>
+          <select
+            value={customer.country}
+            onChange={(e) => setCustomer({ ...customer, country: e.target.value })}
+            className={field + " cursor-pointer pe-10 mt-0"}
+          >
+            <option value="Egypt">{ar ? "مصر" : "Egypt"}</option>
+          </select>
+          <TbChevronDown className="pointer-events-none absolute end-3 bottom-3 text-gray-500" size={18} />
+        </div>
+
+        {/* First name & Last name */}
+        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+          <div>
+            <input
+              required
+              type="text"
+              placeholder={ar ? "الاسم الأول" : "First name"}
+              autoComplete="given-name"
+              value={customer.firstName}
+              onChange={(e) => setCustomer({ ...customer, firstName: e.target.value })}
+              className={field}
+            />
+          </div>
+          <div>
+            <input
+              required
+              type="text"
+              placeholder={ar ? "اسم العائلة" : "Last name"}
+              autoComplete="family-name"
+              value={customer.lastName}
+              onChange={(e) => setCustomer({ ...customer, lastName: e.target.value })}
+              className={field}
+            />
+          </div>
+        </div>
+
+        {/* Address */}
+        <div>
           <input
             required
-            type={type}
-            name={key}
-            autoComplete={autoComplete}
-            minLength={key === "name" ? 2 : undefined}
-            maxLength={120}
-            pattern={key === "phone" ? "(?:\\+?20|0)1[0125][0-9]{8}" : undefined}
-            placeholder={key === "phone" ? "01xxxxxxxxx" : undefined}
-            dir={key === "name" ? undefined : "ltr"}
-            value={customer[key]}
-            onChange={(e) => setCustomer({ ...customer, [key]: e.target.value })}
+            type="text"
+            placeholder={ar ? "العنوان (الشارع والمنطقة)" : "Address"}
+            autoComplete="street-address"
+            minLength={5}
+            value={customer.address}
+            onChange={(e) => setCustomer({ ...customer, address: e.target.value })}
             className={field}
           />
-        </label>
-      ))}
-      <label className="block text-sm">
-        {ar
-          ? "عنوان التوصيل — المحافظة، المنطقة، الشارع، العمارة والشقة"
-          : "Delivery address — city, area, street, building & apartment"}
-        <textarea
-          required
-          name="address"
-          autoComplete="street-address"
-          minLength={10}
-          maxLength={500}
-          rows={3}
-          value={customer.address}
-          onChange={(e) => setCustomer({ ...customer, address: e.target.value })}
-          className={field}
-        />
-      </label>
+        </div>
+
+        {/* Apartment, suite, etc. (optional) */}
+        <div>
+          <input
+            type="text"
+            placeholder={
+              ar
+                ? "الشقة، الملحق، إلخ (اختياري)"
+                : "Apartment, suite, etc. (optional)"
+            }
+            autoComplete="address-line2"
+            value={customer.apartment}
+            onChange={(e) => setCustomer({ ...customer, apartment: e.target.value })}
+            className={field}
+          />
+        </div>
+
+        {/* City, Governorate, Postal code */}
+        <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
+          <div>
+            <input
+              required
+              type="text"
+              placeholder={ar ? "المدينة" : "City"}
+              autoComplete="address-level2"
+              value={customer.city}
+              onChange={(e) => setCustomer({ ...customer, city: e.target.value })}
+              className={field}
+            />
+          </div>
+          <div className="relative">
+            <label className="block text-[11px] font-semibold text-gray-500 mb-0.5">
+              {ar ? "المحافظة" : "Governorate"}
+            </label>
+            <select
+              value={customer.governorate}
+              onChange={(e) => setCustomer({ ...customer, governorate: e.target.value })}
+              className={field + " cursor-pointer pe-7 mt-0"}
+            >
+              {EGYPT_GOVERNORATES.map((g) => (
+                <option key={g.en} value={g.en}>
+                  {ar ? g.ar : g.en}
+                </option>
+              ))}
+            </select>
+            <TbChevronDown className="pointer-events-none absolute end-2.5 bottom-3 text-gray-500" size={16} />
+          </div>
+          <div>
+            <input
+              type="text"
+              placeholder={ar ? "الرمز البريدي (اختياري)" : "Postal code (optional)"}
+              autoComplete="postal-code"
+              value={customer.postalCode}
+              onChange={(e) => setCustomer({ ...customer, postalCode: e.target.value })}
+              className={field}
+            />
+          </div>
+        </div>
+
+        {/* Phone */}
+        <div className="relative">
+          <input
+            required
+            type="tel"
+            dir="ltr"
+            placeholder={ar ? "رقم الموبايل (مثال: 01xxxxxxxxx)" : "Phone"}
+            autoComplete="tel"
+            pattern="(?:\\+?20|0)1[0125][0-9]{8}"
+            value={customer.phone}
+            onChange={(e) => setCustomer({ ...customer, phone: e.target.value })}
+            className={field + " pe-10"}
+          />
+          <button
+            type="button"
+            onClick={() => setShowPhoneHelp(!showPhoneHelp)}
+            className="absolute end-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
+            aria-label="Info"
+          >
+            <TbHelpCircle size={18} />
+          </button>
+        </div>
+        {showPhoneHelp && (
+          <p className="m-0 rounded-lg border border-[#e9ddd5] bg-[#F5E9E2]/50 p-2.5 text-xs leading-5 text-muted">
+            {ar
+              ? "مطلوب رقم الموبايل للتواصل معك من قبل مندوب التوصيل لتأكيد التسليم."
+              : "Phone number is required for the shipping courier to contact you."}
+          </p>
+        )}
+
+        {/* Checkboxes */}
+        <div className="space-y-2 pt-1">
+          <label className="flex items-center gap-2.5 text-sm text-[#412832] cursor-pointer">
+            <input
+              type="checkbox"
+              checked={customer.saveInfo}
+              onChange={(e) => setCustomer({ ...customer, saveInfo: e.target.checked })}
+              className="size-4 rounded border-gray-300 accent-[#5C1A2B]"
+            />
+            <span>
+              {ar
+                ? "حفظ هذه البيانات للمرة القادمة"
+                : "Save this information for next time"}
+            </span>
+          </label>
+          <label className="flex items-center gap-2.5 text-sm text-[#412832] cursor-pointer">
+            <input
+              type="checkbox"
+              checked={customer.smsNews}
+              onChange={(e) => setCustomer({ ...customer, smsNews: e.target.checked })}
+              className="size-4 rounded border-gray-300 accent-[#5C1A2B]"
+            />
+            <span>
+              {ar
+                ? "أرسل لي التحديثات والعروض عبر الرسائل النصية"
+                : "Text me with news and offers"}
+            </span>
+          </label>
+        </div>
+      </div>
+
       <PaymentMethodSelector ar={ar} />
-      <button className={primary + " w-full"}>{ar ? "مراجعة الطلب" : "Review order"}</button>
+      <button className={primary + " w-full font-bold"}>
+        {ar ? "مراجعة الطلب" : "Review order"}
+      </button>
     </form>
   );
 }
@@ -288,10 +532,28 @@ function CartDialog({ lang }: { lang: Language }) {
     [busy, setBusy] = useState(false),
     [receipt, setReceipt] = useState<Receipt | null>(null),
     [ack, setAck] = useState(false);
-  const [customer, setCustomer] = useState<Customer>({
-    name: "",
-    phone: "",
-    address: "",
+  const [customer, setCustomer] = useState<Customer>(() => {
+    if (typeof window !== "undefined") {
+      try {
+        const saved = localStorage.getItem("clarea_checkout_customer");
+        if (saved) return JSON.parse(saved);
+      } catch {}
+    }
+    return {
+      emailOrPhone: "",
+      emailNews: false,
+      country: "Egypt",
+      firstName: "",
+      lastName: "",
+      address: "",
+      apartment: "",
+      city: "",
+      governorate: "Cairo",
+      postalCode: "",
+      phone: "",
+      saveInfo: false,
+      smsNews: false,
+    };
   });
   const attempt = useRef<{ signature: string; id: string } | null>(null),
     submitting = useRef(false);
@@ -349,8 +611,30 @@ function CartDialog({ lang }: { lang: Language }) {
     submitting.current = true;
     setBusy(true);
     setError("");
+    const formattedCustomer = {
+      name: `${customer.firstName} ${customer.lastName}`.trim() || customer.firstName || customer.lastName || "عميل",
+      phone: customer.phone.trim() || (customer.emailOrPhone.match(/^(?:\+?20|0)1[0125]\d{8}$/) ? customer.emailOrPhone.trim() : ""),
+      email: customer.emailOrPhone.includes("@") ? customer.emailOrPhone.trim() : undefined,
+      address: [
+        customer.address.trim(),
+        customer.apartment.trim() ? `شقة/ملحق: ${customer.apartment.trim()}` : "",
+        customer.city.trim(),
+        customer.governorate,
+        customer.country || "Egypt",
+        customer.postalCode.trim() ? `الرمز البريدي: ${customer.postalCode.trim()}` : "",
+      ]
+        .filter(Boolean)
+        .join(" - "),
+      firstName: customer.firstName,
+      lastName: customer.lastName,
+      apartment: customer.apartment,
+      city: customer.city,
+      governorate: customer.governorate,
+      postalCode: customer.postalCode,
+      country: customer.country,
+    };
     const payload = {
-      customer,
+      customer: formattedCustomer,
       payment_method: "COD",
       shipping_acknowledged: true,
       items: items.map((i) => ({
@@ -486,19 +770,19 @@ function CartDialog({ lang }: { lang: Language }) {
                     <div className="my-5">
                       <CartSummary total={total} ar={ar} />
                     </div>
-                    <button
-                      disabled={loading || invalid}
-                      onClick={() => setStep("details")}
-                      className={primary + " w-full"}
+                    <a
+                      href="/checkout"
+                      onClick={() => cart.setOpen(false)}
+                      className={primary + " flex w-full items-center justify-center font-bold text-center"}
                     >
                       {loading
                         ? ar
                           ? "تحديث الأسعار…"
                           : "Updating prices…"
                         : ar
-                          ? "متابعة الطلب"
+                          ? "متابعة الطلب وإتمام الشراء"
                           : "Continue to checkout"}
-                    </button>
+                    </a>
                   </>
                 )}
                 {step === "details" && (
@@ -514,13 +798,29 @@ function CartDialog({ lang }: { lang: Language }) {
                 )}
                 {step === "review" && (
                   <div className="space-y-5">
-                    <h3 className="text-lg">{ar ? "راجعي طلبك" : "Review your order"}</h3>
-                    <div className="rounded-xl border border-[#e9ddd5] p-4 text-sm leading-7">
-                      <strong>{customer.name}</strong>
-                      <div dir="ltr">
-                        {customer.phone}
+                    <h3 className="text-lg font-bold">{ar ? "راجعي طلبك" : "Review your order"}</h3>
+                    <div className="rounded-xl border border-[#e9ddd5] bg-[#F5E9E2]/30 p-4 text-sm leading-7">
+                      <strong className="block text-base">{customer.firstName} {customer.lastName}</strong>
+                      <div dir="ltr" className="text-muted">
+                        {customer.phone || customer.emailOrPhone}
                       </div>
-                      <p className="m-0 whitespace-pre-line break-words">{customer.address}</p>
+                      {customer.emailOrPhone.includes("@") && (
+                        <div dir="ltr" className="text-xs text-muted">
+                          {customer.emailOrPhone}
+                        </div>
+                      )}
+                      <p className="m-0 mt-1.5 whitespace-pre-line break-words text-[#412832]">
+                        {[
+                          customer.address,
+                          customer.apartment ? `شقة/ملحق: ${customer.apartment}` : "",
+                          customer.city,
+                          customer.governorate,
+                          customer.country || "Egypt",
+                          customer.postalCode ? `الرمز البريدي: ${customer.postalCode}` : "",
+                        ]
+                          .filter(Boolean)
+                          .join(" - ")}
+                      </p>
                     </div>
                     <ul className="space-y-3 p-0">
                       {items.map((i) => (

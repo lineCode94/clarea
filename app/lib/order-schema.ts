@@ -10,7 +10,7 @@ export const orderInput = z
         email: z.string().email().max(254).optional(),
         address: z.string().trim().max(500).default(""),
       })
-      .strict(),
+      .passthrough(),
     discount_percent: z.number().finite().min(0).max(100).optional(),
     notes: z.string().trim().max(1000).default(""),
     items: z

@@ -28,9 +28,9 @@ const inputSchema = z
               ),
           ),
         email: z.string().trim().email().max(254).optional(),
-        address: z.string().trim().min(10).max(500),
+        address: z.string().trim().min(5).max(500),
       })
-      .strict(),
+      .passthrough(),
     payment_method: z.literal("COD"),
     shipping_acknowledged: z.literal(true),
     items: z
