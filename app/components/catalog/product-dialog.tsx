@@ -4,12 +4,106 @@ import { useCart } from "../cart/cart-provider";
 import ProductPrice from "./product-price";
 import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
 import { useEffect, useRef, useState } from "react";
-import { TbArrowLeft, TbArrowRight, TbX, TbBrandWhatsapp } from "react-icons/tb";
+import { TbArrowLeft, TbArrowRight, TbX, TbBrandWhatsapp, TbZoomIn, TbMaximize } from "react-icons/tb";
 import type { Product, Language } from "../../types/catalog";
 import { whatsappLink } from "../../lib/whatsapp";
 import { text } from "../../content/catalog";
 import { cleansingCopy, oilIngredients, foamIngredients } from "../../data/cleansing";
 import ProductDetails from "./product-details";
+
+function MagnifierImage({
+  src,
+  alt,
+  lang,
+  imageTransform,
+}: {
+  src: string;
+  alt: string;
+  lang: Language;
+  imageTransform?: string;
+}) {
+  const [zoom, setZoom] = useState(false);
+  const [position, setPosition] = useState({ x: 50, y: 50 });
+  const [fullscreen, setFullscreen] = useState(false);
+  const containerRef = useRef<HTMLDivElement>(null);
+
+  const handleMouseMove = (e: React.MouseEvent<HTMLDivElement>) => {
+    if (!containerRef.current) return;
+    const { left, top, width, height } = containerRef.current.getBoundingClientRect();
+    const x = Math.max(0, Math.min(100, ((e.clientX - left) / width) * 100));
+    const y = Math.max(0, Math.min(100, ((e.clientY - top) / height) * 100));
+    setPosition({ x, y });
+  };
+
+  return (
+    <>
+      <div
+        ref={containerRef}
+        onMouseEnter={() => setZoom(true)}
+        onMouseLeave={() => setZoom(false)}
+        onMouseMove={handleMouseMove}
+        onClick={() => setFullscreen(true)}
+        className="group relative aspect-square cursor-zoom-in overflow-hidden rounded-xl bg-white select-none shadow-sm"
+        title={lang === "ar" ? "اضغطي لتكبير الصورة بالكامل" : "Click to view full image"}
+      >
+        <Image
+          src={src}
+          alt={alt}
+          fill
+          sizes="(max-width: 768px) 90vw, 450px"
+          className="object-contain p-2"
+          style={{ transform: imageTransform }}
+        />
+
+        {/* Floating Zoom Indicator Badge */}
+        <div className="absolute bottom-3 end-3 z-10 flex items-center gap-1.5 rounded-full bg-black/60 px-3 py-1.5 text-xs font-medium text-white backdrop-blur-md transition-all group-hover:bg-[#5C1A2B] group-hover:scale-105">
+          <TbZoomIn size={16} />
+          <span>{lang === "ar" ? "عدسة المكبرة" : "Hover / Click to zoom"}</span>
+        </div>
+
+        {/* Hover Magnifying Lens Circular Window */}
+        {zoom && (
+          <div
+            className="pointer-events-none absolute size-48 rounded-full border-2 border-white shadow-2xl overflow-hidden bg-white z-20 hidden md:block"
+            style={{
+              top: `${position.y}%`,
+              left: `${position.x}%`,
+              transform: "translate(-50%, -50%)",
+              backgroundImage: `url(${src})`,
+              backgroundPosition: `${position.x}% ${position.y}%`,
+              backgroundSize: "280%",
+              backgroundRepeat: "no-repeat",
+              boxShadow: "0 10px 30px rgba(0, 0, 0, 0.4), 0 0 0 1px rgba(255, 255, 255, 0.8)",
+            }}
+          />
+        )}
+      </div>
+
+      {/* Fullscreen Lightbox Modal */}
+      {fullscreen && (
+        <div
+          onClick={() => setFullscreen(false)}
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/85 backdrop-blur-md p-4 transition-all"
+        >
+          <button
+            onClick={() => setFullscreen(false)}
+            className="absolute top-4 end-4 z-50 grid size-12 place-items-center rounded-full bg-white/20 text-white hover:bg-white/40 shadow-lg"
+            aria-label="Close zoom view"
+          >
+            <TbX size={26} />
+          </button>
+          <div
+            onClick={(e) => e.stopPropagation()}
+            className="relative h-[85vh] w-[90vw] max-w-4xl overflow-hidden rounded-2xl bg-white/10 p-2 border border-white/20 shadow-2xl"
+          >
+            <Image src={src} alt={alt} fill className="object-contain p-4" priority />
+          </div>
+        </div>
+      )}
+    </>
+  );
+}
+
 export default function ProductDialog({
   product,
   lang,
@@ -75,13 +169,11 @@ export default function ProductDialog({
                 transition={{ duration: 0.25 }}
                 className="absolute inset-0"
               >
-                <Image
+                <MagnifierImage
                   src={product.images[index]}
                   alt={product.name}
-                  fill
-                  sizes="(max-width: 768px) 90vw, 450px"
-                  className="object-contain"
-                  style={{ transform: index === 0 ? product.imageTransform : undefined }}
+                  lang={lang}
+                  imageTransform={index === 0 ? product.imageTransform : undefined}
                 />
               </motion.div>
             </AnimatePresence>
