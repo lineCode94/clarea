@@ -87,7 +87,10 @@ export async function limitedJson(request: Request, max = 60000) {
   }
 }
 // Persist limits in private storage; conditional writes prevent parallel bypasses.
-export async function limitLogin(request: Request, scope: "auth" | "checkout" = "auth") {
+export async function limitLogin(
+  request: Request,
+  scope: "auth" | "checkout" | "customer-send" | "customer-verify" = "auth",
+) {
   const ip =
     request.headers.get("x-vercel-forwarded-for") ||
     request.headers.get("x-forwarded-for") ||

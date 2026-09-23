@@ -1,5 +1,5 @@
 "use client";
-import Image from "next/image";
+import CustomerNav from "../components/layout/customer-nav";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { TbCheck, TbRefresh, TbPackage, TbTruck, TbX } from "react-icons/tb";
 type Status = "pending" | "confirmed" | "shipped" | "delivered" | "cancelled";
@@ -64,6 +64,7 @@ export default function Tracking() {
         body: JSON.stringify({ token: token.current }),
         signal: controller.signal,
       });
+      if (active.current !== controller) return;
       if (r.status === 404) {
         setOrder(null);
         setError("invalid");
@@ -71,6 +72,7 @@ export default function Tracking() {
       }
       if (!r.ok) throw new Error();
       const data = await r.json();
+      if (active.current !== controller) return;
       if (!Object.hasOwn(labels.ar, data.order?.status)) throw new Error();
       setOrder(data.order);
       setError(null);
@@ -116,23 +118,13 @@ export default function Tracking() {
       className="min-h-dvh bg-[#F5E9E2]/50 px-4 py-8 text-[#5C1A2B] sm:py-14"
     >
       <div className="mx-auto max-w-lg">
-        <header className="mb-8 flex items-center justify-between gap-4">
-          <a href="/" aria-label="Claréa">
-            <Image
-              src="/clarea-logo-transparent.png"
-              width={165}
-              height={52}
-              alt="Claréa"
-              priority
-            />
-          </a>
-          <button
-            className="min-h-11 rounded-xl border border-[#dccbc0] px-4 text-sm"
-            onClick={() => setLang(ar ? "en" : "ar")}
-          >
-            {ar ? "English" : "العربية"}
-          </button>
-        </header>
+        <CustomerNav ar={ar} />
+        <button
+          className="mb-4 min-h-11 px-4 text-sm underline"
+          onClick={() => setLang(ar ? "en" : "ar")}
+        >
+          {ar ? "English" : "العربية"}
+        </button>
         <section className="rounded-3xl border border-[#e5d7cd] bg-white p-6 shadow-sm sm:p-8">
           <h1 className="m-0 text-2xl">{ar ? "متابعة طلبك" : "Track your order"}</h1>
           <div aria-live="polite" aria-atomic="true">

@@ -82,6 +82,11 @@ export default function OrdersPanel({ mode = "list" }: { mode?: "list" | "new" }
   }
   useEffect(() => {
     setRequestId(crypto.randomUUID());
+    const initialQuery = new URLSearchParams(window.location.search).get("q");
+    if (initialQuery) {
+      setSearch(initialQuery);
+      setQuery(initialQuery);
+    }
     const id = new URLSearchParams(window.location.search).get("product");
     if (id) setLines([{ product_id: id, quantity: "1" }]);
     loadProducts().catch((e) => setError(e.message));

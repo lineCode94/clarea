@@ -1,5 +1,6 @@
 "use client";
 import Image from "next/image";
+import { rememberOrder } from "../../lib/recent-orders";
 import { useEffect, useRef, useState, type FormEvent } from "react";
 import {
   TbShoppingBag,
@@ -251,11 +252,7 @@ function CheckoutForm({
         <div>
           <input
             type="text"
-            placeholder={
-              ar
-                ? "الشقة، الملحق، إلخ (اختياري)"
-                : "Apartment, suite, etc. (optional)"
-            }
+            placeholder={ar ? "الشقة، الملحق، إلخ (اختياري)" : "Apartment, suite, etc. (optional)"}
             autoComplete="address-line2"
             value={customer.apartment}
             onChange={(e) => setCustomer({ ...customer, apartment: e.target.value })}
@@ -283,7 +280,10 @@ function CheckoutForm({
                 setCustomer({ ...customer, governorate: e.target.value });
                 e.target.blur();
               }}
-              className={field + " cursor-pointer pe-8 appearance-none [-webkit-appearance:none] [-moz-appearance:none] bg-white"}
+              className={
+                field +
+                " cursor-pointer pe-8 appearance-none [-webkit-appearance:none] [-moz-appearance:none] bg-white"
+              }
             >
               {EGYPT_GOVERNORATES.map((g) => (
                 <option key={g.en} value={g.en}>
@@ -291,7 +291,10 @@ function CheckoutForm({
                 </option>
               ))}
             </select>
-            <TbChevronDown className="pointer-events-none absolute end-3 top-1/2 -translate-y-1/2 text-gray-500" size={16} />
+            <TbChevronDown
+              className="pointer-events-none absolute end-3 top-1/2 -translate-y-1/2 text-gray-500"
+              size={16}
+            />
           </div>
           <div>
             <input
@@ -351,9 +354,7 @@ function CheckoutForm({
               className="size-4 rounded border-gray-300 accent-[#5C1A2B]"
             />
             <span>
-              {ar
-                ? "حفظ هذه البيانات للمرة القادمة"
-                : "Save this information for next time"}
+              {ar ? "حفظ هذه البيانات للمرة القادمة" : "Save this information for next time"}
             </span>
           </label>
           <label className="flex items-center gap-2.5 text-sm text-[#412832] cursor-pointer">
@@ -364,9 +365,7 @@ function CheckoutForm({
               className="size-4 rounded border-gray-300 accent-[#5C1A2B]"
             />
             <span>
-              {ar
-                ? "أرسل لي التحديثات والعروض عبر الرسائل النصية"
-                : "Text me with news and offers"}
+              {ar ? "أرسل لي التحديثات والعروض عبر الرسائل النصية" : "Text me with news and offers"}
             </span>
           </label>
         </div>
@@ -530,8 +529,16 @@ function CartDialog({ lang }: { lang: Language }) {
     setBusy(true);
     setError("");
     const formattedCustomer = {
-      name: `${customer.firstName} ${customer.lastName}`.trim() || customer.firstName || customer.lastName || "عميل",
-      phone: customer.phone.trim() || (customer.emailOrPhone.match(/^(?:\+?20|0)1[0125]\d{8}$/) ? customer.emailOrPhone.trim() : ""),
+      name:
+        `${customer.firstName} ${customer.lastName}`.trim() ||
+        customer.firstName ||
+        customer.lastName ||
+        "عميل",
+      phone:
+        customer.phone.trim() ||
+        (customer.emailOrPhone.match(/^(?:\+?20|0)1[0125]\d{8}$/)
+          ? customer.emailOrPhone.trim()
+          : ""),
       email: customer.emailOrPhone.includes("@") ? customer.emailOrPhone.trim() : undefined,
       address: [
         customer.address.trim(),
@@ -572,6 +579,7 @@ function CartDialog({ lang }: { lang: Language }) {
       });
       const data = await response.json();
       if (!response.ok) throw new Error(data.error || "Please try again");
+      rememberOrder(data.order);
       setReceipt(data.order);
       cart.clear();
     } catch (e) {
@@ -691,7 +699,9 @@ function CartDialog({ lang }: { lang: Language }) {
                     <a
                       href="/checkout"
                       onClick={() => cart.setOpen(false)}
-                      className={primary + " flex w-full items-center justify-center font-bold text-center"}
+                      className={
+                        primary + " flex w-full items-center justify-center font-bold text-center"
+                      }
                     >
                       {loading
                         ? ar
@@ -718,7 +728,9 @@ function CartDialog({ lang }: { lang: Language }) {
                   <div className="space-y-5">
                     <h3 className="text-lg font-bold">{ar ? "راجعي طلبك" : "Review your order"}</h3>
                     <div className="rounded-xl border border-[#e9ddd5] bg-[#F5E9E2]/30 p-4 text-sm leading-7">
-                      <strong className="block text-base">{customer.firstName} {customer.lastName}</strong>
+                      <strong className="block text-base">
+                        {customer.firstName} {customer.lastName}
+                      </strong>
                       <div dir="ltr" className="text-muted">
                         {customer.phone || customer.emailOrPhone}
                       </div>

@@ -86,6 +86,7 @@ function load(file) {
     exports: m.exports,
     require(name) {
       if (name === "server-only") return {};
+      if (name === "./customer-auth") return { customerEmail: async () => null };
       if (name === "zod") return z;
       if (name === "@vercel/blob") return blob;
       if (name === "next/cache")

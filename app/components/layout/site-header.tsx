@@ -125,6 +125,12 @@ export default function SiteHeader({
         <div className="page-width grid grid-cols-[1fr_auto_1fr] items-center gap-2 py-4 md:py-6">
           {/* Left: language + hamburger on mobile */}
           <div className="flex items-center gap-1">
+            <a
+              href="/account"
+              className="flex min-h-11 items-center rounded-xl px-2 text-xs font-semibold text-brand"
+            >
+              {ar ? "طلباتي" : "My orders"}
+            </a>
             <button
               onClick={() => onLanguageChange(ar ? "en" : "ar")}
               title={ar ? "English" : "العربية"}

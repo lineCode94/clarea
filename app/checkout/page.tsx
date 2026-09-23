@@ -1,7 +1,9 @@
 "use client";
 
 import Image from "next/image";
+import { rememberOrder } from "../lib/recent-orders";
 import Link from "next/link";
+import CustomerNav from "../components/layout/customer-nav";
 import { useEffect, useState, useRef, type FormEvent } from "react";
 import {
   TbShoppingBag,
@@ -62,7 +64,9 @@ function CheckoutContent() {
   // Form states
   const [showPhoneHelp, setShowPhoneHelp] = useState(false);
   const [discountCode, setDiscountCode] = useState("");
-  const [appliedDiscount, setAppliedDiscount] = useState<{ code: string; percent: number } | null>(null);
+  const [appliedDiscount, setAppliedDiscount] = useState<{ code: string; percent: number } | null>(
+    null,
+  );
   const [discountError, setDiscountError] = useState("");
 
   const [customer, setCustomer] = useState<Customer>(() => {
@@ -124,7 +128,8 @@ function CheckoutContent() {
     !catalog.some((p) => p.id === id && p.available && p.public_price != null);
   const invalid = items.some((i) => unavailable(i.id));
 
-  const rawSubtotal = Math.round(items.reduce((sum, i) => sum + i.price * i.quantity, 0) * 100) / 100;
+  const rawSubtotal =
+    Math.round(items.reduce((sum, i) => sum + i.price * i.quantity, 0) * 100) / 100;
   const discountAmount = appliedDiscount
     ? Math.round(rawSubtotal * (appliedDiscount.percent / 100))
     : 0;
@@ -159,7 +164,11 @@ function CheckoutContent() {
     setError("");
 
     const formattedCustomer = {
-      name: `${customer.firstName} ${customer.lastName}`.trim() || customer.firstName || customer.lastName || "عميل",
+      name:
+        `${customer.firstName} ${customer.lastName}`.trim() ||
+        customer.firstName ||
+        customer.lastName ||
+        "عميل",
       phone: customer.phone.trim(),
       email: customer.emailOrPhone.includes("@") ? customer.emailOrPhone.trim() : undefined,
       address: [
@@ -203,8 +212,10 @@ function CheckoutContent() {
         body: JSON.stringify({ ...payload, request_id: attempt.current.id }),
       });
       const data = await response.json();
-      if (!response.ok) throw new Error(data.error || (ar ? "فشل إرسال الطلب" : "Failed to place order"));
+      if (!response.ok)
+        throw new Error(data.error || (ar ? "فشل إرسال الطلب" : "Failed to place order"));
 
+      rememberOrder(data.order);
       setReceipt(data.order);
       cart.clear();
 
@@ -221,7 +232,7 @@ function CheckoutContent() {
           draggable: true,
           theme: "colored",
           style: { backgroundColor: "#5C1A2B", color: "#ffffff" },
-        }
+        },
       );
     } catch (err) {
       setError(
@@ -276,6 +287,7 @@ function CheckoutContent() {
       </header>
 
       <main className="mx-auto max-w-6xl px-4 py-6 sm:py-10">
+        <CustomerNav ar={ar} />
         {receipt ? (
           /* Receipt / Confirmation Screen */
           <div className="mx-auto max-w-xl space-y-6 rounded-3xl border border-[#e9ddd5] bg-white p-6 sm:p-10 shadow-xl text-center">
@@ -304,7 +316,10 @@ function CheckoutContent() {
               </a>
             )}
 
-            <Link href="/" className="inline-block pt-2 text-sm font-semibold text-[#5C1A2B] hover:underline">
+            <Link
+              href="/"
+              className="inline-block pt-2 text-sm font-semibold text-[#5C1A2B] hover:underline"
+            >
               {ar ? "العودة للتسوق" : "Continue Shopping"}
             </Link>
           </div>
@@ -314,7 +329,9 @@ function CheckoutContent() {
             <TbShoppingBag className="mx-auto text-[#C9A05C]" size={64} />
             <h2 className="text-2xl font-bold">{ar ? "سلتك فارغة" : "Your cart is empty"}</h2>
             <p className="text-sm text-muted">
-              {ar ? "تفقدي المنتجات وأضيفي منتجاتك المفضلة إلى السلة." : "Browse products and add your favourites to cart."}
+              {ar
+                ? "تفقدي المنتجات وأضيفي منتجاتك المفضلة إلى السلة."
+                : "Browse products and add your favourites to cart."}
             </p>
             <Link href="/" className={primaryBtn + " inline-block text-center"}>
               {ar ? "اكتشفي المنتجات" : "Explore products"}
@@ -326,7 +343,10 @@ function CheckoutContent() {
             {/* Left Column: Form (7 cols) */}
             <div className="lg:col-span-7 space-y-8">
               {error && (
-                <div role="alert" className="rounded-2xl bg-red-50 p-4 text-sm text-red-900 border border-red-200">
+                <div
+                  role="alert"
+                  className="rounded-2xl bg-red-50 p-4 text-sm text-red-900 border border-red-200"
+                >
                   {error}
                 </div>
               )}
@@ -383,9 +403,7 @@ function CheckoutContent() {
                     <input
                       type="text"
                       placeholder={
-                        ar
-                          ? "الشقة، الملحق، إلخ (اختياري)"
-                          : "Apartment, suite, etc. (optional)"
+                        ar ? "الشقة، الملحق، إلخ (اختياري)" : "Apartment, suite, etc. (optional)"
                       }
                       autoComplete="address-line2"
                       value={customer.apartment}
@@ -414,7 +432,10 @@ function CheckoutContent() {
                           setCustomer({ ...customer, governorate: e.target.value });
                           e.target.blur();
                         }}
-                        className={inputField + " cursor-pointer pe-8 appearance-none [-webkit-appearance:none] [-moz-appearance:none] bg-white"}
+                        className={
+                          inputField +
+                          " cursor-pointer pe-8 appearance-none [-webkit-appearance:none] [-moz-appearance:none] bg-white"
+                        }
                       >
                         {EGYPT_GOVERNORATES.map((g) => (
                           <option key={g.en} value={g.en}>
@@ -422,7 +443,10 @@ function CheckoutContent() {
                           </option>
                         ))}
                       </select>
-                      <TbChevronDown className="pointer-events-none absolute end-3 top-1/2 -translate-y-1/2 text-gray-500" size={16} />
+                      <TbChevronDown
+                        className="pointer-events-none absolute end-3 top-1/2 -translate-y-1/2 text-gray-500"
+                        size={16}
+                      />
                     </div>
                     <div>
                       <input
@@ -510,12 +534,23 @@ function CheckoutContent() {
                   </h2>
                   <div className="rounded-2xl border-2 border-[#5C1A2B] bg-[#F5E9E2]/20 p-4">
                     <label className="flex items-center gap-3 cursor-pointer">
-                      <input type="radio" name="payment" value="COD" checked readOnly className="size-4 accent-[#5C1A2B]" />
+                      <input
+                        type="radio"
+                        name="payment"
+                        value="COD"
+                        checked
+                        readOnly
+                        className="size-4 accent-[#5C1A2B]"
+                      />
                       <TbTruck size={24} className="text-[#5C1A2B]" />
                       <div>
-                        <strong className="block text-sm">{ar ? "الدفع عند الاستلام (COD)" : "Cash on Delivery (COD)"}</strong>
+                        <strong className="block text-sm">
+                          {ar ? "الدفع عند الاستلام (COD)" : "Cash on Delivery (COD)"}
+                        </strong>
                         <span className="text-xs text-muted">
-                          {ar ? "ادفع نقداً عند استلام شحنتك" : "Pay in cash when your order is delivered"}
+                          {ar
+                            ? "ادفع نقداً عند استلام شحنتك"
+                            : "Pay in cash when your order is delivered"}
                         </span>
                       </div>
                     </label>
@@ -523,11 +558,7 @@ function CheckoutContent() {
                 </div>
 
                 {/* Submit button */}
-                <button
-                  type="submit"
-                  disabled={busy || invalid || loading}
-                  className={primaryBtn}
-                >
+                <button type="submit" disabled={busy || invalid || loading} className={primaryBtn}>
                   {busy
                     ? ar
                       ? "جاري إرسال الطلب…"
@@ -563,7 +594,9 @@ function CheckoutContent() {
                         </span>
                       </div>
                       <div className="min-w-0 flex-1">
-                        <h4 className="text-sm font-semibold line-clamp-2 leading-5">{item.name}</h4>
+                        <h4 className="text-sm font-semibold line-clamp-2 leading-5">
+                          {item.name}
+                        </h4>
                         <span className="text-xs text-muted">{money(item.price, ar)}</span>
                       </div>
                       <strong className="text-sm shrink-0">
@@ -574,7 +607,10 @@ function CheckoutContent() {
                 </ul>
 
                 {/* Discount Code Form */}
-                <form onSubmit={handleApplyDiscount} className="space-y-2 pt-2 border-t border-[#e9ddd5]">
+                <form
+                  onSubmit={handleApplyDiscount}
+                  className="space-y-2 pt-2 border-t border-[#e9ddd5]"
+                >
                   <div className="flex gap-2">
                     <input
                       type="text"
@@ -593,7 +629,9 @@ function CheckoutContent() {
                   {appliedDiscount && (
                     <p className="flex items-center gap-1.5 text-xs text-emerald-700 font-semibold">
                       <TbTag size={14} />
-                      {ar ? `تم تطبيق خصم ${appliedDiscount.percent}% (${appliedDiscount.code})` : `${appliedDiscount.percent}% discount applied (${appliedDiscount.code})`}
+                      {ar
+                        ? `تم تطبيق خصم ${appliedDiscount.percent}% (${appliedDiscount.code})`
+                        : `${appliedDiscount.percent}% discount applied (${appliedDiscount.code})`}
                     </p>
                   )}
                   {discountError && <p className="text-xs text-red-600">{discountError}</p>}
@@ -616,11 +654,7 @@ function CheckoutContent() {
                   <div className="flex justify-between">
                     <span className="text-muted">{ar ? "الشحن" : "Shipping"}</span>
                     <span>
-                      {shippingFee === 0
-                        ? ar
-                          ? "مجاناً"
-                          : "Free"
-                        : money(shippingFee, ar)}
+                      {shippingFee === 0 ? (ar ? "مجاناً" : "Free") : money(shippingFee, ar)}
                     </span>
                   </div>
 

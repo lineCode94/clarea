@@ -20,9 +20,27 @@ export function useCatalogFilters(lang: Language) {
       return matchesCategory && matchesStock && searchableText.toLowerCase().includes(search);
     });
 
-    return matching.sort((a, b) =>
-      sort === "az" ? a.name.localeCompare(b.name) : Number(b.available) - Number(a.available),
-    );
+    return matching.sort((a, b) => {
+      if (sort === "best-selling") {
+        const salesA = (a as { sales_count?: number }).sales_count ?? 0;
+        const salesB = (b as { sales_count?: number }).sales_count ?? 0;
+        return Number(b.available) - Number(a.available) || salesB - salesA;
+      }
+      if (sort === "price-low-high") {
+        const priceA = a.public_price ?? 0;
+        const priceB = b.public_price ?? 0;
+        return priceA - priceB;
+      }
+      if (sort === "price-high-low") {
+        const priceA = a.public_price ?? 0;
+        const priceB = b.public_price ?? 0;
+        return priceB - priceA;
+      }
+      if (sort === "az") {
+        return a.name.localeCompare(b.name);
+      }
+      return Number(b.available) - Number(a.available);
+    });
   }, [category, query, onlyAvailable, sort, lang, products]);
 
   function reset() {

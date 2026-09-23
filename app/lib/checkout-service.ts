@@ -1,4 +1,5 @@
 import "server-only";
+import { customerEmail } from "./customer-auth";
 import { trackingPath } from "./order-tracking";
 import { createHash, randomUUID } from "node:crypto";
 import { NextResponse } from "next/server";
@@ -76,6 +77,8 @@ export async function checkout(request: Request) {
     sameOrigin(request);
     const input = inputSchema.parse(await limitedJson(request, 20000));
     await limitLogin(request, "checkout");
+    const verifiedEmail = await customerEmail();
+    if (verifiedEmail) input.customer.email = verifiedEmail;
     const fingerprint = createHash("sha256")
       .update(
         JSON.stringify({

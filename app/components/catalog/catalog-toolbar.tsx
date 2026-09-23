@@ -69,9 +69,12 @@ export default function CatalogToolbar({
             aria-label={t.sort}
             value={sort}
             onChange={(e) => setSort(e.target.value)}
-            className="min-h-11 max-w-full rounded border border-line bg-white px-2"
+            className="min-h-11 max-w-full rounded-xl border border-line bg-white px-3 py-2 text-sm font-medium text-brand shadow-xs outline-none focus:border-brand cursor-pointer"
           >
             <option value="featured">{t.featured}</option>
+            <option value="best-selling">{t.bestSelling}</option>
+            <option value="price-low-high">{t.priceLowHigh}</option>
+            <option value="price-high-low">{t.priceHighLow}</option>
             <option value="az">{t.az}</option>
           </select>
         </div>

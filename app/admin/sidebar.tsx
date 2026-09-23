@@ -1,5 +1,6 @@
 "use client";
 
+import OrderNotifications from "./order-notifications";
 import { useRef, useState, useEffect } from "react";
 import {
   TbMenu2,
@@ -171,6 +172,7 @@ export default function AdminSidebar({ active, onNavigate, disabled }: Props) {
   );
   return (
     <>
+      <OrderNotifications />
       <aside className="fixed inset-y-0 right-0 z-30 hidden w-64 overflow-y-auto border-l border-[#e8ddd5] bg-[#fffdf9] p-5 lg:block">
         {content}
       </aside>
