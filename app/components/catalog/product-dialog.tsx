@@ -1,5 +1,6 @@
 "use client";
 import Image from "next/image";
+import { useCart } from "../cart/cart-provider";
 import ProductPrice from "./product-price";
 import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
 import { useEffect, useRef, useState } from "react";
@@ -18,6 +19,7 @@ export default function ProductDialog({
   lang: Language;
   close: () => void;
 }) {
+  const cart = useCart();
   const ref = useRef<HTMLDialogElement>(null);
   const [index, setIndex] = useState(0);
   const t = text[lang];
@@ -149,14 +151,27 @@ export default function ProductDialog({
               {product.details.size}
             </p>
           )}
+          {product.available && product.public_price != null && (
+            <button
+              type="button"
+              disabled={!cart.ready}
+              onClick={() => {
+                close();
+                cart.add(product);
+              }}
+              className="mt-6 flex min-h-12 w-full items-center justify-center rounded-lg bg-brand px-4 py-3 font-semibold text-white disabled:opacity-40"
+            >
+              {lang === "ar" ? "أضيفي للسلة" : "Add to bag"}
+            </button>
+          )}
           <a
             href={whatsappLink(lang, product)}
             target="_blank"
             rel="noreferrer"
-            className="mt-6 flex min-h-12 items-center justify-center gap-2 rounded-lg bg-brand px-4 py-3 text-center text-white"
+            className="mt-3 flex min-h-12 items-center justify-center gap-2 rounded-lg border border-line px-4 py-3 text-center text-brand"
           >
             <TbBrandWhatsapp size={22} />
-            {product.available ? t.order : t.ask}
+            {lang === "ar" ? "اسألي على واتساب" : "Ask on WhatsApp"}
           </a>
           <ProductDetails product={product} lang={lang} />
           {product.id === "centella-duo" && (

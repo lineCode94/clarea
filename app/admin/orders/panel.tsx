@@ -26,6 +26,8 @@ const card = "rounded-2xl border border-[#e8ddd5] bg-white p-5";
 const fmt = (v: number) => new Intl.NumberFormat("ar-EG", { maximumFractionDigits: 2 }).format(v);
 const labels = {
   pending: "قيد التجهيز",
+  confirmed: "تم تأكيده",
+  shipped: "تم شحنه",
   delivered: "تم تسليمه",
   cancelled: "ملغي",
 };
@@ -170,7 +172,7 @@ export default function OrdersPanel({ mode = "list" }: { mode?: "list" | "new" }
     }
   }
   const statusPending = useRef(false);
-  async function status(order: Order, status: "delivered" | "cancelled") {
+  async function status(order: Order, status: "confirmed" | "shipped" | "delivered" | "cancelled") {
     if (busy || statusPending.current) return;
     statusPending.current = true;
     setBusy(true);
@@ -178,7 +180,9 @@ export default function OrdersPanel({ mode = "list" }: { mode?: "list" | "new" }
       !(await confirmOrder(
         status === "delivered"
           ? `تأكيد «تم تسليمه» للطلب ${order.reference}؟ سيتم خصم جميع منتجاته وتسجيل المبيعات مرة واحدة.`
-          : `إلغاء الطلب ${order.reference}؟`,
+          : status === "cancelled"
+            ? `إلغاء الطلب ${order.reference}؟`
+            : `تغيير حالة ${order.reference} إلى «${labels[status]}»؟`,
       ))
     ) {
       statusPending.current = false;
@@ -621,12 +625,25 @@ export default function OrdersPanel({ mode = "list" }: { mode?: "list" | "new" }
                     <span
                       className={`rounded-full px-3 py-2 text-sm ${order.status === "delivered" ? "bg-green-50 text-green-800" : order.status === "cancelled" ? "bg-gray-100" : "bg-amber-50 text-amber-900"}`}
                     >
-                      {labels[order.status]}
+                      {order.source === "storefront" && order.status === "pending"
+                        ? "بانتظار تأكيد العميل"
+                        : labels[order.status]}
                     </span>
                   </div>
                   <p className="break-words">
                     {order.customer.name} {order.customer.phone && `· ${order.customer.phone}`}
                   </p>
+                  {order.source === "storefront" && (
+                    <p className="rounded-xl bg-[#f5e9e2] p-3 text-sm">
+                      طلب الموقع · الدفع عند الاستلام ·{" "}
+                      {order.shipping_fee === 0
+                        ? "شحن مجاني"
+                        : "الشحن وموعد التسليم يحتاجان تأكيداً مع العميل"}
+                    </p>
+                  )}
+                  {order.customer.email && (
+                    <p className="break-words text-sm">{order.customer.email}</p>
+                  )}
                   {order.customer.address && (
                     <p className="break-words text-sm">{order.customer.address}</p>
                   )}
@@ -651,18 +668,44 @@ export default function OrdersPanel({ mode = "list" }: { mode?: "list" | "new" }
                         <strong className="break-words">{item.name}</strong>
                         <p className="mb-0">
                           {item.quantity} × {fmt(item.selling_price)} ج = {fmt(item.revenue)} ج ·
-                          ربح {fmt(item.profit)} ج
+                          {item.cost_pending
+                            ? "سعر الشراء مطلوب لحساب الربح"
+                            : `ربح ${fmt(item.profit)} ج`}
                         </p>
                       </li>
                     ))}
                   </ul>
                   <p className="text-sm">
                     إجمالي المنتجات: <strong>{fmt(order.revenue)} ج</strong> · مجمل الربح{" "}
-                    {order.status === "pending" ? "المتوقع" : ""}:{" "}
-                    <strong>{fmt(order.profit)} ج</strong>
+                    {order.status !== "delivered" ? "المتوقع" : ""}:{" "}
+                    <strong>
+                      {order.items.some((i) => i.cost_pending)
+                        ? "بانتظار تسجيل تكلفة الشراء"
+                        : `${fmt(order.profit)} ج`}
+                    </strong>
                   </p>
-                  {order.status === "pending" && (
+                  {!["delivered", "cancelled"].includes(order.status) && (
                     <div className="flex flex-wrap gap-3">
+                      {order.status === "pending" && (
+                        <button
+                          disabled={busy}
+                          type="button"
+                          className={button}
+                          onClick={() => status(order, "confirmed")}
+                        >
+                          تأكيد الطلب بعد التواصل
+                        </button>
+                      )}
+                      {order.status === "confirmed" && (
+                        <button
+                          disabled={busy}
+                          type="button"
+                          className={button}
+                          onClick={() => status(order, "shipped")}
+                        >
+                          تم شحنه
+                        </button>
+                      )}
                       <button
                         type="button"
                         disabled={busy}

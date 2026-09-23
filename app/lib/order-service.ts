@@ -23,7 +23,7 @@ export async function listOrders(request: Request) {
       .parse(q.get("offset") || 0);
     const search = (q.get("q") || "").slice(0, 120).toLowerCase();
     const status = z
-      .enum(["all", "pending", "delivered", "cancelled"])
+      .enum(["all", "pending", "confirmed", "shipped", "delivered", "cancelled"])
       .parse(q.get("status") || "all");
     const all = c.orders.filter(
       (o) =>
@@ -135,20 +135,37 @@ export async function changeOrder(request: Request, id: string) {
     sameOrigin(request);
     await requireAdmin();
     const { status } = z
-      .object({ status: z.enum(["delivered", "cancelled"]) })
+      .object({ status: z.enum(["confirmed", "shipped", "delivered", "cancelled"]) })
       .strict()
       .parse(await limitedJson(request));
     const c = await readCatalog(),
       order = c.orders.find((o) => o.id === id);
     if (!order) throw new AdminError("الطلب غير موجود", 404);
     if (order.status === status) return json({ success: true, duplicate: true, order });
-    if (order.status !== "pending")
+    if (order.status === "delivered" || order.status === "cancelled")
       throw new AdminError("الطلب منتهي ولا يمكن تغيير حالته مرة أخرى", 409);
+    if (
+      (status === "confirmed" && order.status !== "pending") ||
+      (status === "shipped" && order.status !== "confirmed")
+    )
+      throw new AdminError("أكد الطلب أولاً واتبع ترتيب حالات الطلب", 409);
     const now = new Date().toISOString();
     if (status === "delivered") {
       // Validate every line before applying any changes; one CAS commits the whole order.
       for (const item of order.items) {
-        const stock = c.inventory[item.product_id]?.stock;
+        const inventory = c.inventory[item.product_id];
+        const stock = inventory?.stock;
+        // Supplier costs can be unknown when a customer requests an order.
+        // Resolve them before any stock/sales mutation; never book zero-cost profit.
+        if (item.cost_pending) {
+          const purchase = inventory?.pricing?.cost_price;
+          if (purchase == null)
+            throw new AdminError(`أدخل سعر شراء ${item.name} قبل تسجيل التسليم`, 409);
+          item.cost_price = purchase;
+          item.cost = round(purchase * item.quantity);
+          item.profit = round(item.revenue - item.cost);
+          item.cost_pending = false;
+        }
         if (!stock || stock.status !== "available" || stock.quantity < item.quantity)
           throw new AdminError(`المخزون غير كافٍ: ${item.name}. لم يُخصم أي منتج.`, 409);
         if (
@@ -187,6 +204,8 @@ export async function changeOrder(request: Request, id: string) {
           changed_by: "owner",
         });
       }
+      order.cost = round(order.items.reduce((sum, item) => sum + item.cost, 0));
+      order.profit = round(order.revenue - order.cost);
       order.delivered_at = now;
     }
     order.status = status;

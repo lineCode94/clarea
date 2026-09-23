@@ -1,6 +1,7 @@
 "use client";
 
 import Image from "next/image";
+import { CartButton } from "../cart/cart-panel";
 import { TbWorld, TbSearch, TbGift, TbX } from "react-icons/tb";
 import { AnimatePresence, motion, useReducedMotion, type Variants } from "framer-motion";
 import { useCallback, useEffect, useState } from "react";
@@ -153,7 +154,7 @@ export default function SiteHeader({
               onClick={search}
               title={r.search}
               aria-label={r.search}
-              className="grid size-10 place-items-center rounded-full hover:bg-brand/5 sm:size-11"
+              className="hidden size-10 place-items-center rounded-full hover:bg-brand/5 sm:grid sm:size-11"
             >
               <TbSearch size={23} />
             </button>
@@ -165,6 +166,7 @@ export default function SiteHeader({
             >
               <TbGift size={24} />
             </button>
+            <CartButton lang={lang} />
             {/* Hamburger — mobile only */}
             <button
               onClick={() => setMenuOpen(true)}

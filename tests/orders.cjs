@@ -48,6 +48,7 @@ class AdminError extends Error {
   }
 }
 const auth = {
+  limitLogin: async () => {},
   AdminError,
   requireAdmin: async () => {
     if (!authorized) throw new AdminError("unauthorized", 401);
@@ -373,6 +374,142 @@ const orders = load("app/lib/order-service.ts");
   assert.equal(noCostOrder.status, 400);
   assert.match(noCostOrder.body.error, /سعر شراء/);
   assert.equal(JSON.stringify(await store.readCatalog()), beforeUnknownCost);
+  // Storefront checkout shares the ledger, but never returns private accounting or PII.
+  const checkout = load("app/lib/checkout-service.ts").checkout;
+  authorized = false;
+  const webInput = {
+    request_id: crypto.randomUUID(),
+    customer: {
+      name: "Web customer",
+      phone: "01012345678",
+      email: "private@example.com",
+      address: "Cairo, street 12, building 7",
+    },
+    payment_method: "COD",
+    shipping_acknowledged: true,
+    items: [{ product_id: "sample", quantity: 1, expected_price: 1700 }],
+  };
+  assert.equal((await checkout(req(webInput, "/api/checkout", "https://evil.test"))).status, 403);
+  assert.equal((await checkout(req({ ...webInput, payment_method: "Instapay" }))).status, 400);
+  assert.equal(
+    (await checkout(req({ ...webInput, items: [{ ...webInput.items[0], expected_price: 1 }] })))
+      .status,
+    409,
+  );
+  assert.equal(
+    (await checkout(req({ ...webInput, items: [{ ...webInput.items[0], quantity: 21 }] }))).status,
+    400,
+  );
+  assert.equal((await checkout(req({ ...webInput, shipping_acknowledged: false }))).status, 400);
+  assert.equal(
+    (await checkout(req({ ...webInput, customer: { ...webInput.customer, phone: "123" } }))).status,
+    400,
+  );
+  assert.equal((await checkout(req({ ...webInput, cost_price: 0 }))).status, 400);
+  c = await store.readCatalog();
+  const originalStock = c.inventory.sample.stock;
+  c.inventory.sample.stock = { ...originalStock, quantity: 0, status: "out_of_stock" };
+  await store.saveCatalog(c.products, c.version, c);
+  assert.equal((await checkout(req(webInput))).status, 409);
+  c = await store.readCatalog();
+  c.inventory.sample.stock = originalStock;
+  await store.saveCatalog(c.products, c.version, c);
+  // Unknown supplier inventory is allowed only if the published product is available.
+  c = await store.readCatalog();
+  delete c.inventory.sample.stock;
+  c.products.find((p) => p.id === "sample").available = true;
+  await store.saveCatalog(c.products, c.version, c);
+  const webResponse = await checkout(req(webInput));
+  assert.equal(webResponse.status, 200);
+  assert.equal(webResponse.body.order.subtotal, 1700);
+  assert.equal(webResponse.body.order.shipping_fee, null);
+  const publicReceipt = JSON.stringify(webResponse.body);
+  for (const token of [
+    "cost",
+    "profit",
+    "customer",
+    "private@example.com",
+    "01012345678",
+    "request_fingerprint",
+  ])
+    assert(!publicReceipt.includes(token), token + " leaked");
+  const count = (await store.readCatalog()).orders.length;
+  assert.equal(
+    (await checkout(req(webInput))).body.order.reference,
+    webResponse.body.order.reference,
+  );
+  assert.equal((await store.readCatalog()).orders.length, count);
+  assert.equal(
+    (await checkout(req({ ...webInput, customer: { ...webInput.customer, name: "Other" } })))
+      .status,
+    409,
+  );
+  c = await store.readCatalog();
+  const webOrder = c.orders.find((o) => o.reference === webResponse.body.order.reference);
+  assert.equal(webOrder.source, "storefront");
+  assert.equal(webOrder.items[0].cost_pending, true);
+  assert.equal(webOrder.profit, 0);
+  authorized = true;
+  const beforeDelivery = JSON.stringify(await store.readCatalog());
+  assert.equal((await orders.changeOrder(req({ status: "delivered" }), webOrder.id)).status, 409);
+  assert.equal(JSON.stringify(await store.readCatalog()), beforeDelivery);
+  await service.updateInventory(
+    req({ cost_price: 1300, selling_price: 1800 }),
+    "sample",
+    "pricing",
+  );
+  await service.updateInventory(req({ quantity: 10, min_stock_alert: 2 }), "sample", "stock");
+  assert.equal((await orders.changeOrder(req({ status: "delivered" }), webOrder.id)).status, 200);
+  c = await store.readCatalog();
+  const webSale = c.sales.find((s) => s.order_id === webOrder.id);
+  assert.equal(webSale.cost, 1300);
+  assert.equal(webSale.revenue, 1700);
+  assert.equal(webSale.profit, 400);
+  assert.equal(c.inventory.sample.stock.quantity, 9);
+  // Forward-only fulfillment, with no sales or stock deduction until delivery.
+  const fulfillmentInput = {
+    ...webInput,
+    request_id: crypto.randomUUID(),
+    items: [{ product_id: "sample", quantity: 1, expected_price: 1800 }],
+  };
+  const fulfillmentReceipt = (await checkout(req(fulfillmentInput))).body.order;
+  c = await store.readCatalog();
+  const fulfillment = c.orders.find((o) => o.reference === fulfillmentReceipt.reference);
+  const stockBefore = c.inventory.sample.stock.quantity;
+  assert.equal((await orders.changeOrder(req({ status: "shipped" }), fulfillment.id)).status, 409);
+  assert.equal(
+    (await orders.changeOrder(req({ status: "confirmed" }), fulfillment.id)).status,
+    200,
+  );
+  assert.equal((await orders.changeOrder(req({ status: "shipped" }), fulfillment.id)).status, 200);
+  assert.equal(
+    (await orders.changeOrder(req({ status: "confirmed" }), fulfillment.id)).status,
+    409,
+  );
+  assert.equal((await store.readCatalog()).inventory.sample.stock.quantity, stockBefore);
+  assert.equal(
+    (await orders.changeOrder(req({ status: "delivered" }), fulfillment.id)).status,
+    200,
+  );
+  const freeShipping = {
+    ...webInput,
+    request_id: crypto.randomUUID(),
+    items: [{ product_id: "sample", quantity: 3, expected_price: 1800 }],
+  };
+  forceConflict = true;
+  const free = await checkout(req(freeShipping));
+  assert.equal(free.status, 200);
+  assert.equal(free.body.order.shipping_fee, 0);
+  c = await store.readCatalog();
+  c.products.find((p) => p.id === "sample").published = false;
+  await store.saveCatalog(c.products, c.version, c);
+  assert.equal(
+    (await checkout(req({ ...freeShipping, request_id: crypto.randomUUID() }))).status,
+    409,
+  );
+  console.log(
+    "PASS checkout: COD only, server prices, unavailable/hidden products, supplier stock, safe receipts, idempotency, CAS retry, free shipping and cost resolution before delivery",
+  );
   console.log(
     "PASS orders: private auth, automatic unique numbering, creation replay safety, multi-item discount totals, immutable snapshots, all-or-nothing delivery, concurrency, cancellation, one-order report counts and no public customer leakage",
   );

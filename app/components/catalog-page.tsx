@@ -20,7 +20,17 @@ import ProductCatalog from "./catalog/product-catalog";
 import ProductDialog from "./catalog/product-dialog";
 import StorefrontActions from "./rewards/storefront-actions";
 
+import { CartProvider } from "./cart/cart-provider";
+import CartPanel from "./cart/cart-panel";
+
 export default function CatalogPage() {
+  return (
+    <CartProvider>
+      <CatalogContent />
+    </CartProvider>
+  );
+}
+function CatalogContent() {
   const [lang, setLang] = useState<Language>("en");
   const [selected, setSelected] = useState<Product | null>(null);
   const [giftsOpen, setGiftsOpen] = useState(false);
@@ -48,6 +58,7 @@ export default function CatalogPage() {
         className={`min-h-screen ${lang === "ar" ? "font-arabic" : "font-sans"}`}
       >
         <BeautyCursor />
+        <CartPanel lang={lang} />
         <SiteHeader
           lang={lang}
           onLanguageChange={setLang}
