@@ -1,4 +1,5 @@
 "use client";
+import { rememberOrder } from "../lib/recent-orders";
 import CustomerNav from "../components/layout/customer-nav";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { TbCheck, TbRefresh, TbPackage, TbTruck, TbX } from "react-icons/tb";
@@ -74,6 +75,7 @@ export default function Tracking() {
       const data = await r.json();
       if (active.current !== controller) return;
       if (!Object.hasOwn(labels.ar, data.order?.status)) throw new Error();
+      rememberOrder({ reference: data.order.reference, tracking_path: "/track#" + token.current });
       setOrder(data.order);
       setError(null);
     } catch {
