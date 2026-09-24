@@ -1,5 +1,6 @@
 "use client";
 
+import { popularProductIds } from "../config/home-collections";
 import { useMemo, useState } from "react";
 import { useProducts } from "../components/catalog-provider";
 import type { Language } from "../types/catalog";
@@ -22,18 +23,23 @@ export function useCatalogFilters(lang: Language) {
 
     return matching.sort((a, b) => {
       if (sort === "best-selling") {
-        const salesA = (a as { sales_count?: number }).sales_count ?? 0;
-        const salesB = (b as { sales_count?: number }).sales_count ?? 0;
-        return Number(b.available) - Number(a.available) || salesB - salesA;
+        const rank = (p: typeof a) => {
+          const sold = p.best_seller_rank;
+          const popular = popularProductIds.indexOf(p.id);
+          return sold !== undefined ? sold : popular >= 0 ? 10000 + popular : Infinity;
+        };
+        return rank(a) - rank(b) || Number(b.available) - Number(a.available);
       }
       if (sort === "price-low-high") {
-        const priceA = a.public_price ?? 0;
-        const priceB = b.public_price ?? 0;
+        const priceA = a.public_price ?? Infinity;
+        const priceB = b.public_price ?? Infinity;
         return priceA - priceB;
       }
       if (sort === "price-high-low") {
         const priceA = a.public_price ?? 0;
         const priceB = b.public_price ?? 0;
+        if (!Number.isFinite(priceA)) return Number.isFinite(priceB) ? 1 : 0;
+        if (!Number.isFinite(priceB)) return -1;
         return priceB - priceA;
       }
       if (sort === "az") {
@@ -47,6 +53,7 @@ export function useCatalogFilters(lang: Language) {
     setQuery("");
     setCategory("all");
     setOnlyAvailable(false);
+    setSort("featured");
   }
 
   return {

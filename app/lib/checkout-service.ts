@@ -124,6 +124,7 @@ export async function checkout(request: Request) {
         return {
           product_id: product.id,
           name: product.name,
+          image: product.images[0],
           category: product.category,
           quantity: line.quantity,
           selling_price: price,

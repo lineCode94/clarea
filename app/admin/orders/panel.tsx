@@ -761,7 +761,26 @@ export default function OrdersPanel({ mode = "list" }: { mode?: "list" | "new" }
                             key={item.product_id}
                             className="list-none rounded-xl bg-[#f8f5f1] p-3 text-sm"
                           >
-                            <strong className="break-words">{item.name}</strong>
+                            <div className="flex items-center gap-3">
+                              <img
+                                src={
+                                  item.image ||
+                                  products.find((p) => p.id === item.product_id)?.image ||
+                                  "/clarea-logo-transparent.png"
+                                }
+                                alt={item.name}
+                                loading="lazy"
+                                className="size-24 shrink-0 rounded-xl border border-[#e8ddd5] bg-white object-contain p-2"
+                                onError={(e) => {
+                                  if (!e.currentTarget.src.endsWith("/clarea-logo-transparent.png"))
+                                    e.currentTarget.src = "/clarea-logo-transparent.png";
+                                }}
+                              />
+                              <div>
+                                <strong className="break-words">{item.name}</strong>
+                                <p className="mb-0 text-sm">الكمية: {item.quantity}</p>
+                              </div>
+                            </div>
                             <p className="mb-0">
                               {item.quantity} × {fmt(item.selling_price)} ج = {fmt(item.revenue)} ج
                               ·

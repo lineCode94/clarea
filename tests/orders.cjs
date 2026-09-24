@@ -209,6 +209,7 @@ const orders = load("app/lib/order-service.ts");
   assert.equal(order.cost, 350);
   assert.equal(order.profit, 400);
   assert.equal(order.status, "pending");
+  assert.equal(order.items[0].image, "/test.png");
   c = await store.readCatalog();
   assert.equal(c.inventory.sample.stock.quantity, 10);
   assert.equal(c.sales.length, 0);

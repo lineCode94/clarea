@@ -107,6 +107,7 @@ export async function createOrder(request: Request) {
       return {
         ...line,
         name: p.name,
+        image: p.images[0],
         category: p.category,
         selling_price: f.effective_price,
         cost_price: entry.pricing.cost_price,

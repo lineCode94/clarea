@@ -136,8 +136,8 @@ function CheckoutContent() {
     ? Math.round(rawSubtotal * (appliedDiscount.percent / 100))
     : 0;
   const subtotal = rawSubtotal - discountAmount;
-  const shippingFee = subtotal > 4000 ? 0 : 80;
-  const total = subtotal + shippingFee;
+  const shippingFee = subtotal > 4000 ? 0 : null;
+  const total = subtotal + (shippingFee ?? 0);
 
   function handleApplyDiscount(e: FormEvent) {
     e.preventDefault();
@@ -674,12 +674,26 @@ function CheckoutContent() {
                   <div className="flex justify-between">
                     <span className="text-muted">{ar ? "الشحن" : "Shipping"}</span>
                     <span>
-                      {shippingFee === 0 ? (ar ? "مجاناً" : "Free") : money(shippingFee, ar)}
+                      {shippingFee === 0
+                        ? ar
+                          ? "مجاناً"
+                          : "Free"
+                        : ar
+                          ? "يُحدد عند التأكيد"
+                          : "Confirmed with you"}
                     </span>
                   </div>
 
                   <div className="flex justify-between items-baseline pt-3 border-t border-[#e9ddd5]">
-                    <span className="text-base font-bold">{ar ? "الإجمالي الكلي" : "Total"}</span>
+                    <span className="text-base font-bold">
+                      {shippingFee === null
+                        ? ar
+                          ? "الإجمالي قبل الشحن"
+                          : "Total before shipping"
+                        : ar
+                          ? "الإجمالي الكلي"
+                          : "Total"}
+                    </span>
                     <div className="text-end">
                       <span className="text-xs text-muted me-1">EGP</span>
                       <strong className="text-2xl font-black text-[#5C1A2B]">

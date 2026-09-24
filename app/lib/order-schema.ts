@@ -31,6 +31,7 @@ export const orderInput = z
   })
   .strict();
 export const orderLineSchema = z.object({
+  image: z.string().max(2000).optional(),
   product_id: z.string(),
   name: z.string(),
   category: z.string(),
