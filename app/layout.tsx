@@ -8,7 +8,7 @@ export const viewport: Viewport = { themeColor: "#541c2b" };
 export const metadata: Metadata = {
   title: "Claréa | Beauty & Care",
   description:
-    "اكتشفي العناية بالبشرة والشعر من Claréa، وتصفّحي المنتجات واطلبي عبر واتساب. Explore beauty and care and order through WhatsApp.",
+    "اكتشفي مع Claréa منتجات العناية بالبشرة والشعر والجمال من براندات عالمية. اختيارات من حول العالم، في مكان واحد. Discover skincare, haircare and beauty from international brands.",
   applicationName: "Claréa",
   appleWebApp: { capable: true, title: "Claréa", statusBarStyle: "default" },
   icons: {
