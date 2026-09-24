@@ -1,7 +1,5 @@
 "use client";
 import React, { useEffect, useState, type FormEvent } from "react";
-import EmailLogin from "./email-login";
-import { FcGoogle } from "react-icons/fc";
 import {
   TbShoppingBag,
   TbUser,
@@ -73,12 +71,8 @@ export default function Account() {
   const [profile, setProfile] = useState({ name: "", phone: "", address: "" });
   const [saved, setSaved] = useState(false);
   const [data, setData] = useState<AccountData | null>(null),
-    [email, setEmail] = useState(""),
-    [code, setCode] = useState(""),
-    [challenge, setChallenge] = useState(""),
     [busy, setBusy] = useState(false),
     [error, setError] = useState(""),
-    [wait, setWait] = useState(0),
     [recent, setRecent] = useState<RecentOrder[]>([]);
 
   async function refresh() {
@@ -127,57 +121,7 @@ export default function Account() {
       .catch((e) => setError(e.message));
   }, [ar]);
 
-  useEffect(() => {
-    if (!wait) return;
-    const timer = setTimeout(() => setWait((n) => n - 1), 1000);
-    return () => clearTimeout(timer);
-  }, [wait]);
 
-  async function send(e?: FormEvent) {
-    e?.preventDefault();
-    if (busy || wait) return;
-    setBusy(true);
-    setError("");
-    try {
-      const r = await fetch("/api/account/code", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email }),
-      });
-      const d = await r.json();
-      if (!r.ok) throw new Error(d.error || (ar ? "فشل الإرسال" : "Failed to send"));
-      setChallenge(d.challenge);
-      setCode("");
-      setWait(60);
-    } catch (e) {
-      setError(e instanceof Error ? e.message : ar ? "تعذر الإرسال" : "Could not send");
-    } finally {
-      setBusy(false);
-    }
-  }
-
-  async function verify(e: FormEvent) {
-    e.preventDefault();
-    if (busy) return;
-    setBusy(true);
-    setError("");
-    try {
-      const r = await fetch("/api/account/verify", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email, code, challenge }),
-      });
-      const d = await r.json();
-      if (!r.ok) throw new Error(d.error || (ar ? "فشل التحقق" : "Verification failed"));
-      setCode("");
-      setChallenge("");
-      await refresh();
-    } catch (e) {
-      setError(e instanceof Error ? e.message : ar ? "تعذر التحقق" : "Verification failed");
-    } finally {
-      setBusy(false);
-    }
-  }
 
   async function logout() {
     setBusy(true);
@@ -245,39 +189,7 @@ export default function Account() {
               </h1>
             </header>
 
-            {!data?.authenticated && (
-              <section className="mb-6 rounded-2xl border border-[#e9ddd5] bg-[#fffaf6] p-4">
-                <h2 className="text-lg font-bold">
-                  {ar ? "متابعة بدون تسجيل" : "Track without signing in"}
-                </h2>
-                <p className="text-sm">
-                  {ar
-                    ? "كل طلب له رابط خاص. الطلبات المحفوظة في المتصفح تظهر هنا، ولو بتستخدمي جهاز تاني افتحي رابط المتابعة اللي حفظتيه."
-                    : "Each order has a private link. Orders saved in this browser appear here; on another device, open your saved tracking link."}
-                </p>
-                {recent.length ? (
-                  recent.map((o) => (
-                    <a
-                      key={o.reference}
-                      href={o.tracking_path}
-                      className="my-2 flex justify-between gap-3 rounded-xl bg-white p-3 text-sm font-bold"
-                    >
-                      <bdi>{o.reference}</bdi>
-                      <span>{ar ? "تابعي الطلب ←" : "Track order →"}</span>
-                    </a>
-                  ))
-                ) : (
-                  <p className="text-sm">
-                    {ar
-                      ? "لا توجد طلبات محفوظة على هذا المتصفح بعد."
-                      : "No orders saved in this browser yet."}
-                  </p>
-                )}
-                <a href="/#collection" className="text-sm underline">
-                  {ar ? "تسوقي بدون حساب" : "Shop without an account"}
-                </a>
-              </section>
-            )}
+
             {error && (
               <div
                 role="alert"
@@ -535,154 +447,58 @@ export default function Account() {
               </>
             ) : (
               data && (
-                <div className="animate-in fade-in slide-in-from-bottom-2 duration-300 mx-auto max-w-md space-y-6">
-                  <div className="text-center mb-8">
-                    <p className="text-[#412832] leading-relaxed">
-                      {ar
-                        ? "تسجيل الدخول اختياري لجمع الطلبات المسجلة بنفس إيميلك في مكان واحد. تقدري تتابعي بدون حساب من الروابط المحفوظة فوق."
-                        : "Sign in optionally to collect orders placed with your email. Track without an account using your saved links above."}
-                    </p>
-                  </div>
-
-                  {data.google_configured ? (
-                    <a
-                      href="/api/account/google"
-                      className="group flex w-full items-center justify-center gap-3 rounded-xl border border-[#dadce0] bg-white p-4 text-sm font-bold text-[#3c4043] shadow-sm transition-all hover:bg-gray-50 hover:shadow"
-                    >
-                      <FcGoogle size={24} className="group-hover:scale-110 transition-transform" />
-                      {ar ? "تسجيل الدخول باستخدام Google" : "Sign in with Google"}
-                    </a>
-                  ) : null}
-
-                  {(data.configured || data.firebase_configured) && (
-                    <div className="relative py-4">
-                      <div className="absolute inset-0 flex items-center" aria-hidden="true">
-                        <div className="w-full border-t border-[#e9ddd5]" />
-                      </div>
-                      <div className="relative flex justify-center">
-                        <span className="bg-white px-4 text-xs font-semibold text-muted uppercase">
-                          {ar ? "أو باستخدام البريد الإلكتروني" : "Or use email"}
-                        </span>
+                <div className="animate-in fade-in slide-in-from-bottom-2 duration-300 space-y-6">
+                  {recent.length > 0 ? (
+                    <div className="rounded-2xl border border-[#C9A05C]/30 bg-[#F5E9E2]/30 p-6 sm:p-8 relative overflow-hidden shadow-sm">
+                      <div className="absolute top-0 right-0 w-40 h-40 bg-[#5C1A2B]/5 rounded-bl-[100px] -mr-10 -mt-10 pointer-events-none" />
+                      <div className="relative z-10">
+                        <h2 className="text-xs font-bold tracking-[.15em] text-[#C9A05C] uppercase mb-2">
+                          {ar ? "أحدث طلباتك" : "Latest Order"}
+                        </h2>
+                        <p className="text-2xl sm:text-3xl font-black text-[#5C1A2B] tracking-wider mb-6">
+                          <bdi>{recent[0].reference}</bdi>
+                        </p>
+                        <a
+                          href={recent[0].tracking_path}
+                          className="inline-flex items-center justify-center gap-2 rounded-xl bg-[#5C1A2B] px-6 py-3.5 text-sm font-bold text-white transition-all hover:bg-[#481422] shadow-md hover:-translate-y-0.5"
+                        >
+                          <TbTruck size={20} />
+                          {ar ? "تابعي حالة الطلب" : "Track Order Status"}
+                        </a>
                       </div>
                     </div>
-                  )}
-                  {data.firebase_configured && (
-                    <EmailLogin
-                      ar={ar}
-                      onSuccess={() => {
-                        refresh().catch((e) => setError(e.message));
-                      }}
-                    />
-                  )}
-                  {data.configured && !data.firebase_configured ? (
-                    <>
-                      {!challenge ? (
-                        <form onSubmit={send} className="space-y-4">
-                          <div>
-                            <input
-                              required
-                              type="email"
-                              autoComplete="email"
-                              maxLength={254}
-                              dir="ltr"
-                              placeholder={ar ? "البريد الإلكتروني" : "Email address"}
-                              value={email}
-                              onChange={(e) => setEmail(e.target.value)}
-                              className={field}
-                            />
-                          </div>
-                          <button disabled={busy || wait > 0} className={button}>
-                            {busy
-                              ? ar
-                                ? "جاري الإرسال…"
-                                : "Sending..."
-                              : wait > 0
-                                ? ar
-                                  ? `انتظري ${wait} ثانية`
-                                  : `Wait ${wait}s`
-                                : ar
-                                  ? "إرسال كود التحقق"
-                                  : "Send Login Code"}
-                          </button>
-                        </form>
-                      ) : (
-                        <form
-                          onSubmit={verify}
-                          className="space-y-5 rounded-2xl bg-[#F5E9E2]/30 p-6 border border-[#e9ddd5]"
-                        >
-                          <div className="text-center">
-                            <p className="text-sm font-medium mb-1">
-                              {ar ? "أرسلنا كود التحقق إلى:" : "We sent a code to:"}
-                            </p>
-                            <p dir="ltr" className="text-sm font-bold text-[#5C1A2B]">
-                              {email}
-                            </p>
-                          </div>
-
-                          <div>
-                            <input
-                              required
-                              autoComplete="one-time-code"
-                              inputMode="numeric"
-                              pattern="[0-9]{6}"
-                              maxLength={6}
-                              dir="ltr"
-                              placeholder="000000"
-                              value={code}
-                              onChange={(e) => setCode(e.target.value.replace(/[^0-9]/g, ""))}
-                              className={field + " text-center text-2xl tracking-[0.5em] font-bold"}
-                            />
-                          </div>
-                          <button disabled={busy || code.length !== 6} className={button}>
-                            {busy
-                              ? ar
-                                ? "جاري التحقق…"
-                                : "Verifying..."
-                              : ar
-                                ? "تأكيد وتسجيل الدخول"
-                                : "Verify & Sign In"}
-                          </button>
-
-                          <div className="flex flex-col items-center gap-3 text-sm pt-2">
-                            <button
-                              type="button"
-                              disabled={busy || wait > 0}
-                              onClick={() => void send()}
-                              className="font-semibold text-[#5C1A2B] hover:underline disabled:opacity-40"
-                            >
-                              {wait > 0
-                                ? ar
-                                  ? `إعادة الإرسال بعد ${wait} ثانية`
-                                  : `Resend in ${wait}s`
-                                : ar
-                                  ? "إعادة إرسال الكود"
-                                  : "Resend Code"}
-                            </button>
-                            <button
-                              type="button"
-                              disabled={busy}
-                              onClick={() => {
-                                setChallenge("");
-                                setCode("");
-                              }}
-                              className="text-muted hover:text-[#412832] hover:underline"
-                            >
-                              {ar ? "استخدام إيميل مختلف" : "Use a different email"}
-                            </button>
-                          </div>
-                        </form>
-                      )}
-                    </>
                   ) : (
-                    !data.google_configured &&
-                    !data.firebase_configured && (
-                      <p className="rounded-xl border border-amber-200 bg-amber-50 p-4 text-sm leading-6 text-amber-900 text-center">
+                    <div className="rounded-2xl border border-dashed border-[#e9ddd5] p-10 text-center bg-[#fffaf6]/50">
+                      <div className="mx-auto mb-4 grid size-12 place-items-center rounded-full bg-white text-muted shadow-sm">
+                        <TbBox size={20} />
+                      </div>
+                      <p className="text-sm font-semibold text-[#412832]">
                         {ar
-                          ? "تسجيل الدخول غير متاح مؤقتاً. يمكنك استخدام رابط متابعة الطلب الذي حفظتيه."
-                          : "Log in is temporarily unavailable. You can use your saved tracking link."}
+                          ? "لا توجد طلبات محفوظة على هذا المتصفح بعد."
+                          : "No orders saved in this browser yet."}
                       </p>
-                    )
+                    </div>
                   )}
+
+                  <div className="rounded-2xl border border-[#e9ddd5] bg-white p-6 sm:p-10 text-center shadow-sm">
+                    <div className="mx-auto mb-5 grid size-14 place-items-center rounded-full bg-[#F5E9E2]/50 text-[#5C1A2B]">
+                      <TbUser size={24} />
+                    </div>
+                    <h3 className="mb-2 text-xl font-bold text-[#5C1A2B]">
+                      {ar ? "عندك حساب؟" : "Have an account?"}
+                    </h3>
+                    <p className="mx-auto mb-8 max-w-sm text-sm leading-relaxed text-muted">
+                      {ar
+                        ? "سجلي الدخول عشان تشوفي كل طلباتك السابقة وتديري حسابك بكل سهولة في مكان واحد."
+                        : "Sign in to view your complete order history and manage your account details easily."}
+                    </p>
+                    <a
+                      href="/login"
+                      className="inline-flex w-full sm:w-auto items-center justify-center rounded-xl bg-white border-2 border-[#5C1A2B] px-10 py-3.5 text-sm font-bold text-[#5C1A2B] transition-all hover:bg-[#5C1A2B] hover:text-white"
+                    >
+                      {ar ? "تسجيل الدخول" : "Sign In to Account"}
+                    </a>
+                  </div>
                 </div>
               )
             )}

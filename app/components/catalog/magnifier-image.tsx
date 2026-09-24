@@ -168,6 +168,7 @@ export default function MagnifierImage(props: Props) {
         }}
         onPointerLeave={() => setHover(false)}
         className="relative block aspect-square w-full cursor-zoom-in overflow-hidden rounded-xl bg-white"
+        data-hide-cursor="true"
       >
         <Image
           src={props.src}

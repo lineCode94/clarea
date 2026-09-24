@@ -1,6 +1,7 @@
 import type { Metadata, Viewport } from "next";
 import "./globals.css";
 import PwaRegister from "./components/pwa-register";
+import CustomCursor from "./components/custom-cursor";
 import SiteLoading from "./components/site-loading";
 export const viewport: Viewport = { themeColor: "#541c2b" };
 
@@ -42,6 +43,7 @@ export default function RootLayout({
     <html lang="en">
       <body>
         <PwaRegister />
+        <CustomCursor />
         <SiteLoading>{children}</SiteLoading>
       </body>
     </html>

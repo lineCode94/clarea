@@ -8,23 +8,22 @@
 }
 
 @media (hover: hover) and (pointer: fine) {
+  *,
   body,
   a,
   button,
   [role="button"],
   .cursor-pointer {
-    cursor:
-      url("/serum-dropper-cursor.svg") 3 3,
-      auto;
+    cursor: none !important;
   }
   input,
   textarea,
   [contenteditable="true"] {
-    cursor: text;
+    cursor: none !important;
   }
   button:disabled,
   [aria-disabled="true"] {
-    cursor: not-allowed;
+    cursor: none !important;
   }
 }
 
