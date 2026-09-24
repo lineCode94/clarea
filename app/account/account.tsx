@@ -1,7 +1,18 @@
 "use client";
 import React, { useEffect, useState, type FormEvent } from "react";
+import EmailLogin from "./email-login";
 import { FcGoogle } from "react-icons/fc";
-import { TbShoppingBag, TbUser, TbBox, TbCheck, TbTruck, TbX, TbMapPin, TbPhone, TbClock } from "react-icons/tb";
+import {
+  TbShoppingBag,
+  TbUser,
+  TbBox,
+  TbCheck,
+  TbTruck,
+  TbX,
+  TbMapPin,
+  TbPhone,
+  TbClock,
+} from "react-icons/tb";
 import CustomerNav from "../components/layout/customer-nav";
 import { setOrderAttention, recentOrders, type RecentOrder } from "../lib/recent-orders";
 import { useLanguage } from "../hooks/use-language";
@@ -9,6 +20,7 @@ import { useLanguage } from "../hooks/use-language";
 type AccountData = {
   authenticated: boolean;
   configured?: boolean;
+  firebase_configured?: boolean;
   google_configured?: boolean;
   email?: string;
   profile?: { name: string; phone: string; address: string };
@@ -24,8 +36,10 @@ type AccountData = {
   }[];
 };
 
-const field = "mt-2 w-full rounded-xl border border-[#dbcac0] bg-white p-3.5 text-sm outline-offset-4 focus:border-[#5C1A2B] focus:outline-[#C9A05C] placeholder:text-gray-400";
-const button = "min-h-12 w-full rounded-xl bg-[#5C1A2B] px-5 py-3.5 font-bold text-white shadow-md transition-all hover:bg-[#481422] disabled:opacity-40";
+const field =
+  "mt-2 w-full rounded-xl border border-[#dbcac0] bg-white p-3.5 text-sm outline-offset-4 focus:border-[#5C1A2B] focus:outline-[#C9A05C] placeholder:text-gray-400";
+const button =
+  "min-h-12 w-full rounded-xl bg-[#5C1A2B] px-5 py-3.5 font-bold text-white shadow-md transition-all hover:bg-[#481422] disabled:opacity-40";
 
 export default function Account() {
   const [lang, setLang] = useLanguage("ar");
@@ -69,7 +83,10 @@ export default function Account() {
 
   async function refresh() {
     const response = await fetch("/api/account", { cache: "no-store" });
-    if (!response.ok) throw new Error(ar ? "تعذر تحميل حسابك. حاولي مجدداً." : "Could not load account. Try again.");
+    if (!response.ok)
+      throw new Error(
+        ar ? "تعذر تحميل حسابك. حاولي مجدداً." : "Could not load account. Try again.",
+      );
     const next = await response.json();
     setData(next);
     if (next.profile) setProfile(next.profile);
@@ -79,10 +96,19 @@ export default function Account() {
   useEffect(() => {
     let initialError = "";
     const login = new URLSearchParams(window.location.search).get("login");
-    if (login === "failed") initialError = ar ? "تعذر تسجيل الدخول بجوجل. حاولي مجدداً." : "Google login failed. Please try again.";
-    if (login === "cancelled") initialError = ar ? "تم إلغاء تسجيل الدخول. تقدري تحاولي مرة أخرى." : "Login was cancelled. You can try again.";
-    if (login === "unavailable") initialError = ar ? "تسجيل الدخول بجوجل غير متاح حالياً." : "Google login is currently unavailable.";
-    
+    if (login === "failed")
+      initialError = ar
+        ? "تعذر تسجيل الدخول بجوجل. حاولي مجدداً."
+        : "Google login failed. Please try again.";
+    if (login === "cancelled")
+      initialError = ar
+        ? "تم إلغاء تسجيل الدخول. تقدري تحاولي مرة أخرى."
+        : "Login was cancelled. You can try again.";
+    if (login === "unavailable")
+      initialError = ar
+        ? "تسجيل الدخول بجوجل غير متاح حالياً."
+        : "Google login is currently unavailable.";
+
     setRecent(recentOrders());
     setOrderAttention(false);
     refresh()
@@ -124,7 +150,7 @@ export default function Account() {
       setCode("");
       setWait(60);
     } catch (e) {
-      setError(e instanceof Error ? e.message : (ar ? "تعذر الإرسال" : "Could not send"));
+      setError(e instanceof Error ? e.message : ar ? "تعذر الإرسال" : "Could not send");
     } finally {
       setBusy(false);
     }
@@ -147,7 +173,7 @@ export default function Account() {
       setChallenge("");
       await refresh();
     } catch (e) {
-      setError(e instanceof Error ? e.message : (ar ? "تعذر التحقق" : "Verification failed"));
+      setError(e instanceof Error ? e.message : ar ? "تعذر التحقق" : "Verification failed");
     } finally {
       setBusy(false);
     }
@@ -183,34 +209,80 @@ export default function Account() {
       await refresh();
       setSaved(true);
     } catch (e) {
-      setError(e instanceof Error ? e.message : (ar ? "تعذر الحفظ" : "Could not save"));
+      setError(e instanceof Error ? e.message : ar ? "تعذر الحفظ" : "Could not save");
     } finally {
       setBusy(false);
     }
   }
 
-  const activeOrders = data?.orders?.filter((o) => !["delivered", "cancelled"].includes(o.status)).length || 0;
+  const activeOrders =
+    data?.orders?.filter((o) => !["delivered", "cancelled"].includes(o.status)).length || 0;
 
   return (
-    <main dir={ar ? "rtl" : "ltr"} lang={ar ? "ar" : "en"} className={`min-h-dvh bg-[#fffdfa] text-[#412832] ${ar ? "font-arabic" : "font-sans"}`}>
+    <main
+      dir={ar ? "rtl" : "ltr"}
+      lang={ar ? "ar" : "en"}
+      className={`min-h-dvh bg-[#fffdfa] text-[#412832] ${ar ? "font-arabic" : "font-sans"}`}
+    >
       <div className="mx-auto max-w-5xl px-4 py-6 sm:py-10">
         <CustomerNav lang={lang} onLangChange={setLang} />
-        
+
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
-          
           {/* Main Account Area */}
           <section className="lg:col-span-8 rounded-3xl border border-[#e9ddd5] bg-white p-6 sm:p-10 shadow-sm">
             <header className="mb-8 border-b border-[#e9ddd5] pb-6">
-              <p className="mb-2 text-xs font-semibold tracking-[.2em] text-[#C9A05C] uppercase">MY CLARÉA</p>
+              <p className="mb-2 text-xs font-semibold tracking-[.2em] text-[#C9A05C] uppercase">
+                MY CLARÉA
+              </p>
               <h1 className="text-3xl font-bold text-[#5C1A2B]">
-                {data?.authenticated 
-                  ? (ar ? `أهلاً ${profile.name || "بيكي"} 🤍` : `Welcome ${profile.name || "back"} 🤍`) 
-                  : (ar ? "حسابك في Claréa" : "Your Claréa Account")}
+                {data?.authenticated
+                  ? ar
+                    ? `أهلاً ${profile.name || "بيكي"} 🤍`
+                    : `Welcome ${profile.name || "back"} 🤍`
+                  : ar
+                    ? "طلباتي · الحساب اختياري"
+                    : "My orders · Account optional"}
               </h1>
             </header>
 
+            {!data?.authenticated && (
+              <section className="mb-6 rounded-2xl border border-[#e9ddd5] bg-[#fffaf6] p-4">
+                <h2 className="text-lg font-bold">
+                  {ar ? "متابعة بدون تسجيل" : "Track without signing in"}
+                </h2>
+                <p className="text-sm">
+                  {ar
+                    ? "كل طلب له رابط خاص. الطلبات المحفوظة في المتصفح تظهر هنا، ولو بتستخدمي جهاز تاني افتحي رابط المتابعة اللي حفظتيه."
+                    : "Each order has a private link. Orders saved in this browser appear here; on another device, open your saved tracking link."}
+                </p>
+                {recent.length ? (
+                  recent.map((o) => (
+                    <a
+                      key={o.reference}
+                      href={o.tracking_path}
+                      className="my-2 flex justify-between gap-3 rounded-xl bg-white p-3 text-sm font-bold"
+                    >
+                      <bdi>{o.reference}</bdi>
+                      <span>{ar ? "تابعي الطلب ←" : "Track order →"}</span>
+                    </a>
+                  ))
+                ) : (
+                  <p className="text-sm">
+                    {ar
+                      ? "لا توجد طلبات محفوظة على هذا المتصفح بعد."
+                      : "No orders saved in this browser yet."}
+                  </p>
+                )}
+                <a href="/#collection" className="text-sm underline">
+                  {ar ? "تسوقي بدون حساب" : "Shop without an account"}
+                </a>
+              </section>
+            )}
             {error && (
-              <div role="alert" className="mb-6 rounded-2xl bg-red-50 p-4 text-sm text-red-900 border border-red-200">
+              <div
+                role="alert"
+                className="mb-6 rounded-2xl bg-red-50 p-4 text-sm text-red-900 border border-red-200"
+              >
                 {error}
               </div>
             )}
@@ -224,7 +296,13 @@ export default function Account() {
 
             {!data && error && (
               <div className="text-center py-10">
-                <button className={button + " max-w-xs"} onClick={() => { setError(""); refresh().catch((e) => setError(e.message)); }}>
+                <button
+                  className={button + " max-w-xs"}
+                  onClick={() => {
+                    setError("");
+                    refresh().catch((e) => setError(e.message));
+                  }}
+                >
                   {ar ? "إعادة المحاولة" : "Try Again"}
                 </button>
               </div>
@@ -238,11 +316,19 @@ export default function Account() {
                       <TbUser size={20} />
                     </div>
                     <div>
-                      <p className="text-xs text-muted">{ar ? "مسجل دخول بحساب" : "Logged in as"}</p>
-                      <p dir="ltr" className="text-sm font-semibold text-[#5C1A2B] break-all">{data.email}</p>
+                      <p className="text-xs text-muted">
+                        {ar ? "مسجل دخول بحساب" : "Logged in as"}
+                      </p>
+                      <p dir="ltr" className="text-sm font-semibold text-[#5C1A2B] break-all">
+                        {data.email}
+                      </p>
                     </div>
                   </div>
-                  <button disabled={busy} className="text-sm font-semibold text-[#5C1A2B] hover:underline" onClick={() => void logout()}>
+                  <button
+                    disabled={busy}
+                    className="text-sm font-semibold text-[#5C1A2B] hover:underline"
+                    onClick={() => void logout()}
+                  >
                     {ar ? "تسجيل الخروج" : "Log out"}
                   </button>
                 </div>
@@ -250,9 +336,14 @@ export default function Account() {
                 <div className="mb-8 flex gap-3 border-b border-[#e9ddd5] pb-4 overflow-x-auto no-scrollbar">
                   <button
                     aria-pressed={tab === "orders"}
-                    onClick={() => { setTab("orders"); setSaved(false); }}
+                    onClick={() => {
+                      setTab("orders");
+                      setSaved(false);
+                    }}
                     className={`flex min-w-[120px] items-center justify-center gap-2 rounded-xl px-5 py-3 text-sm font-bold transition-colors ${
-                      tab === "orders" ? "bg-[#5C1A2B] text-white" : "bg-[#F5E9E2]/50 text-[#5C1A2B] hover:bg-[#F5E9E2]"
+                      tab === "orders"
+                        ? "bg-[#5C1A2B] text-white"
+                        : "bg-[#F5E9E2]/50 text-[#5C1A2B] hover:bg-[#F5E9E2]"
                     }`}
                   >
                     <TbShoppingBag size={18} />
@@ -262,7 +353,9 @@ export default function Account() {
                     aria-pressed={tab === "profile"}
                     onClick={() => setTab("profile")}
                     className={`flex min-w-[120px] items-center justify-center gap-2 rounded-xl px-5 py-3 text-sm font-bold transition-colors ${
-                      tab === "profile" ? "bg-[#5C1A2B] text-white" : "bg-[#F5E9E2]/50 text-[#5C1A2B] hover:bg-[#F5E9E2]"
+                      tab === "profile"
+                        ? "bg-[#5C1A2B] text-white"
+                        : "bg-[#F5E9E2]/50 text-[#5C1A2B] hover:bg-[#F5E9E2]"
                     }`}
                   >
                     <TbUser size={18} />
@@ -271,9 +364,14 @@ export default function Account() {
                 </div>
 
                 {tab === "profile" ? (
-                  <form onSubmit={saveProfile} className="space-y-5 animate-in fade-in slide-in-from-bottom-2 duration-300">
+                  <form
+                    onSubmit={saveProfile}
+                    className="space-y-5 animate-in fade-in slide-in-from-bottom-2 duration-300"
+                  >
                     <div>
-                      <label className="block text-sm font-semibold text-[#412832] mb-1">{ar ? "الاسم" : "Name"}</label>
+                      <label className="block text-sm font-semibold text-[#412832] mb-1">
+                        {ar ? "الاسم" : "Name"}
+                      </label>
                       <input
                         maxLength={120}
                         autoComplete="name"
@@ -284,7 +382,9 @@ export default function Account() {
                       />
                     </div>
                     <div>
-                      <label className="block text-sm font-semibold text-[#412832] mb-1">{ar ? "رقم الموبايل" : "Phone Number"}</label>
+                      <label className="block text-sm font-semibold text-[#412832] mb-1">
+                        {ar ? "رقم الموبايل" : "Phone Number"}
+                      </label>
                       <input
                         type="tel"
                         dir="ltr"
@@ -297,7 +397,9 @@ export default function Account() {
                       />
                     </div>
                     <div>
-                      <label className="block text-sm font-semibold text-[#412832] mb-1">{ar ? "عنوان التوصيل الافتراضي" : "Default Delivery Address"}</label>
+                      <label className="block text-sm font-semibold text-[#412832] mb-1">
+                        {ar ? "عنوان التوصيل الافتراضي" : "Default Delivery Address"}
+                      </label>
                       <textarea
                         maxLength={500}
                         autoComplete="street-address"
@@ -308,22 +410,31 @@ export default function Account() {
                         placeholder={ar ? "الشارع، المنطقة، المدينة" : "Street, Area, City"}
                       />
                     </div>
-                    
+
                     <p className="flex items-start gap-2 rounded-xl bg-blue-50 p-4 text-xs leading-5 text-blue-800">
                       <span className="mt-0.5 text-blue-500">ℹ️</span>
-                      {ar 
-                        ? "تعديل بياناتك هنا لا يغيّر عنوان التوصيل للطلبات اللي تم تأكيدها بالفعل." 
+                      {ar
+                        ? "تعديل بياناتك هنا لا يغيّر عنوان التوصيل للطلبات اللي تم تأكيدها بالفعل."
                         : "Updating your details here does not affect the delivery address of already confirmed orders."}
                     </p>
-                    
+
                     <div className="pt-2">
                       <button disabled={busy} className={button}>
-                        {busy ? (ar ? "جاري الحفظ…" : "Saving...") : (ar ? "حفظ البيانات" : "Save Changes")}
+                        {busy
+                          ? ar
+                            ? "جاري الحفظ…"
+                            : "Saving..."
+                          : ar
+                            ? "حفظ البيانات"
+                            : "Save Changes"}
                       </button>
                     </div>
-                    
+
                     {saved && (
-                      <p role="status" className="flex items-center justify-center gap-2 text-sm font-bold text-emerald-700 pt-2">
+                      <p
+                        role="status"
+                        className="flex items-center justify-center gap-2 text-sm font-bold text-emerald-700 pt-2"
+                      >
                         <TbCheck size={18} />
                         {ar ? "تم حفظ بياناتك بنجاح" : "Profile updated successfully"}
                       </p>
@@ -332,9 +443,11 @@ export default function Account() {
                 ) : (
                   <div className="animate-in fade-in slide-in-from-bottom-2 duration-300">
                     <p className="mb-6 text-sm text-muted">
-                      {ar ? "تابعي تفاصيل وحالة كل طلباتك من هنا." : "Track your order status and details here."}
+                      {ar
+                        ? "تابعي تفاصيل وحالة كل طلباتك من هنا."
+                        : "Track your order status and details here."}
                     </p>
-                    
+
                     {data.orders?.length ? (
                       <div className="space-y-4">
                         {data.orders.map((o) => (
@@ -348,34 +461,52 @@ export default function Account() {
                                 <p className="text-xs text-muted mb-1">
                                   {ar ? "رقم الطلب" : "Order Reference"}
                                 </p>
-                                <strong dir="ltr" className="text-lg text-[#5C1A2B] tracking-wider font-bold block">
+                                <strong
+                                  dir="ltr"
+                                  className="text-lg text-[#5C1A2B] tracking-wider font-bold block"
+                                >
                                   {o.reference}
                                 </strong>
                               </div>
-                              <div className={`flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-bold ${statusColors[o.status] || "bg-gray-100 text-gray-800"}`}>
+                              <div
+                                className={`flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-bold ${statusColors[o.status] || "bg-gray-100 text-gray-800"}`}
+                              >
                                 {statusIcons[o.status]}
                                 {labels[o.status]}
                               </div>
                             </div>
-                            
+
                             <div className="p-5">
                               <div className="flex items-center justify-between mb-4">
                                 <span className="flex items-center gap-1.5 text-xs text-muted">
                                   <TbClock size={14} />
-                                  {new Date(o.created_at).toLocaleDateString(ar ? "ar-EG" : "en-EG", {
-                                    timeZone: "Africa/Cairo",
-                                    year: 'numeric', month: 'long', day: 'numeric'
-                                  })}
+                                  {new Date(o.created_at).toLocaleDateString(
+                                    ar ? "ar-EG" : "en-EG",
+                                    {
+                                      timeZone: "Africa/Cairo",
+                                      year: "numeric",
+                                      month: "long",
+                                      day: "numeric",
+                                    },
+                                  )}
                                 </span>
                                 <span className="text-sm font-bold text-[#5C1A2B]">
-                                  {o.subtotal.toLocaleString(ar ? "ar-EG" : "en-EG")} {ar ? "ج.م" : "EGP"}
+                                  {o.subtotal.toLocaleString(ar ? "ar-EG" : "en-EG")}{" "}
+                                  {ar ? "ج.م" : "EGP"}
                                 </span>
                               </div>
-                              
+
                               <p className="text-sm text-[#412832] font-medium">
-                                {o.items.length} {ar ? (o.items.length === 1 ? "منتج" : "منتجات") : (o.items.length === 1 ? "Item" : "Items")}
+                                {o.items.length}{" "}
+                                {ar
+                                  ? o.items.length === 1
+                                    ? "منتج"
+                                    : "منتجات"
+                                  : o.items.length === 1
+                                    ? "Item"
+                                    : "Items"}
                               </p>
-                              
+
                               <div className="mt-4 flex items-center gap-2 text-sm font-bold text-[#5C1A2B] group-hover:text-[#C9A05C] transition-colors">
                                 {ar ? "عرض التفاصيل والتتبع" : "View Details & Track"}
                                 <span className={ar ? "rotate-180" : ""}>→</span>
@@ -393,8 +524,8 @@ export default function Account() {
                           {ar ? "لا توجد طلبات بعد" : "No orders yet"}
                         </h3>
                         <p className="text-sm text-muted max-w-sm">
-                          {ar 
-                            ? "مفيش طلبات مسجلة بالإيميل ده لسه. طلباتك الجاية هتظهر هنا." 
+                          {ar
+                            ? "مفيش طلبات مسجلة بالإيميل ده لسه. طلباتك الجاية هتظهر هنا."
                             : "You haven't placed any orders with this email yet. Your future orders will appear here."}
                         </p>
                       </div>
@@ -407,9 +538,9 @@ export default function Account() {
                 <div className="animate-in fade-in slide-in-from-bottom-2 duration-300 mx-auto max-w-md space-y-6">
                   <div className="text-center mb-8">
                     <p className="text-[#412832] leading-relaxed">
-                      {ar 
-                        ? "سجّلي الدخول لمتابعة طلباتك، حفظ بياناتك، وتجربة تسوق أسهل من أي جهاز." 
-                        : "Log in to track your orders, save your details, and enjoy an easier shopping experience."}
+                      {ar
+                        ? "تسجيل الدخول اختياري لجمع الطلبات المسجلة بنفس إيميلك في مكان واحد. تقدري تتابعي بدون حساب من الروابط المحفوظة فوق."
+                        : "Sign in optionally to collect orders placed with your email. Track without an account using your saved links above."}
                     </p>
                   </div>
 
@@ -421,28 +552,29 @@ export default function Account() {
                       <FcGoogle size={24} className="group-hover:scale-110 transition-transform" />
                       {ar ? "تسجيل الدخول باستخدام Google" : "Sign in with Google"}
                     </a>
-                  ) : (
-                    <button
-                      disabled
-                      className="flex w-full items-center justify-center gap-3 rounded-xl border border-[#dadce0] bg-gray-50 p-4 text-sm font-bold text-gray-400"
-                    >
-                      <FcGoogle size={24} className="opacity-50" />
-                      {ar ? "تسجيل الدخول باستخدام Google" : "Sign in with Google"}
-                    </button>
+                  ) : null}
+
+                  {(data.configured || data.firebase_configured) && (
+                    <div className="relative py-4">
+                      <div className="absolute inset-0 flex items-center" aria-hidden="true">
+                        <div className="w-full border-t border-[#e9ddd5]" />
+                      </div>
+                      <div className="relative flex justify-center">
+                        <span className="bg-white px-4 text-xs font-semibold text-muted uppercase">
+                          {ar ? "أو باستخدام البريد الإلكتروني" : "Or use email"}
+                        </span>
+                      </div>
+                    </div>
                   )}
-
-                  <div className="relative py-4">
-                    <div className="absolute inset-0 flex items-center" aria-hidden="true">
-                      <div className="w-full border-t border-[#e9ddd5]" />
-                    </div>
-                    <div className="relative flex justify-center">
-                      <span className="bg-white px-4 text-xs font-semibold text-muted uppercase">
-                        {ar ? "أو باستخدام البريد الإلكتروني" : "Or use email"}
-                      </span>
-                    </div>
-                  </div>
-
-                  {data.configured ? (
+                  {data.firebase_configured && (
+                    <EmailLogin
+                      ar={ar}
+                      onSuccess={() => {
+                        refresh().catch((e) => setError(e.message));
+                      }}
+                    />
+                  )}
+                  {data.configured && !data.firebase_configured ? (
                     <>
                       {!challenge ? (
                         <form onSubmit={send} className="space-y-4">
@@ -461,21 +593,32 @@ export default function Account() {
                           </div>
                           <button disabled={busy || wait > 0} className={button}>
                             {busy
-                              ? (ar ? "جاري الإرسال…" : "Sending...")
+                              ? ar
+                                ? "جاري الإرسال…"
+                                : "Sending..."
                               : wait > 0
-                                ? (ar ? `انتظري ${wait} ثانية` : `Wait ${wait}s`)
-                                : (ar ? "إرسال كود التحقق" : "Send Login Code")}
+                                ? ar
+                                  ? `انتظري ${wait} ثانية`
+                                  : `Wait ${wait}s`
+                                : ar
+                                  ? "إرسال كود التحقق"
+                                  : "Send Login Code"}
                           </button>
                         </form>
                       ) : (
-                        <form onSubmit={verify} className="space-y-5 rounded-2xl bg-[#F5E9E2]/30 p-6 border border-[#e9ddd5]">
+                        <form
+                          onSubmit={verify}
+                          className="space-y-5 rounded-2xl bg-[#F5E9E2]/30 p-6 border border-[#e9ddd5]"
+                        >
                           <div className="text-center">
                             <p className="text-sm font-medium mb-1">
                               {ar ? "أرسلنا كود التحقق إلى:" : "We sent a code to:"}
                             </p>
-                            <p dir="ltr" className="text-sm font-bold text-[#5C1A2B]">{email}</p>
+                            <p dir="ltr" className="text-sm font-bold text-[#5C1A2B]">
+                              {email}
+                            </p>
                           </div>
-                          
+
                           <div>
                             <input
                               required
@@ -491,9 +634,15 @@ export default function Account() {
                             />
                           </div>
                           <button disabled={busy || code.length !== 6} className={button}>
-                            {busy ? (ar ? "جاري التحقق…" : "Verifying...") : (ar ? "تأكيد وتسجيل الدخول" : "Verify & Sign In")}
+                            {busy
+                              ? ar
+                                ? "جاري التحقق…"
+                                : "Verifying..."
+                              : ar
+                                ? "تأكيد وتسجيل الدخول"
+                                : "Verify & Sign In"}
                           </button>
-                          
+
                           <div className="flex flex-col items-center gap-3 text-sm pt-2">
                             <button
                               type="button"
@@ -502,13 +651,20 @@ export default function Account() {
                               className="font-semibold text-[#5C1A2B] hover:underline disabled:opacity-40"
                             >
                               {wait > 0
-                                ? (ar ? `إعادة الإرسال بعد ${wait} ثانية` : `Resend in ${wait}s`)
-                                : (ar ? "إعادة إرسال الكود" : "Resend Code")}
+                                ? ar
+                                  ? `إعادة الإرسال بعد ${wait} ثانية`
+                                  : `Resend in ${wait}s`
+                                : ar
+                                  ? "إعادة إرسال الكود"
+                                  : "Resend Code"}
                             </button>
                             <button
                               type="button"
                               disabled={busy}
-                              onClick={() => { setChallenge(""); setCode(""); }}
+                              onClick={() => {
+                                setChallenge("");
+                                setCode("");
+                              }}
                               className="text-muted hover:text-[#412832] hover:underline"
                             >
                               {ar ? "استخدام إيميل مختلف" : "Use a different email"}
@@ -518,11 +674,12 @@ export default function Account() {
                       )}
                     </>
                   ) : (
-                    !data.google_configured && (
+                    !data.google_configured &&
+                    !data.firebase_configured && (
                       <p className="rounded-xl border border-amber-200 bg-amber-50 p-4 text-sm leading-6 text-amber-900 text-center">
-                        {ar 
-                          ? "تسجيل الدخول غير متاح مؤقتاً. يمكنك استخدام رابط تتبع الطلب المُرسل إليك."
-                          : "Log in is temporarily unavailable. You can use the tracking link sent to you."}
+                        {ar
+                          ? "تسجيل الدخول غير متاح مؤقتاً. يمكنك استخدام رابط متابعة الطلب الذي حفظتيه."
+                          : "Log in is temporarily unavailable. You can use your saved tracking link."}
                       </p>
                     )
                   )}
@@ -536,27 +693,39 @@ export default function Account() {
             {/* Account Summary Stats (Only if logged in) */}
             {data?.authenticated && (
               <div className="rounded-3xl border border-[#e9ddd5] bg-[#F5E9E2]/20 p-6 shadow-sm">
-                <h3 className="mb-4 text-sm font-bold text-[#412832]">{ar ? "ملخص حسابك" : "Account Summary"}</h3>
+                <h3 className="mb-4 text-sm font-bold text-[#412832]">
+                  {ar ? "ملخص حسابك" : "Account Summary"}
+                </h3>
                 <div className="grid grid-cols-2 gap-3">
                   <div className="rounded-2xl bg-white p-4 text-center border border-[#e9ddd5]">
-                    <strong className="block text-3xl text-[#5C1A2B] font-black">{data.orders?.length || 0}</strong>
-                    <span className="text-xs font-semibold text-muted mt-1 block">{ar ? "كل الطلبات" : "Total Orders"}</span>
+                    <strong className="block text-3xl text-[#5C1A2B] font-black">
+                      {data.orders?.length || 0}
+                    </strong>
+                    <span className="text-xs font-semibold text-muted mt-1 block">
+                      {ar ? "كل الطلبات" : "Total Orders"}
+                    </span>
                   </div>
                   <div className="rounded-2xl bg-white p-4 text-center border border-[#e9ddd5]">
-                    <strong className="block text-3xl text-[#5C1A2B] font-black">{activeOrders}</strong>
-                    <span className="text-xs font-semibold text-muted mt-1 block">{ar ? "قيد التنفيذ" : "Active Orders"}</span>
+                    <strong className="block text-3xl text-[#5C1A2B] font-black">
+                      {activeOrders}
+                    </strong>
+                    <span className="text-xs font-semibold text-muted mt-1 block">
+                      {ar ? "قيد التنفيذ" : "Active Orders"}
+                    </span>
                   </div>
                 </div>
               </div>
             )}
 
             {/* Recent Local Orders */}
-            {recent.length > 0 && (
+            {data?.authenticated && recent.length > 0 && (
               <div className="rounded-3xl border border-[#e9ddd5] bg-white p-6 shadow-sm">
-                <h2 className="mb-2 text-base font-bold text-[#5C1A2B]">{ar ? "طلباتي الأخيرة" : "Recent Orders"}</h2>
+                <h2 className="mb-2 text-base font-bold text-[#5C1A2B]">
+                  {ar ? "طلباتي الأخيرة" : "Recent Orders"}
+                </h2>
                 <p className="mb-4 text-xs text-muted">
-                  {ar 
-                    ? "الطلبات التي تمت من هذا الجهاز متوفرة للتتبع مباشرة." 
+                  {ar
+                    ? "الطلبات التي تمت من هذا الجهاز متوفرة للتتبع مباشرة."
                     : "Orders placed on this device are available for direct tracking."}
                 </p>
                 <ul className="list-none space-y-3 p-0">
@@ -581,12 +750,16 @@ export default function Account() {
             <div className="rounded-3xl border border-[#e9ddd5] bg-[#5C1A2B] p-6 text-white shadow-sm">
               <h3 className="mb-2 text-base font-bold">{ar ? "محتاجة مساعدة؟" : "Need help?"}</h3>
               <p className="text-sm opacity-90 mb-5 leading-relaxed">
-                {ar 
+                {ar
                   ? "فريق خدمة العملاء جاهز يرد على استفساراتك ويساعدك في طلباتك."
                   : "Our customer service team is ready to answer your inquiries and assist with your orders."}
               </p>
-              <a 
-                href={ar ? "https://wa.me/201018318721?text=مرحباً+كلاريا،+لدي+استفسار+عن+طلبي" : "https://wa.me/201018318721?text=Hello+Clarea,+I+have+an+inquiry+about+my+order"}
+              <a
+                href={
+                  ar
+                    ? "https://wa.me/201018318721?text=مرحباً+كلاريا،+لدي+استفسار+عن+طلبي"
+                    : "https://wa.me/201018318721?text=Hello+Clarea,+I+have+an+inquiry+about+my+order"
+                }
                 target="_blank"
                 rel="noreferrer"
                 className="flex w-full items-center justify-center gap-2 rounded-xl bg-white text-[#5C1A2B] px-4 py-3 text-sm font-bold transition-all hover:bg-gray-100"

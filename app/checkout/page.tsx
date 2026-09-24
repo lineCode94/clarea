@@ -1,4 +1,5 @@
 "use client";
+import SaveTrackingLink from "../components/save-tracking-link";
 
 import Image from "next/image";
 import { rememberOrder, setOrderAttention } from "../lib/recent-orders";
@@ -310,12 +311,15 @@ function CheckoutContent() {
             </p>
 
             {receipt.tracking_path && (
-              <a
-                href={receipt.tracking_path}
-                className={primaryBtn + " flex items-center justify-center gap-2"}
-              >
-                {ar ? "تابعي حالة طلبك" : "Track your order"}
-              </a>
+              <>
+                <a
+                  href={receipt.tracking_path}
+                  className={primaryBtn + " flex items-center justify-center gap-2"}
+                >
+                  {ar ? "تابعي حالة طلبك" : "Track your order"}
+                </a>
+                <SaveTrackingLink path={receipt.tracking_path} ar={ar} />
+              </>
             )}
 
             <Link
@@ -468,6 +472,20 @@ function CheckoutContent() {
                       : "📌 Delivery available to: Cairo, Giza, and Sheikh Zayed only."}
                   </p>
 
+                  <label className="block text-sm">
+                    {ar
+                      ? "الإيميل (اختياري لحفظ الطلب في حسابك لاحقاً)"
+                      : "Email (optional, to find this order in your account later)"}
+                    <input
+                      type="email"
+                      autoComplete="email"
+                      dir="ltr"
+                      maxLength={254}
+                      value={customer.emailOrPhone}
+                      onChange={(e) => setCustomer({ ...customer, emailOrPhone: e.target.value })}
+                      className="mt-2 w-full rounded-xl border border-[#dbcac0] p-3"
+                    />
+                  </label>
                   {/* Phone */}
                   <div className="relative">
                     <input

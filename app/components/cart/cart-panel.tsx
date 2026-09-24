@@ -1,4 +1,5 @@
 "use client";
+import SaveTrackingLink from "../save-tracking-link";
 import Image from "next/image";
 import { rememberOrder, setOrderAttention } from "../../lib/recent-orders";
 import { useEffect, useRef, useState, type FormEvent } from "react";
@@ -314,6 +315,20 @@ function CheckoutForm({
             : "📌 Delivery available to: Cairo, Giza, and Sheikh Zayed only."}
         </p>
 
+        <label className="block text-sm">
+          {ar
+            ? "الإيميل (اختياري لحفظ الطلب في حسابك لاحقاً)"
+            : "Email (optional, to find this order in your account later)"}
+          <input
+            type="email"
+            autoComplete="email"
+            dir="ltr"
+            maxLength={254}
+            value={customer.emailOrPhone}
+            onChange={(e) => setCustomer({ ...customer, emailOrPhone: e.target.value })}
+            className="mt-2 w-full rounded-xl border border-[#dbcac0] p-3"
+          />
+        </label>
         {/* Phone */}
         <div className="relative">
           <input
@@ -420,6 +435,7 @@ function OrderConfirmation({
           >
             {ar ? "تابعي حالة طلبك" : "Track your order"}
           </a>
+          <SaveTrackingLink path={receipt.tracking_path} ar={ar} />
           <p className="text-xs leading-6 text-muted">
             {ar
               ? "احتفظي برابط المتابعة علشان ترجعي له في أي وقت."

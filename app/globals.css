@@ -14,7 +14,7 @@
   [role="button"],
   .cursor-pointer {
     cursor:
-      url("/lipstick-cursor.svg") 5 2,
+      url("/serum-dropper-cursor.svg") 3 3,
       auto;
   }
   input,

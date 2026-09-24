@@ -253,6 +253,11 @@ export async function accountOrders() {
           authenticated: false,
           configured: emailLoginConfigured(),
           google_configured: googleLoginConfigured(),
+          firebase_configured: Boolean(
+            process.env.FIREBASE_WEB_API_KEY &&
+            (process.env.CUSTOMER_AUTH_SECRET || process.env.ADMIN_SESSION_SECRET || "").length >=
+              32,
+          ),
         },
         { headers },
       );
