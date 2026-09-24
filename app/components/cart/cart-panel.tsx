@@ -144,9 +144,7 @@ function CartSummary({ total, ar }: { total: number; ar: boolean }) {
       </div>
       <div className="flex justify-between gap-3">
         <span>{ar ? "الشحن" : "Delivery"}</span>
-        <span>
-          {total > 4000 ? (ar ? "مجاناً" : "Free") : ar ? "يُحدد بالتليفون" : "Confirmed by phone"}
-        </span>
+        <span>{ar ? "يُحدد حسب عنوان التوصيل" : "Based on delivery address"}</span>
       </div>
       <p className="m-0 leading-6 text-muted">
         {ar

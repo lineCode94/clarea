@@ -506,7 +506,7 @@ const orders = load("app/lib/order-service.ts");
   forceConflict = true;
   const free = await checkout(req(freeShipping));
   assert.equal(free.status, 200);
-  assert.equal(free.body.order.shipping_fee, 0);
+  assert.equal(free.body.order.shipping_fee, null);
   c = await store.readCatalog();
   c.products.find((p) => p.id === "sample").published = false;
   await store.saveCatalog(c.products, c.version, c);
@@ -574,7 +574,7 @@ const orders = load("app/lib/order-service.ts");
     "PASS tracking: legacy order links, tamper rejection, unknown IDs, status freshness, authenticated admin links and no customer/accounting leakage",
   );
   console.log(
-    "PASS checkout: COD only, server prices, unavailable/hidden products, supplier stock, safe receipts, idempotency, CAS retry, free shipping and cost resolution before delivery",
+    "PASS checkout: COD only, server prices, unavailable/hidden products, supplier stock, safe receipts, idempotency, CAS retry, address-based shipping and cost resolution before delivery",
   );
   console.log(
     "PASS orders: private auth, automatic unique numbering, creation replay safety, multi-item discount totals, immutable snapshots, all-or-nothing delivery, concurrency, cancellation, one-order report counts and no public customer leakage",

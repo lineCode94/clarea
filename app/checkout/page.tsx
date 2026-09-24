@@ -136,7 +136,7 @@ function CheckoutContent() {
     ? Math.round(rawSubtotal * (appliedDiscount.percent / 100))
     : 0;
   const subtotal = rawSubtotal - discountAmount;
-  const shippingFee = subtotal > 4000 ? 0 : null;
+  const shippingFee = null;
   const total = subtotal + (shippingFee ?? 0);
 
   function handleApplyDiscount(e: FormEvent) {
@@ -679,8 +679,8 @@ function CheckoutContent() {
                           ? "مجاناً"
                           : "Free"
                         : ar
-                          ? "يُحدد عند التأكيد"
-                          : "Confirmed with you"}
+                          ? "يُحدد حسب عنوان التوصيل"
+                          : "Based on delivery address"}
                     </span>
                   </div>
 

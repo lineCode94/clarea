@@ -161,7 +161,7 @@ export async function checkout(request: Request) {
         notes: "طلب من الموقع — يرجى تأكيد التوفر والشحن وموعد التوصيل مع العميل قبل التجهيز.",
         source: "storefront",
         payment_method: "COD",
-        shipping_fee: revenue > 4000 ? 0 : null,
+        shipping_fee: null,
         created_at: now,
         updated_at: now,
         changed_by: "storefront",
