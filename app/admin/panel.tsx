@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState, type FormEvent } from "react";
 import {
   TbPlus,
+  TbTrash,
   TbLogout,
   TbPhotoPlus,
   TbX,
@@ -15,6 +16,8 @@ import {
 import { matchesAdminProduct } from "../lib/admin-search";
 import AdminSidebar, { adminExtraPaths, type AdminView } from "./sidebar";
 import type { ManagedProduct } from "../lib/catalog-schema";
+
+import OrderToasts, { confirmOrder, toast } from "./orders/toasts";
 
 type Catalog = { products: ManagedProduct[]; version: string };
 const field =
@@ -176,6 +179,36 @@ export default function AdminPanel({ authenticated }: { authenticated: boolean }
       setBusy(false);
     }
   }
+  async function remove(product: ManagedProduct) {
+    if (busy || uploading || !catalog || !canLeave()) return;
+    setBusy(true);
+    try {
+      if (
+        !(await confirmOrder(
+          "حذف المنتج «" +
+            product.name +
+            "» من الموقع والأدمن؟ ستبقى الطلبات والتقارير القديمة محفوظة.",
+        ))
+      )
+        return;
+      const next = await api("/api/admin/products", {
+        method: "DELETE",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ id: product.id, version: catalog.version }),
+      });
+      setCatalog(next);
+      if (draft?.id === product.id) {
+        setDraft(null);
+        setDirty(false);
+      }
+      setError("");
+      toast.success("تم حذف المنتج");
+    } catch (e) {
+      toast.error((e as Error).message);
+    } finally {
+      setBusy(false);
+    }
+  }
   async function upload(files: FileList | null) {
     if (!files || !draft) return;
     if (files.length + draft.images.length > 6) {
@@ -268,6 +301,7 @@ export default function AdminPanel({ authenticated }: { authenticated: boolean }
       dir="rtl"
       className={`admin-panel min-h-dvh bg-[#f8f5f1] font-arabic text-[#412832] ${auth ? "lg:pr-64" : ""}`}
     >
+      <OrderToasts />
       {auth && (
         <AdminSidebar
           active={draft && creating ? "new" : (filter as AdminView)}
@@ -439,34 +473,43 @@ export default function AdminPanel({ authenticated }: { authenticated: boolean }
               )}
               <div className={draft ? "grid gap-2" : "grid gap-3 md:grid-cols-2 xl:grid-cols-3"}>
                 {visible.map((product) => (
-                  <button
-                    key={product.id}
-                    onClick={() => edit(product)}
-                    disabled={busy || uploading}
-                    className={`flex min-w-0 items-center gap-3 rounded-xl border p-3 text-right transition-colors hover:bg-[#faf6f2] ${draft?.id === product.id ? "border-[#b58b4b] bg-[#faf6f2]" : "border-[#eee6df]"}`}
-                  >
-                    <img
-                      src={product.images[0]}
-                      alt=""
-                      className="size-16 shrink-0 rounded-lg bg-[#f7f4ee] object-contain"
-                    />
-                    <div className="min-w-0 flex-1">
-                      <p className="m-0 truncate text-[10px] text-[#a88758]">
-                        {product.brand || "CLARÉA"}
-                      </p>
-                      <h3 className="m-0 mt-1 break-words text-sm leading-6">{product.name}</h3>
-                      <div className="mt-2 flex flex-wrap gap-2 text-[10px]">
-                        <span
-                          className={`rounded-full px-2 py-1 ${product.published ? "bg-green-50 text-green-800" : "bg-amber-50 text-amber-800"}`}
-                        >
-                          {product.published ? "منشور" : "مسودة / مخفي"}
-                        </span>
-                        <span className="rounded-full bg-[#f5f0ec] px-2 py-1">
-                          {product.available ? "متاح" : "غير متاح"}
-                        </span>
+                  <div key={product.id} className="min-w-0 rounded-xl border border-[#eee6df]">
+                    <button
+                      onClick={() => edit(product)}
+                      disabled={busy || uploading}
+                      className={`flex w-full min-w-0 items-center gap-3 rounded-xl border p-3 text-right transition-colors hover:bg-[#faf6f2] ${draft?.id === product.id ? "border-[#b58b4b] bg-[#faf6f2]" : "border-[#eee6df]"}`}
+                    >
+                      <img
+                        src={product.images[0]}
+                        alt=""
+                        className="size-16 shrink-0 rounded-lg bg-[#f7f4ee] object-contain"
+                      />
+                      <div className="min-w-0 flex-1">
+                        <p className="m-0 truncate text-[10px] text-[#a88758]">
+                          {product.brand || "CLARÉA"}
+                        </p>
+                        <h3 className="m-0 mt-1 break-words text-sm leading-6">{product.name}</h3>
+                        <div className="mt-2 flex flex-wrap gap-2 text-[10px]">
+                          <span
+                            className={`rounded-full px-2 py-1 ${product.published ? "bg-green-50 text-green-800" : "bg-amber-50 text-amber-800"}`}
+                          >
+                            {product.published ? "منشور" : "مسودة / مخفي"}
+                          </span>
+                          <span className="rounded-full bg-[#f5f0ec] px-2 py-1">
+                            {product.available ? "متاح" : "غير متاح"}
+                          </span>
+                        </div>
                       </div>
-                    </div>
-                  </button>
+                    </button>
+                    <button
+                      type="button"
+                      disabled={busy || uploading}
+                      onClick={() => remove(product)}
+                      className="m-2 inline-flex min-h-10 items-center gap-2 rounded-lg px-3 text-sm text-red-700 hover:bg-red-50 disabled:opacity-40"
+                    >
+                      <TbTrash /> حذف المنتج
+                    </button>
+                  </div>
                 ))}
               </div>
             </section>

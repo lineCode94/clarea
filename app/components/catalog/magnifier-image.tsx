@@ -146,6 +146,7 @@ export default function MagnifierImage(props: Props) {
   const [open, setOpen] = useState(false);
   const [hover, setHover] = useState(false);
   const [position, setPosition] = useState({ x: 50, y: 50 });
+  const [bounds, setBounds] = useState({ width: 400, height: 400 });
   return (
     <>
       <button
@@ -158,6 +159,7 @@ export default function MagnifierImage(props: Props) {
         onPointerMove={(e) => {
           if (e.pointerType !== "mouse") return;
           const r = e.currentTarget.getBoundingClientRect();
+          setBounds({ width: r.width, height: r.height });
           setPosition({
             x: ((e.clientX - r.left) / r.width) * 100,
             y: ((e.clientY - r.top) / r.height) * 100,
@@ -174,10 +176,44 @@ export default function MagnifierImage(props: Props) {
           sizes="(max-width:768px) 95vw, 900px"
           className="object-contain"
           style={{
-            transform: `${hover ? "scale(2.5)" : "scale(1)"} ${props.imageTransform || ""}`,
+            transform: props.imageTransform,
             transformOrigin: `${position.x}% ${position.y}%`,
           }}
         />
+        {hover && (
+          <span
+            aria-hidden="true"
+            data-magnifier-lens
+            className="pointer-events-none absolute z-20 block size-48 overflow-hidden rounded-full border-2 border-white bg-white shadow-2xl"
+            style={{
+              left:
+                Math.max(96, Math.min(bounds.width - 96, (position.x * bounds.width) / 100)) - 96,
+              top:
+                Math.max(96, Math.min(bounds.height - 96, (position.y * bounds.height) / 100)) - 96,
+            }}
+          >
+            <span
+              className="absolute block"
+              style={{
+                width: bounds.width,
+                height: bounds.height,
+                left: 96 - ((position.x * bounds.width) / 100) * 3,
+                top: 96 - ((position.y * bounds.height) / 100) * 3,
+                transform: "scale(3)",
+                transformOrigin: "0 0",
+              }}
+            >
+              <Image
+                src={props.src}
+                alt=""
+                fill
+                unoptimized
+                className="object-contain"
+                style={{ transform: props.imageTransform }}
+              />
+            </span>
+          </span>
+        )}
         <span className="absolute bottom-3 end-3 flex items-center gap-2 rounded-full bg-[#5C1A2B] px-3 py-2 text-xs text-white">
           <TbZoomIn size={18} />
           {props.lang === "ar" ? "اضغطي للتكبير" : "Tap to zoom"}
