@@ -56,6 +56,15 @@ export default function CatalogToolbar({
           ))}
         </div>
         <div className="flex flex-wrap items-center gap-4 text-sm text-muted">
+          {(query || category !== "all" || onlyAvailable || sort !== "featured") && (
+            <button
+              type="button"
+              onClick={filters.reset}
+              className="min-h-11 rounded-xl border border-line px-3 text-brand"
+            >
+              {lang === "ar" ? "مسح الفلاتر" : "Clear filters"}
+            </button>
+          )}
           <label className="flex min-h-11 cursor-pointer items-center gap-2">
             <input
               className="size-4 accent-brand"

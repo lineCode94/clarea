@@ -1,5 +1,6 @@
 "use client";
 
+import { matchesAdminProduct } from "../lib/admin-search";
 import { popularProductIds } from "../config/home-collections";
 import { useMemo, useState } from "react";
 import { useProducts } from "../components/catalog-provider";
@@ -13,12 +14,10 @@ export function useCatalogFilters(lang: Language) {
   const [sort, setSort] = useState("featured");
 
   const filtered = useMemo(() => {
-    const search = query.trim().toLowerCase();
     const matching = products.filter((product) => {
       const matchesCategory = category === "all" || product.category === category;
       const matchesStock = !onlyAvailable || product.available;
-      const searchableText = `${product.name} ${product.brand} ${product.label[lang]}`;
-      return matchesCategory && matchesStock && searchableText.toLowerCase().includes(search);
+      return matchesCategory && matchesStock && matchesAdminProduct(product, query);
     });
 
     return matching.sort((a, b) => {
@@ -36,8 +35,8 @@ export function useCatalogFilters(lang: Language) {
         return priceA - priceB;
       }
       if (sort === "price-high-low") {
-        const priceA = a.public_price ?? 0;
-        const priceB = b.public_price ?? 0;
+        const priceA = a.public_price ?? Infinity;
+        const priceB = b.public_price ?? Infinity;
         if (!Number.isFinite(priceA)) return Number.isFinite(priceB) ? 1 : 0;
         if (!Number.isFinite(priceB)) return -1;
         return priceB - priceA;

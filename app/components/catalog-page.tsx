@@ -44,10 +44,11 @@ function CatalogContent() {
     document.documentElement.lang = lang;
   }, [lang]);
 
-  function exploreCategory(category: string, query = "") {
+  function exploreCategory(category: string, query = "", sort = "featured") {
     filters.reset();
     filters.setCategory(category);
     filters.setQuery(query);
+    filters.setSort(sort);
     document.getElementById("collection")?.scrollIntoView({
       behavior: reducedMotion ? "instant" : "smooth",
     });

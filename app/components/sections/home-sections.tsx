@@ -11,7 +11,7 @@ import ProductShelf from "./product-shelf";
 type Props = {
   lang: Language;
   onSelect: (product: Product) => void;
-  onExplore: (category: string, query?: string) => void;
+  onExplore: (category: string, query?: string, sort?: string) => void;
 };
 
 export function ShopCategories({ lang, onExplore }: Pick<Props, "lang" | "onExplore">) {
@@ -101,7 +101,7 @@ export default function HomeSections({ lang, onSelect, onExplore }: Props) {
           }
           products={bestSellers}
           onSelect={onSelect}
-          onViewAll={() => onExplore("all")}
+          onViewAll={() => onExplore("all", "", "best-selling")}
         />
       )}
       <section
