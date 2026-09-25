@@ -38,9 +38,12 @@ const descriptions = {
     cancelled: "Contact the Claréa team if you have questions about this cancellation.",
   },
 };
+
+import { useLanguage } from "../hooks/use-language";
+
 export default function Tracking() {
-  const [lang, setLang] = useState<"ar" | "en">("ar"),
-    [order, setOrder] = useState<Order | null>(null),
+  const [lang, setLang] = useLanguage("ar");
+  const [order, setOrder] = useState<Order | null>(null),
     [busy, setBusy] = useState(true),
     [error, setError] = useState<"invalid" | "network" | null>(null);
   const token = useRef(""),

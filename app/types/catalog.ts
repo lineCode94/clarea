@@ -14,6 +14,8 @@ export type Product = {
   category: "skin" | "hair" | "supplements" | "oral" | "body";
   available: boolean;
   public_price?: number;
+  original_price?: number;
+  discount?: number;
   stock_status?: "available" | "coming_soon" | "out_of_stock";
   images: string[];
   tone: string;

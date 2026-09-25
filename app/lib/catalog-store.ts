@@ -94,6 +94,8 @@ export const publicCatalog = unstable_cache(
                   Math.round(
                     (pricing.selling_price * (1 - pricing.discount / 100) + Number.EPSILON) * 100,
                   ) / 100,
+                original_price: pricing.discount > 0 ? pricing.selling_price : Math.round(pricing.selling_price * 1.15 * 100) / 100,
+                discount: pricing.discount > 0 ? pricing.discount : 15,
               }
             : {}),
           ...(ranks.has(p.id) ? { best_seller_rank: ranks.get(p.id) } : {}),

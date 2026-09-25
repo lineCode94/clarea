@@ -9,11 +9,21 @@ export default function ProductPrice({ product, lang }: { product: Product; lang
           {lang === "ar" ? "تواصلي معنا لمعرفة السعر" : "Contact us for the price"}
         </span>
       ) : (
-        <span dir={lang === "ar" ? "rtl" : "ltr"}>
-          {new Intl.NumberFormat(lang === "ar" ? "ar-EG" : "en-EG", {
-            maximumFractionDigits: 2,
-          }).format(price)}{" "}
-          {lang === "ar" ? "ج.م" : "EGP"}
+        <span dir={lang === "ar" ? "rtl" : "ltr"} className="flex items-center gap-2">
+          <span>
+            {new Intl.NumberFormat(lang === "ar" ? "ar-EG" : "en-EG", {
+              maximumFractionDigits: 2,
+            }).format(price)}{" "}
+            {lang === "ar" ? "ج.م" : "EGP"}
+          </span>
+          {product.original_price != null && product.original_price > price && (
+            <span className="text-sm font-normal text-muted line-through">
+              {new Intl.NumberFormat(lang === "ar" ? "ar-EG" : "en-EG", {
+                maximumFractionDigits: 2,
+              }).format(product.original_price)}{" "}
+              {lang === "ar" ? "ج.م" : "EGP"}
+            </span>
+          )}
         </span>
       )}
     </p>
