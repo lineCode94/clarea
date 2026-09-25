@@ -571,7 +571,7 @@ function CartDialog({ lang }: { lang: Language }) {
         ? [{ opacity: 1 }, { opacity: 0 }]
         : [
             { transform: getComputedStyle(el).transform, opacity: 1 },
-            { transform: ar ? "translateX(100%)" : "translateX(-100%)", opacity: 0.7 },
+            { transform: ar ? "translateX(-100%)" : "translateX(100%)", opacity: 0 },
           ],
       { duration: reduced ? 120 : 380, easing: "cubic-bezier(.4,0,.6,1)", fill: "both" },
     );
