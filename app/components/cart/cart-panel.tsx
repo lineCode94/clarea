@@ -625,13 +625,13 @@ function CartDialog({ lang }: { lang: Language }) {
       className="m-auto max-h-[94dvh] w-[min(560px,calc(100%-16px))] overflow-y-auto rounded-3xl border-0 bg-[#fffdfa] p-0 text-[#412832] shadow-2xl backdrop:bg-black/40 backdrop:backdrop-blur-sm"
     >
       <div className="sticky top-0 z-10 flex items-center justify-between border-b border-[#e9ddd5] bg-[#fffdfa] px-5 py-4">
-        <h2 id="cart-title" className="m-0 text-xl">
+        <h2 id="cart-title" className="m-0 text-lg font-bold">
           {receipt
             ? "Claréa"
             : step === "cart"
               ? ar
-                ? "سلة التسوق"
-                : "Your shopping bag"
+                ? `سلة التسوق (${cart.items.reduce((acc, i) => acc + i.quantity, 0)})`
+                : `Shopping Cart (${cart.items.reduce((acc, i) => acc + i.quantity, 0)})`
               : ar
                 ? "إتمام الطلب"
                 : "Checkout"}
@@ -642,11 +642,40 @@ function CartDialog({ lang }: { lang: Language }) {
           disabled={busy}
           onClick={close}
           aria-label={ar ? "إغلاق" : "Close"}
-          className="grid size-11 place-items-center rounded-full hover:bg-[#F5E9E2]"
+          className="grid size-10 place-items-center text-gray-500 hover:text-gray-800"
         >
-          <TbX size={23} />
+          <TbX size={20} />
         </button>
       </div>
+      {!receipt && step === "cart" && (
+        <div className="px-5 py-4 border-b border-[#e9ddd5] bg-[#fffdfa]">
+          <div className="relative mb-5 h-1.5 w-full rounded-full bg-gray-200">
+            <div 
+              className="h-full rounded-full bg-[#f472b6] transition-all duration-500 ease-out"
+              style={{ width: `${Math.min((total / 4000) * 100, 100)}%` }}
+            />
+            <div 
+              className="absolute top-1/2 -translate-y-1/2 grid size-6 place-items-center rounded-full border-2 border-white bg-[#f472b6] text-white shadow-sm transition-all duration-500 ease-out"
+              style={{ 
+                [ar ? 'right' : 'left']: `calc(${Math.min((total / 4000) * 100, 100)}% - 12px)`
+              }}
+            >
+              <TbTruck size={14} />
+            </div>
+          </div>
+          <p className="text-center text-sm text-[#412832]">
+            {total < 4000 ? (
+              ar ? (
+                <>أضف منتجات بقيمة <strong className="text-[#f472b6] font-medium">{money(4000 - total, ar)}</strong> للاستمتاع بشحن مجاني!</>
+              ) : (
+                <>Spend <strong className="text-[#f472b6] font-medium">{money(4000 - total, ar)}</strong> more to enjoy <span className="text-[#f472b6]">Free shipping!</span></>
+              )
+            ) : (
+              ar ? "لقد حصلت على شحن مجاني! 🎉" : "You have unlocked Free shipping! 🎉"
+            )}
+          </p>
+        </div>
+      )}
       <div className="p-5 sm:p-7">
         {receipt ? (
           <OrderConfirmation receipt={receipt} ar={ar} close={close} />
@@ -708,24 +737,30 @@ function CartDialog({ lang }: { lang: Language }) {
                         />
                       ))}
                     </ul>
-                    <div className="my-5">
-                      <CartSummary total={total} ar={ar} />
+                    <div className="my-5 border-t border-[#e9ddd5] pt-5">
+                      <div className="flex justify-between font-bold text-lg mb-5 text-[#412832]">
+                        <span>{ar ? "المجموع الفرعي" : "Subtotal"}</span>
+                        <span>{money(total, ar)}</span>
+                      </div>
+                      <div className="flex flex-col gap-3">
+                        <button onClick={close} className="w-full rounded-full border border-[#f472b6] py-3 text-center font-bold text-[#f472b6] transition-colors hover:bg-pink-50">
+                          {ar ? "عرض السلة" : "View Cart"}
+                        </button>
+                        <a
+                          href="/checkout"
+                          onClick={() => cart.setOpen(false)}
+                          className="w-full rounded-full bg-[#f472b6] py-3 text-center font-bold text-white transition-opacity hover:opacity-90 flex justify-center items-center"
+                        >
+                          {loading
+                            ? ar
+                              ? "تحديث الأسعار…"
+                              : "Updating prices…"
+                            : ar
+                              ? "متابعة الطلب وإتمام الشراء"
+                              : "Checkout"}
+                        </a>
+                      </div>
                     </div>
-                    <a
-                      href="/checkout"
-                      onClick={() => cart.setOpen(false)}
-                      className={
-                        primary + " flex w-full items-center justify-center font-bold text-center"
-                      }
-                    >
-                      {loading
-                        ? ar
-                          ? "تحديث الأسعار…"
-                          : "Updating prices…"
-                        : ar
-                          ? "متابعة الطلب وإتمام الشراء"
-                          : "Continue to checkout"}
-                    </a>
                   </>
                 )}
                 {step === "details" && (
