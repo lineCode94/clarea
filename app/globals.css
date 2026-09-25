@@ -396,13 +396,21 @@
 }
 
 @keyframes marquee-en {
-  0% { transform: translateX(100%); }
-  100% { transform: translateX(-100%); }
+  0% {
+    transform: translateX(100%);
+  }
+  100% {
+    transform: translateX(-100%);
+  }
 }
 
 @keyframes marquee-ar {
-  0% { transform: translateX(-100%); }
-  100% { transform: translateX(100%); }
+  0% {
+    transform: translateX(-100%);
+  }
+  100% {
+    transform: translateX(100%);
+  }
 }
 
 .animate-marquee-en {
@@ -417,4 +425,63 @@
   white-space: nowrap;
   animation: marquee-ar 15s linear infinite;
   padding-right: 100%;
+}
+
+/* Animate the native modal in the top layer, including its backdrop. */
+.clarea-cart-drawer {
+  --cart-slide: -100%;
+  animation: clarea-cart-enter 480ms cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+.clarea-cart-drawer[dir="rtl"] {
+  --cart-slide: 100%;
+}
+.clarea-cart-drawer::backdrop {
+  animation: clarea-cart-shade-in 400ms ease both;
+}
+.clarea-cart-drawer[data-closing="true"] {
+  animation: clarea-cart-leave 320ms cubic-bezier(0.4, 0, 0.6, 1) both;
+  pointer-events: none;
+}
+.clarea-cart-drawer[data-closing="true"]::backdrop {
+  animation: clarea-cart-shade-out 320ms ease both;
+}
+@keyframes clarea-cart-enter {
+  from {
+    transform: translateX(var(--cart-slide));
+  }
+  to {
+    transform: translateX(0);
+  }
+}
+@keyframes clarea-cart-leave {
+  from {
+    transform: translateX(0);
+  }
+  to {
+    transform: translateX(var(--cart-slide));
+  }
+}
+@keyframes clarea-cart-shade-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+@keyframes clarea-cart-shade-out {
+  from {
+    opacity: 1;
+  }
+  to {
+    opacity: 0;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .clarea-cart-drawer,
+  .clarea-cart-drawer::backdrop,
+  .clarea-cart-drawer[data-closing="true"],
+  .clarea-cart-drawer[data-closing="true"]::backdrop {
+    animation-duration: 1ms;
+  }
 }

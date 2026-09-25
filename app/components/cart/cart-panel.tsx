@@ -461,6 +461,7 @@ function CartDialog({ lang }: { lang: Language }) {
   const ar = lang === "ar",
     cart = useCart(),
     dialog = useRef<HTMLDialogElement>(null);
+  const [closing, setClosing] = useState(false);
   const [catalog, setCatalog] = useState<Product[]>([]),
     [loading, setLoading] = useState(true),
     [error, setError] = useState("");
@@ -541,7 +542,7 @@ function CartDialog({ lang }: { lang: Language }) {
   const invalid = items.some((i) => unavailable(i.id)),
     total = Math.round(items.reduce((n, i) => n + i.price * i.quantity, 0) * 100) / 100;
   const close = () => {
-    if (!submitting.current) cart.setOpen(false);
+    if (!submitting.current) setClosing(true);
   };
   async function submit() {
     if (submitting.current || loading || invalid || !ack || !items.length) return;
@@ -628,7 +629,11 @@ function CartDialog({ lang }: { lang: Language }) {
       onClick={(e) => {
         if (e.target === e.currentTarget) close();
       }}
-      className="m-0 fixed inset-y-0 end-0 h-[100dvh] max-h-none w-[min(460px,100%)] overflow-hidden rounded-none border-0 bg-[#fffdfa] p-0 text-[#412832] shadow-2xl backdrop:bg-black/40 backdrop:backdrop-blur-sm"
+      data-closing={closing}
+      onAnimationEnd={(e) => {
+        if (e.target === e.currentTarget && closing) cart.setOpen(false);
+      }}
+      className="clarea-cart-drawer m-0 fixed inset-y-0 start-0 end-auto h-[100dvh] max-h-none w-[min(460px,100%)] overflow-hidden rounded-none border-0 bg-[#fffdfa] p-0 text-[#412832] shadow-2xl backdrop:bg-black/40 backdrop:backdrop-blur-sm"
     >
       <div className="flex h-full min-h-0 flex-col">
         <div className="z-10 flex shrink-0 items-center justify-between bg-[#5C1A2B] px-6 py-4 text-[#fffaf5]">
