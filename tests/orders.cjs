@@ -219,6 +219,28 @@ const orders = load("app/lib/order-service.ts");
   assert.equal((await store.readCatalog()).orders.length, 1);
   // Product price changes must not rewrite already-agreed order totals.
   await service.updateInventory(req({ cost_price: 200, selling_price: 400 }), "sample", "pricing");
+  let visible = (await store.publicCatalog()).find((p) => p.id === "sample");
+  assert.equal(visible.public_price, 400);
+  assert.equal(visible.discount, undefined);
+  await service.updateInventory(
+    req({ cost_price: 200, selling_price: 400, discount: 10 }),
+    "sample",
+    "pricing",
+  );
+  visible = (await store.publicCatalog()).find((p) => p.id === "sample");
+  assert.equal(visible.public_price, 360);
+  assert.equal(visible.original_price, 400);
+  assert.equal(visible.discount, 10);
+  await service.updateInventory(
+    req({ cost_price: 200, selling_price: 400, discount: 0 }),
+    "sample",
+    "pricing",
+  );
+  visible = (await store.publicCatalog()).find((p) => p.id === "sample");
+  assert.equal(visible.public_price, 400);
+  assert.equal(visible.original_price, undefined);
+  assert.equal(visible.discount, undefined);
+
   await service.updateInventory(req({ quantity: 2, min_stock_alert: 2 }), "second", "stock");
   assert.equal((await orders.changeOrder(req({ status: "delivered" }), order.id)).status, 409);
   c = await store.readCatalog();

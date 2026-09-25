@@ -477,8 +477,16 @@ export default function InventoryPanel({
                           ))}
                           <p className="text-sm leading-7 text-[#806b63]">
                             اترك سعر الشراء فارغاً لو غير معروف؛ الربح يظل غير محدد حتى تضيفه. الخصم
-                            يُطبّق على سعر البيع.
+                            يُطبّق على سعر البيع ويظهر على الموقع بعد الحفظ. اكتب 0 لإلغاء الخصم.
                           </p>
+                          <button
+                            type="button"
+                            disabled={busy || Number(discount) === 0}
+                            onClick={() => setDiscount("0")}
+                            className="mb-3 rounded-xl border border-[#dfd2c8] px-4 py-2 disabled:opacity-40"
+                          >
+                            إلغاء خصم المنتج
+                          </button>
                           {preview && (
                             <div className="mb-4 rounded-xl bg-[#f8f5f1] p-3 text-sm leading-7">
                               البيع الفعلي: {money(preview.effective_price)} ج
@@ -493,7 +501,7 @@ export default function InventoryPanel({
                             </div>
                           )}
                           <button disabled={busy} className={button}>
-                            {busy ? "جارٍ الحفظ…" : "حفظ الأسعار"}
+                            {busy ? "جارٍ الحفظ…" : "حفظ الأسعار والخصم"}
                           </button>
                           <button
                             type="button"

@@ -86,15 +86,8 @@ export const publicCatalog = unstable_cache(
         const pricing = catalog.inventory[p.id]?.pricing;
         // Publish only the final customer price; costs, margins and history stay private.
         const clean = catalogSchema.shape.products.element.parse(p);
-        const getMockDiscount = (id: string) => {
-          const mod = id.charCodeAt(id.length - 1) % 4;
-          if (mod === 1) return 5;
-          if (mod === 2) return 10;
-          if (mod === 3) return 15;
-          return 0;
-        };
-        const appliedDiscount = pricing ? (pricing.discount > 0 ? pricing.discount : getMockDiscount(p.id)) : 0;
-        
+        const appliedDiscount = pricing?.discount ?? 0;
+
         return {
           ...clean,
           ...(pricing
@@ -117,6 +110,6 @@ export const publicCatalog = unstable_cache(
         };
       });
   },
-  ["clarea-public-catalog-v5", namespace],
+  ["clarea-public-catalog-v6", namespace],
   { revalidate: 30, tags: ["clarea-catalog"] },
 );
