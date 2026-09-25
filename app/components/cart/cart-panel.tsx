@@ -622,7 +622,7 @@ function CartDialog({ lang }: { lang: Language }) {
       onClick={(e) => {
         if (e.target === e.currentTarget) close();
       }}
-      className="m-auto max-h-[94dvh] w-[min(560px,calc(100%-16px))] overflow-y-auto rounded-3xl border-0 bg-[#fffdfa] p-0 text-[#412832] shadow-2xl backdrop:bg-black/40 backdrop:backdrop-blur-sm"
+      className="m-0 fixed inset-y-0 end-0 h-[100dvh] max-h-none w-[min(460px,100%)] overflow-y-auto rounded-none border-0 bg-[#fffdfa] p-0 text-[#412832] shadow-2xl backdrop:bg-black/40 backdrop:backdrop-blur-sm"
     >
       <div className="sticky top-0 z-10 flex items-center justify-between border-b border-[#e9ddd5] bg-[#fffdfa] px-5 py-4">
         <h2 id="cart-title" className="m-0 text-lg font-bold">
