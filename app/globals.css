@@ -397,34 +397,32 @@
 
 @keyframes marquee-en {
   0% {
-    transform: translateX(100%);
+    transform: translateX(0%);
   }
   100% {
-    transform: translateX(-100%);
+    transform: translateX(-50%);
   }
 }
 
 @keyframes marquee-ar {
   0% {
-    transform: translateX(-100%);
+    transform: translateX(0%);
   }
   100% {
-    transform: translateX(100%);
+    transform: translateX(50%);
   }
 }
 
 .animate-marquee-en {
-  display: inline-block;
-  white-space: nowrap;
-  animation: marquee-en 15s linear infinite;
-  padding-left: 100%;
+  display: flex;
+  width: max-content;
+  animation: marquee-en 30s linear infinite;
 }
 
 .animate-marquee-ar {
-  display: inline-block;
-  white-space: nowrap;
-  animation: marquee-ar 15s linear infinite;
-  padding-right: 100%;
+  display: flex;
+  width: max-content;
+  animation: marquee-ar 30s linear infinite;
 }
 
 /* Animate the native modal in the top layer, including its backdrop. */

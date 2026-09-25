@@ -120,9 +120,13 @@ export default function SiteHeader({
     <>
       <div className="bg-brand text-xs leading-relaxed text-white sm:text-sm overflow-hidden flex items-center h-10">
         <div className={ar ? "animate-marquee-ar" : "animate-marquee-en"}>
-          {ar
-            ? "فقط ٢٥٠٠ جنيه متبقية للاستمتاع بشحن مجاني!"
-            : "Only LE 2500 away from free shipping!"}
+          {[...Array(8)].map((_, i) => (
+            <span key={i} className="mx-8 whitespace-nowrap">
+              {ar
+                ? "فقط ٢٥٠٠ جنيه متبقية للاستمتاع بشحن مجاني! ✨ اشتري بـ ٤٠٠٠ جنيه واحصل على صندوق هدايا مع الشحن المجاني!"
+                : "Only LE 2500 away from free shipping! ✨ Spend LE 4000 to get a free gift box + free shipping!"}
+            </span>
+          ))}
         </div>
       </div>
       <header className="topbar sticky top-0 z-30 border-b border-line bg-white/95 backdrop-blur-xl">
