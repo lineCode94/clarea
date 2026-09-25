@@ -651,24 +651,24 @@ function CartDialog({ lang }: { lang: Language }) {
         <div className="px-5 py-4 border-b border-[#e9ddd5] bg-[#fffdfa]">
           <div className="relative mb-5 h-1.5 w-full rounded-full bg-gray-200">
             <div 
-              className="h-full rounded-full bg-[#f472b6] transition-all duration-500 ease-out"
+              className="h-full rounded-full bg-[#5C1A2B] transition-all duration-500 ease-out"
               style={{ width: `${Math.min((total / 4000) * 100, 100)}%` }}
             />
             <div 
-              className="absolute top-1/2 -translate-y-1/2 grid size-6 place-items-center rounded-full border-2 border-white bg-[#f472b6] text-white shadow-sm transition-all duration-500 ease-out"
+              className="absolute top-1/2 -translate-y-1/2 grid size-8 place-items-center rounded-full border-2 border-white bg-[#5C1A2B] text-white shadow-sm transition-all duration-500 ease-out"
               style={{ 
-                [ar ? 'right' : 'left']: `calc(${Math.min((total / 4000) * 100, 100)}% - 12px)`
+                [ar ? 'right' : 'left']: `calc(${Math.min((total / 4000) * 100, 100)}% - 16px)`
               }}
             >
-              <TbTruck size={14} />
+              <TbTruck size={20} />
             </div>
           </div>
           <p className="text-center text-sm text-[#412832]">
             {total < 4000 ? (
               ar ? (
-                <>أضف منتجات بقيمة <strong className="text-[#f472b6] font-medium">{money(4000 - total, ar)}</strong> للاستمتاع بشحن مجاني!</>
+                <>أضف منتجات بقيمة <strong className="text-[#C9A05C] font-bold">{money(4000 - total, ar)}</strong> للاستمتاع بشحن مجاني!</>
               ) : (
-                <>Spend <strong className="text-[#f472b6] font-medium">{money(4000 - total, ar)}</strong> more to enjoy <span className="text-[#f472b6]">Free shipping!</span></>
+                <>Spend <strong className="text-[#C9A05C] font-bold">{money(4000 - total, ar)}</strong> more to enjoy <span className="text-[#5C1A2B] font-bold">Free shipping!</span></>
               )
             ) : (
               ar ? "لقد حصلت على شحن مجاني! 🎉" : "You have unlocked Free shipping! 🎉"
@@ -743,13 +743,13 @@ function CartDialog({ lang }: { lang: Language }) {
                         <span>{money(total, ar)}</span>
                       </div>
                       <div className="flex flex-col gap-3">
-                        <button onClick={close} className="w-full rounded-full border border-[#f472b6] py-3 text-center font-bold text-[#f472b6] transition-colors hover:bg-pink-50">
+                        <button onClick={close} className="w-full rounded-full border border-[#5C1A2B] py-3 text-center font-bold text-[#5C1A2B] transition-colors hover:bg-[#F5E9E2]">
                           {ar ? "عرض السلة" : "View Cart"}
                         </button>
                         <a
                           href="/checkout"
                           onClick={() => cart.setOpen(false)}
-                          className="w-full rounded-full bg-[#f472b6] py-3 text-center font-bold text-white transition-opacity hover:opacity-90 flex justify-center items-center"
+                          className="w-full rounded-full bg-[#5C1A2B] py-3 text-center font-bold text-white transition-opacity hover:opacity-90 flex justify-center items-center"
                         >
                           {loading
                             ? ar
