@@ -72,23 +72,28 @@ function CartItem({
   ar,
   unavailable,
 }: {
-  item: CartLine;
+  item: CartLine & { original_price?: number };
   ar: boolean;
   unavailable: boolean;
 }) {
   const cart = useCart();
   return (
-    <li className="flex gap-3 border-b border-[#e9ddd5] py-5">
+    <li className="flex gap-5 border-b border-[#eee5df] px-5 py-6">
       <Image
         src={item.image}
         alt=""
-        width={72}
-        height={90}
-        className="h-24 w-16 shrink-0 rounded-xl bg-[#F5E9E2] object-contain"
+        width={112}
+        height={144}
+        className="h-36 w-24 shrink-0 rounded-2xl bg-[#faf7f3] object-contain p-2"
       />
       <div className="min-w-0 flex-1">
-        <h3 className="m-0 text-sm font-semibold leading-6">{item.name}</h3>
-        <p className="my-1 text-sm text-muted">{money(item.price, ar)}</p>
+        <h3 className="m-0 line-clamp-2 text-sm font-semibold leading-6">{item.name}</h3>
+        <p className="my-2 flex flex-wrap gap-2 text-sm font-semibold text-[#5C1A2B]">
+          {item.original_price != null && item.original_price > item.price && (
+            <del className="font-normal text-[#958780]">{money(item.original_price, ar)}</del>
+          )}
+          {money(item.price, ar)}
+        </p>
         {unavailable && (
           <p className="text-sm text-red-800">
             {ar
@@ -97,7 +102,7 @@ function CartItem({
           </p>
         )}
         <div className="mt-2 flex flex-wrap items-center justify-between gap-2">
-          <div className="flex items-center rounded-lg border border-[#dbcac0]">
+          <div className="flex items-center overflow-hidden rounded-full border border-[#cfbcb3] bg-white">
             <button
               type="button"
               className="grid size-10 place-items-center"
@@ -528,6 +533,7 @@ function CartDialog({ lang }: { lang: Language }) {
       name: p?.name || i.name,
       image: p?.images[0] || i.image,
       price: p?.public_price ?? i.price,
+      original_price: p?.original_price,
     };
   });
   const unavailable = (id: string) =>
@@ -622,229 +628,223 @@ function CartDialog({ lang }: { lang: Language }) {
       onClick={(e) => {
         if (e.target === e.currentTarget) close();
       }}
-      className="m-0 fixed inset-y-0 end-0 h-[100dvh] max-h-none w-[min(460px,100%)] overflow-y-auto rounded-none border-0 bg-[#fffdfa] p-0 text-[#412832] shadow-2xl backdrop:bg-black/40 backdrop:backdrop-blur-sm"
+      className="m-0 fixed inset-y-0 end-0 h-[100dvh] max-h-none w-[min(460px,100%)] overflow-hidden rounded-none border-0 bg-[#fffdfa] p-0 text-[#412832] shadow-2xl backdrop:bg-black/40 backdrop:backdrop-blur-sm"
     >
-      <div className="sticky top-0 z-10 flex items-center justify-between border-b border-[#e9ddd5] bg-[#fffdfa] px-5 py-4">
-        <h2 id="cart-title" className="m-0 text-lg font-bold">
-          {receipt
-            ? "Claréa"
-            : step === "cart"
-              ? ar
-                ? `سلة التسوق (${cart.items.reduce((acc, i) => acc + i.quantity, 0)})`
-                : `Shopping Cart (${cart.items.reduce((acc, i) => acc + i.quantity, 0)})`
-              : ar
-                ? "إتمام الطلب"
-                : "Checkout"}
-        </h2>
-        <button
-          autoFocus
-          type="button"
-          disabled={busy}
-          onClick={close}
-          aria-label={ar ? "إغلاق" : "Close"}
-          className="grid size-10 place-items-center text-gray-500 hover:text-gray-800"
-        >
-          <TbX size={20} />
-        </button>
-      </div>
-      {!receipt && step === "cart" && (
-        <div className="px-5 py-4 border-b border-[#e9ddd5] bg-[#fffdfa]">
-          <div className="relative mb-5 h-1.5 w-full rounded-full bg-gray-200">
-            <div 
-              className="h-full rounded-full bg-[#5C1A2B] transition-all duration-500 ease-out"
-              style={{ width: `${Math.min((total / 4000) * 100, 100)}%` }}
-            />
-            <div 
-              className="absolute top-1/2 -translate-y-1/2 grid size-8 place-items-center rounded-full border-2 border-white bg-[#5C1A2B] text-white shadow-sm transition-all duration-500 ease-out"
-              style={{ 
-                [ar ? 'right' : 'left']: `calc(${Math.min((total / 4000) * 100, 100)}% - 16px)`
-              }}
-            >
-              <TbTruck size={20} />
-            </div>
-          </div>
-          <p className="text-center text-sm text-[#412832]">
-            {total < 4000 ? (
-              ar ? (
-                <>أضف منتجات بقيمة <strong className="text-[#C9A05C] font-bold">{money(4000 - total, ar)}</strong> للاستمتاع بشحن مجاني!</>
-              ) : (
-                <>Spend <strong className="text-[#C9A05C] font-bold">{money(4000 - total, ar)}</strong> more to enjoy <span className="text-[#5C1A2B] font-bold">Free shipping!</span></>
-              )
-            ) : (
-              ar ? "لقد حصلت على شحن مجاني! 🎉" : "You have unlocked Free shipping! 🎉"
-            )}
-          </p>
+      <div className="flex h-full min-h-0 flex-col">
+        <div className="z-10 flex shrink-0 items-center justify-between bg-[#5C1A2B] px-6 py-4 text-[#fffaf5]">
+          <h2 id="cart-title" className="m-0 text-lg font-bold">
+            {receipt
+              ? "Claréa"
+              : step === "cart"
+                ? ar
+                  ? `سلة التسوق (${cart.items.reduce((acc, i) => acc + i.quantity, 0)})`
+                  : `Shopping Cart (${cart.items.reduce((acc, i) => acc + i.quantity, 0)})`
+                : ar
+                  ? "إتمام الطلب"
+                  : "Checkout"}
+          </h2>
+          <button
+            autoFocus
+            type="button"
+            disabled={busy}
+            onClick={close}
+            aria-label={ar ? "إغلاق" : "Close"}
+            className="grid size-10 place-items-center rounded-full border border-white/30 text-white transition-colors hover:bg-white/15"
+          >
+            <TbX size={20} />
+          </button>
         </div>
-      )}
-      <div className="p-5 sm:p-7">
-        {receipt ? (
-          <OrderConfirmation receipt={receipt} ar={ar} close={close} />
-        ) : (
-          <>
-            {error && (
-              <div
-                role="alert"
-                className="mb-4 rounded-xl bg-red-50 p-4 text-sm leading-6 text-red-900"
-              >
-                {error}
-                <button
-                  type="button"
-                  disabled={busy}
-                  onClick={() => {
-                    setStep("cart");
-                    void refresh();
-                  }}
-                  className="mt-2 block underline"
+        <div
+          className={
+            step === "cart" && !receipt
+              ? "min-h-0 flex-1 overflow-y-auto"
+              : "min-h-0 flex-1 overflow-y-auto p-5 sm:p-7"
+          }
+        >
+          {receipt ? (
+            <OrderConfirmation receipt={receipt} ar={ar} close={close} />
+          ) : (
+            <>
+              {error && (
+                <div
+                  role="alert"
+                  className="mb-4 rounded-xl bg-red-50 p-4 text-sm leading-6 text-red-900"
                 >
-                  {ar ? "تحديث السلة" : "Refresh bag"}
-                </button>
-              </div>
-            )}
-            {items.length === 0 ? (
-              <div className="space-y-5 py-12 text-center">
-                <TbShoppingBag className="mx-auto text-[#C9A05C]" size={48} />
-                <h3 className="text-xl">{ar ? "سلتك لسه فاضية" : "Your bag is empty"}</h3>
-                <p className="text-sm text-muted">
-                  {ar
-                    ? "اختاري منتجاتك المفضلة وابدئي من هنا."
-                    : "Find your favourites and make them yours."}
-                </p>
-                <button onClick={close} className={primary}>
-                  {ar ? "اكتشفي المنتجات" : "Explore products"}
-                </button>
-              </div>
-            ) : (
-              <>
-                {step !== "cart" && (
+                  {error}
                   <button
+                    type="button"
                     disabled={busy}
-                    onClick={() => setStep(step === "review" ? "details" : "cart")}
-                    className="mb-4 flex min-h-11 items-center gap-2 text-sm"
-                  >
-                    <TbArrowLeft />
-                    {ar ? "رجوع" : "Back"}
-                  </button>
-                )}
-                {step === "cart" && (
-                  <>
-                    <ul className="m-0 list-none p-0">
-                      {items.map((i) => (
-                        <CartItem
-                          key={i.id}
-                          item={i}
-                          ar={ar}
-                          unavailable={!loading && unavailable(i.id)}
-                        />
-                      ))}
-                    </ul>
-                    <div className="my-5 border-t border-[#e9ddd5] pt-5">
-                      <div className="flex justify-between font-bold text-lg mb-5 text-[#412832]">
-                        <span>{ar ? "المجموع الفرعي" : "Subtotal"}</span>
-                        <span>{money(total, ar)}</span>
-                      </div>
-                      <div className="flex flex-col gap-3">
-                        <button onClick={close} className="w-full rounded-full border border-[#5C1A2B] py-3 text-center font-bold text-[#5C1A2B] transition-colors hover:bg-[#F5E9E2]">
-                          {ar ? "عرض السلة" : "View Cart"}
-                        </button>
-                        <a
-                          href="/checkout"
-                          onClick={() => cart.setOpen(false)}
-                          className="w-full rounded-full bg-[#5C1A2B] py-3 text-center font-bold text-white transition-opacity hover:opacity-90 flex justify-center items-center"
-                        >
-                          {loading
-                            ? ar
-                              ? "تحديث الأسعار…"
-                              : "Updating prices…"
-                            : ar
-                              ? "متابعة الطلب وإتمام الشراء"
-                              : "Checkout"}
-                        </a>
-                      </div>
-                    </div>
-                  </>
-                )}
-                {step === "details" && (
-                  <CheckoutForm
-                    ar={ar}
-                    customer={customer}
-                    setCustomer={setCustomer}
-                    onReview={() => {
-                      setAck(false);
-                      setStep("review");
+                    onClick={() => {
+                      setStep("cart");
+                      void refresh();
                     }}
-                  />
-                )}
-                {step === "review" && (
-                  <div className="space-y-5">
-                    <h3 className="text-lg font-bold">{ar ? "راجعي طلبك" : "Review your order"}</h3>
-                    <div className="rounded-xl border border-[#e9ddd5] bg-[#F5E9E2]/30 p-4 text-sm leading-7">
-                      <strong className="block text-base">
-                        {customer.firstName} {customer.lastName}
-                      </strong>
-                      <div dir="ltr" className="text-muted">
-                        {customer.phone || customer.emailOrPhone}
-                      </div>
-                      {customer.emailOrPhone.includes("@") && (
-                        <div dir="ltr" className="text-xs text-muted">
-                          {customer.emailOrPhone}
-                        </div>
-                      )}
-                      <p className="m-0 mt-1.5 whitespace-pre-line break-words text-[#412832]">
-                        {[
-                          customer.address,
-                          customer.apartment ? `شقة/ملحق: ${customer.apartment}` : "",
-                          customer.city,
-                          customer.governorate,
-                          customer.country || "Egypt",
-                          customer.postalCode ? `الرمز البريدي: ${customer.postalCode}` : "",
-                        ]
-                          .filter(Boolean)
-                          .join(" - ")}
-                      </p>
-                    </div>
-                    <ul className="space-y-3 p-0">
-                      {items.map((i) => (
-                        <li key={i.id} className="flex list-none justify-between gap-3 text-sm">
-                          <span>
-                            {i.name} × {i.quantity}
-                          </span>
-                          <strong className="shrink-0">{money(i.price * i.quantity, ar)}</strong>
-                        </li>
-                      ))}
-                    </ul>
-                    <CartSummary total={total} ar={ar} />
-                    <PaymentMethodSelector ar={ar} />
-                    <label className="flex items-start gap-3 text-sm leading-6">
-                      <input
-                        type="checkbox"
-                        checked={ack}
-                        disabled={busy}
-                        onChange={(e) => setAck(e.target.checked)}
-                        className="mt-1 size-4 shrink-0"
-                      />
-                      {ar
-                        ? "موافقة على التواصل معايا لتأكيد الطلب والتوفر وتكلفة الشحن وموعد التوصيل قبل التجهيز."
-                        : "I agree to be contacted to confirm my order, availability, delivery cost and arrival time before preparation."}
-                    </label>
+                    className="mt-2 block underline"
+                  >
+                    {ar ? "تحديث السلة" : "Refresh bag"}
+                  </button>
+                </div>
+              )}
+              {items.length === 0 ? (
+                <div className="space-y-5 py-12 text-center">
+                  <TbShoppingBag className="mx-auto text-[#C9A05C]" size={48} />
+                  <h3 className="text-xl">{ar ? "سلتك لسه فاضية" : "Your bag is empty"}</h3>
+                  <p className="text-sm text-muted">
+                    {ar
+                      ? "اختاري منتجاتك المفضلة وابدئي من هنا."
+                      : "Find your favourites and make them yours."}
+                  </p>
+                  <button onClick={close} className={primary}>
+                    {ar ? "اكتشفي المنتجات" : "Explore products"}
+                  </button>
+                </div>
+              ) : (
+                <>
+                  {step !== "cart" && (
                     <button
-                      disabled={busy || !ack || invalid || loading}
-                      onClick={() => void submit()}
-                      className={primary + " w-full"}
+                      disabled={busy}
+                      onClick={() => setStep(step === "review" ? "details" : "cart")}
+                      className="mb-4 flex min-h-11 items-center gap-2 text-sm"
                     >
-                      {busy
-                        ? ar
-                          ? "جاري إرسال الطلب…"
-                          : "Placing order…"
-                        : ar
-                          ? "إرسال الطلب — الدفع عند الاستلام"
-                          : "Place order — pay on delivery"}
+                      <TbArrowLeft />
+                      {ar ? "رجوع" : "Back"}
                     </button>
-                  </div>
-                )}
-              </>
-            )}
-          </>
-        )}
+                  )}
+                  {step === "cart" && (
+                    <div className="flex h-full min-h-0 flex-col">
+                      <ul className="m-0 min-h-0 flex-1 list-none overflow-y-auto overscroll-contain p-0">
+                        {items.map((i) => (
+                          <CartItem
+                            key={i.id}
+                            item={i}
+                            ar={ar}
+                            unavailable={!loading && unavailable(i.id)}
+                          />
+                        ))}
+                      </ul>
+                      <div className="shrink-0 border-t border-[#e9ddd5] bg-[#faf5ef] px-6 pt-5 pb-[max(1.25rem,env(safe-area-inset-bottom))]">
+                        <p className="mt-0 mb-4 flex items-center justify-center gap-2 text-xs text-[#806b63]">
+                          <TbTruck size={19} />
+                          {ar
+                            ? "الشحن يُحدد حسب عنوان التوصيل"
+                            : "Shipping confirmed by delivery address"}
+                        </p>
+                        <div className="flex justify-between font-bold text-lg mb-5 text-[#412832]">
+                          <span>{ar ? "المجموع الفرعي" : "Subtotal"}</span>
+                          <span>{money(total, ar)}</span>
+                        </div>
+                        <div className="flex flex-col gap-3">
+                          <button
+                            onClick={close}
+                            className="w-full rounded-full border border-[#5C1A2B] py-3 text-center font-bold text-[#5C1A2B] transition-colors hover:bg-[#F5E9E2]"
+                          >
+                            {ar ? "متابعة التسوق" : "Continue shopping"}
+                          </button>
+                          <button
+                            type="button"
+                            disabled={loading || invalid || !!error}
+                            onClick={() => {
+                              cart.setOpen(false);
+                              window.location.assign("/checkout");
+                            }}
+                            className="w-full rounded-full bg-[#5C1A2B] py-3 text-center font-bold text-white transition-opacity hover:opacity-90 disabled:opacity-40 flex justify-center items-center"
+                          >
+                            {loading
+                              ? ar
+                                ? "تحديث الأسعار…"
+                                : "Updating prices…"
+                              : ar
+                                ? "متابعة الطلب وإتمام الشراء"
+                                : "Checkout"}
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+                  {step === "details" && (
+                    <CheckoutForm
+                      ar={ar}
+                      customer={customer}
+                      setCustomer={setCustomer}
+                      onReview={() => {
+                        setAck(false);
+                        setStep("review");
+                      }}
+                    />
+                  )}
+                  {step === "review" && (
+                    <div className="space-y-5">
+                      <h3 className="text-lg font-bold">
+                        {ar ? "راجعي طلبك" : "Review your order"}
+                      </h3>
+                      <div className="rounded-xl border border-[#e9ddd5] bg-[#F5E9E2]/30 p-4 text-sm leading-7">
+                        <strong className="block text-base">
+                          {customer.firstName} {customer.lastName}
+                        </strong>
+                        <div dir="ltr" className="text-muted">
+                          {customer.phone || customer.emailOrPhone}
+                        </div>
+                        {customer.emailOrPhone.includes("@") && (
+                          <div dir="ltr" className="text-xs text-muted">
+                            {customer.emailOrPhone}
+                          </div>
+                        )}
+                        <p className="m-0 mt-1.5 whitespace-pre-line break-words text-[#412832]">
+                          {[
+                            customer.address,
+                            customer.apartment ? `شقة/ملحق: ${customer.apartment}` : "",
+                            customer.city,
+                            customer.governorate,
+                            customer.country || "Egypt",
+                            customer.postalCode ? `الرمز البريدي: ${customer.postalCode}` : "",
+                          ]
+                            .filter(Boolean)
+                            .join(" - ")}
+                        </p>
+                      </div>
+                      <ul className="space-y-3 p-0">
+                        {items.map((i) => (
+                          <li key={i.id} className="flex list-none justify-between gap-3 text-sm">
+                            <span>
+                              {i.name} × {i.quantity}
+                            </span>
+                            <strong className="shrink-0">{money(i.price * i.quantity, ar)}</strong>
+                          </li>
+                        ))}
+                      </ul>
+                      <CartSummary total={total} ar={ar} />
+                      <PaymentMethodSelector ar={ar} />
+                      <label className="flex items-start gap-3 text-sm leading-6">
+                        <input
+                          type="checkbox"
+                          checked={ack}
+                          disabled={busy}
+                          onChange={(e) => setAck(e.target.checked)}
+                          className="mt-1 size-4 shrink-0"
+                        />
+                        {ar
+                          ? "موافقة على التواصل معايا لتأكيد الطلب والتوفر وتكلفة الشحن وموعد التوصيل قبل التجهيز."
+                          : "I agree to be contacted to confirm my order, availability, delivery cost and arrival time before preparation."}
+                      </label>
+                      <button
+                        disabled={busy || !ack || invalid || loading}
+                        onClick={() => void submit()}
+                        className={primary + " w-full"}
+                      >
+                        {busy
+                          ? ar
+                            ? "جاري إرسال الطلب…"
+                            : "Placing order…"
+                          : ar
+                            ? "إرسال الطلب — الدفع عند الاستلام"
+                            : "Place order — pay on delivery"}
+                      </button>
+                    </div>
+                  )}
+                </>
+              )}
+            </>
+          )}
+        </div>
       </div>
     </dialog>
   );
