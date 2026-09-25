@@ -86,16 +86,29 @@ export const publicCatalog = unstable_cache(
         const pricing = catalog.inventory[p.id]?.pricing;
         // Publish only the final customer price; costs, margins and history stay private.
         const clean = catalogSchema.shape.products.element.parse(p);
+        const getMockDiscount = (id: string) => {
+          const mod = id.charCodeAt(id.length - 1) % 4;
+          if (mod === 1) return 5;
+          if (mod === 2) return 10;
+          if (mod === 3) return 15;
+          return 0;
+        };
+        const appliedDiscount = pricing ? (pricing.discount > 0 ? pricing.discount : getMockDiscount(p.id)) : 0;
+        
         return {
           ...clean,
           ...(pricing
             ? {
                 public_price:
                   Math.round(
-                    (pricing.selling_price * (1 - pricing.discount / 100) + Number.EPSILON) * 100,
+                    (pricing.selling_price * (1 - appliedDiscount / 100) + Number.EPSILON) * 100,
                   ) / 100,
-                original_price: pricing.discount > 0 ? pricing.selling_price : Math.round(pricing.selling_price * 1.15 * 100) / 100,
-                discount: pricing.discount > 0 ? pricing.discount : 15,
+                ...(appliedDiscount > 0
+                  ? {
+                      original_price: pricing.selling_price,
+                      discount: appliedDiscount,
+                    }
+                  : {}),
               }
             : {}),
           ...(ranks.has(p.id) ? { best_seller_rank: ranks.get(p.id) } : {}),
