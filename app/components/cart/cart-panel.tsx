@@ -507,8 +507,19 @@ function CartDialog({ lang }: { lang: Language }) {
       previous = document.activeElement as HTMLElement,
       overflow = document.body.style.overflow;
     el.showModal();
+    const reduced = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    const entrance = el.animate(
+      reduced
+        ? [{ opacity: 0 }, { opacity: 1 }]
+        : [
+            { transform: ar ? "translateX(100%)" : "translateX(-100%)", opacity: 0.7 },
+            { transform: "translateX(0)", opacity: 1 },
+          ],
+      { duration: reduced ? 160 : 650, easing: "cubic-bezier(.22,1,.36,1)", fill: "both" },
+    );
     document.body.style.overflow = "hidden";
     return () => {
+      entrance.cancel();
       el.close();
       document.body.style.overflow = overflow;
       previous?.focus();
@@ -550,7 +561,21 @@ function CartDialog({ lang }: { lang: Language }) {
   const invalid = items.some((i) => unavailable(i.id)),
     total = Math.round(items.reduce((n, i) => n + i.price * i.quantity, 0) * 100) / 100;
   const close = () => {
-    if (!submitting.current) setClosing(true);
+    if (submitting.current || closing) return;
+    setClosing(true);
+    const el = dialog.current;
+    if (!el) return cart.setOpen(false);
+    const reduced = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    const departure = el.animate(
+      reduced
+        ? [{ opacity: 1 }, { opacity: 0 }]
+        : [
+            { transform: getComputedStyle(el).transform, opacity: 1 },
+            { transform: ar ? "translateX(100%)" : "translateX(-100%)", opacity: 0.7 },
+          ],
+      { duration: reduced ? 120 : 380, easing: "cubic-bezier(.4,0,.6,1)", fill: "both" },
+    );
+    void departure.finished.then(() => cart.setOpen(false)).catch(() => {});
   };
   async function submit() {
     if (submitting.current || loading || invalid || !ack || !items.length) return;
@@ -638,9 +663,6 @@ function CartDialog({ lang }: { lang: Language }) {
         if (e.target === e.currentTarget) close();
       }}
       data-closing={closing}
-      onAnimationEnd={(e) => {
-        if (e.target === e.currentTarget && closing) cart.setOpen(false);
-      }}
       className="clarea-cart-drawer m-0 fixed inset-y-0 start-0 end-auto h-[100dvh] max-h-none w-[min(460px,100%)] overflow-hidden rounded-none border-0 bg-[#fffdfa] p-0 text-[#412832] shadow-2xl backdrop:bg-black/40 backdrop:backdrop-blur-sm"
     >
       <div className="flex h-full min-h-0 flex-col">
@@ -739,8 +761,8 @@ function CartDialog({ lang }: { lang: Language }) {
                           <TbTruck size={19} />
                           {total >= 2500
                             ? ar
-                              ? "طلبك مؤهل للشحن المجاني"
-                              : "Your order qualifies for free shipping"
+                              ? "مبروك! شحن طلبك مجاني"
+                              : "You’ve unlocked free shipping!"
                             : ar
                               ? `باقي ${money(2500 - total, ar)} للشحن المجاني`
                               : `${money(2500 - total, ar)} away from free shipping`}
