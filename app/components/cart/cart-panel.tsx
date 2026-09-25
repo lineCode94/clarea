@@ -149,7 +149,15 @@ function CartSummary({ total, ar }: { total: number; ar: boolean }) {
       </div>
       <div className="flex justify-between gap-3">
         <span>{ar ? "الشحن" : "Delivery"}</span>
-        <span>{ar ? "يُحدد حسب عنوان التوصيل" : "Based on delivery address"}</span>
+        <span>
+          {total >= 2500
+            ? ar
+              ? "مجاني"
+              : "Free"
+            : ar
+              ? "يُحدد حسب عنوان التوصيل"
+              : "Based on delivery address"}
+        </span>
       </div>
       <p className="m-0 leading-6 text-muted">
         {ar
@@ -729,9 +737,18 @@ function CartDialog({ lang }: { lang: Language }) {
                       <div className="shrink-0 border-t border-[#e9ddd5] bg-[#faf5ef] px-6 pt-5 pb-[max(1.25rem,env(safe-area-inset-bottom))]">
                         <p className="mt-0 mb-4 flex items-center justify-center gap-2 text-xs text-[#806b63]">
                           <TbTruck size={19} />
+                          {total >= 2500
+                            ? ar
+                              ? "طلبك مؤهل للشحن المجاني"
+                              : "Your order qualifies for free shipping"
+                            : ar
+                              ? `باقي ${money(2500 - total, ar)} للشحن المجاني`
+                              : `${money(2500 - total, ar)} away from free shipping`}
+                        </p>
+                        <p className="mt-0 text-center text-xs text-[#806b63]">
                           {ar
-                            ? "الشحن يُحدد حسب عنوان التوصيل"
-                            : "Shipping confirmed by delivery address"}
+                            ? "شحن مجاني للطلبات من ٢٥٠٠ جنيه بعد الخصم"
+                            : "Free shipping on orders of EGP 2,500+ after discounts"}
                         </p>
                         <div className="flex justify-between font-bold text-lg mb-5 text-[#412832]">
                           <span>{ar ? "المجموع الفرعي" : "Subtotal"}</span>

@@ -136,7 +136,7 @@ function CheckoutContent() {
     ? Math.round(rawSubtotal * (appliedDiscount.percent / 100))
     : 0;
   const subtotal = rawSubtotal - discountAmount;
-  const shippingFee = null;
+  const shippingFee = subtotal >= 2500 ? 0 : null;
   const total = subtotal + (shippingFee ?? 0);
 
   function handleApplyDiscount(e: FormEvent) {

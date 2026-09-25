@@ -528,7 +528,7 @@ const orders = load("app/lib/order-service.ts");
   forceConflict = true;
   const free = await checkout(req(freeShipping));
   assert.equal(free.status, 200);
-  assert.equal(free.body.order.shipping_fee, null);
+  assert.equal(free.body.order.shipping_fee, 0);
   c = await store.readCatalog();
   c.products.find((p) => p.id === "sample").published = false;
   await store.saveCatalog(c.products, c.version, c);
